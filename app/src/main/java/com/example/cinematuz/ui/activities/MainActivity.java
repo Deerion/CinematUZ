@@ -1,7 +1,8 @@
-package com.example.cinematuz;
+package com.example.cinematuz.ui.activities;
 
 import android.os.Bundle;
 
+import com.example.cinematuz.R;
 import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
