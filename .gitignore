@@ -21,7 +21,5 @@ build/
 *.jks
 *.keystore
 
-# --- Google Services (Firebase) ---
-# Jeśli projekt jest publiczny, warto rozważyć ignorowanie tego pliku,
-# ale w projektach studenckich często się go zostawia dla wygody zespołu.
-# google-services.json
+# Firebase configuration file
+app/google-services.json
