@@ -28,4 +28,9 @@
     <string name="confirm_password">Confirm password</string>
     <string name="captcha_mock">I\'m not a robot</string>
     <string name="already_have_account">Already have an account?</string>
+
+    <string name="nav_discover">Discover</string>
+    <string name="nav_community">Community</string>
+    <string name="nav_map">Map</string>
+    <string name="nav_profile">Profile</string>
 </resources>
