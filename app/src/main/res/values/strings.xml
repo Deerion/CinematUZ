@@ -29,8 +29,8 @@
     <string name="captcha_mock">Nie jestem robotem</string>
     <string name="already_have_account">Masz już konto?</string>
 
-    <string name="nav_discover">Odkrywaj</string>
-    <string name="nav_community">Społeczność</string>
+    <string name="nav_start">Start</string>
+    <string name="nav_friends">Znajomi</string>
     <string name="nav_map">Mapa</string>
     <string name="nav_profile">Profil</string>
 </resources>
