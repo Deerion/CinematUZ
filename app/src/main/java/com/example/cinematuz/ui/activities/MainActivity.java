@@ -5,44 +5,65 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
+import androidx.fragment.app.Fragment;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.databinding.ActivityMainBinding;
-import com.google.firebase.auth.FirebaseAuth;
+import com.example.cinematuz.ui.fragments.HomeFragment;
+import com.example.cinematuz.ui.fragments.FriendsFragment;
+import com.example.cinematuz.ui.fragments.MapFragment;
+import com.example.cinematuz.ui.fragments.ProfileFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Test Firebase (można usunąć po weryfikacji)
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        android.util.Log.d("FIREBASE_TEST", "Instancja Firebase: " + mAuth.toString());
-
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Ustawienie górnego paska (Toolbar)
         setSupportActionBar(binding.toolbar);
 
-        // Zmiana ID z nav_host_fragment_content_main na nav_host_fragment
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        // 1. Wczytanie domyślnego fragmentu (Start) po uruchomieniu aplikacji
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new HomeFragment())
+                    .commit();
+        }
 
-        // Konfiguracja paska aplikacji
-        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        // 2. Logika obsługująca kliknięcia w dolnym pasku
+        binding.bottomNavigation.setOnItemSelectedListener(item -> {
+            Fragment selectedFragment = null;
+            int itemId = item.getItemId();
 
-        // Opcjonalnie: Połączenie BottomNavigationView z NavController (logika nawigacji)
-        // NavigationUI.setupWithNavController(binding.bottomNavigation, navController);
+            // Przypisanie odpowiedniego fragmentu do klikniętej ikony
+            if (itemId == R.id.nav_start) {
+                selectedFragment = new HomeFragment();
+            } else if (itemId == R.id.nav_friends) {
+                selectedFragment = new FriendsFragment();
+            } else if (itemId == R.id.nav_map) {
+                selectedFragment = new MapFragment();
+            } else if (itemId == R.id.nav_profile) {
+                selectedFragment = new ProfileFragment();
+            }
+
+            // Jeśli fragment został pomyślnie wybrany, podmień go na ekranie
+            if (selectedFragment != null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, selectedFragment)
+                        .commit();
+                return true; // Zwracamy true, aby ikona na pasku zaświeciła się jako aktywna
+            }
+
+            return false;
+        });
     }
 
+    // Obsługa górnego menu (np. Ustawienia)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -51,18 +72,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (item.getItemId() == R.id.action_settings) {
+            // Tutaj w przyszłości można dodać przejście do ustawień
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        // Zmiana ID na aktualny nav_host_fragment
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        return NavigationUI.navigateUp(navController, appBarConfiguration)
-                || super.onSupportNavigateUp();
     }
 }
