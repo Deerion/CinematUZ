@@ -20,4 +20,12 @@
     <string name="action_settings">Ustawienia</string>
     <string name="first_fragment_label">Główny Ekran</string>
     <string name="second_fragment_label">Szczegóły</string>
+
+    <string name="create_account">Stwórz konto</string>
+    <string name="register_subtitle">Dołącz do społeczności CinematUZ i zacznij filmową przygodę</string>
+    <string name="full_name">Nazwa użytkownika</string>
+    <string name="full_name_hint">Wpisz swoją nazwę</string>
+    <string name="confirm_password">Powtórz hasło</string>
+    <string name="captcha_mock">Nie jestem robotem</string>
+    <string name="already_have_account">Masz już konto?</string>
 </resources>
