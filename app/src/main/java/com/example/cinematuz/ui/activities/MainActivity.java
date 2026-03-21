@@ -26,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         // Ustawienie górnego paska (Toolbar)
-        setSupportActionBar(binding.toolbar);
+        setSupportActionBar(binding.topAppBar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         // 1. Wczytanie domyślnego fragmentu (Start) po uruchomieniu aplikacji
         if (savedInstanceState == null) {
@@ -36,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // 2. Logika obsługująca kliknięcia w dolnym pasku
-        binding.bottomNavigation.setOnItemSelectedListener(item -> {
+        binding.navView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
 
