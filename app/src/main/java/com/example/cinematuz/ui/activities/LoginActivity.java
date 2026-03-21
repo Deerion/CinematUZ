@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -13,6 +15,8 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 

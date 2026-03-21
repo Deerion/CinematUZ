@@ -30,7 +30,7 @@
     <string name="already_have_account">Already have an account?</string>
 
     <string name="nav_start">Home</string>
-    <string name="nav_friends">Znajomi</string>
+    <string name="nav_friends">Friends</string>
     <string name="nav_map">Map</string>
     <string name="nav_profile">Profile</string>
 </resources>
