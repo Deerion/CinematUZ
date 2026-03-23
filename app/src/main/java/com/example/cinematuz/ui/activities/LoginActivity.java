@@ -2,44 +2,89 @@ package com.example.cinematuz.ui.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
 import com.example.cinematuz.R;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        View mainView = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return windowInsets;
+        });
+
+        mAuth = FirebaseAuth.getInstance();
+
+        // Znajdowanie elementów na podstawie ID
         ImageButton btnClose = findViewById(R.id.btnClose);
         TextView tvSignUpLink = findViewById(R.id.tvSignUpLink);
+        Button btnLogin = findViewById(R.id.btnLogin);
 
-        // 1. Zamknięcie logowania (przejście jako "gość" na główny ekran)
+        // Pola, do których przed chwilą dodaliśmy ID w XML
+        TextInputEditText etEmail = findViewById(R.id.etLoginEmail);
+        TextInputEditText etPassword = findViewById(R.id.etLoginPassword);
+
+        // Zamknięcie ekranu
         if (btnClose != null) {
             btnClose.setOnClickListener(v -> {
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish(); // Niszczymy ekran logowania
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
             });
         }
 
-        // 2. Przejście do rejestracji
+        // Przejście do rejestracji
         if (tvSignUpLink != null) {
             tvSignUpLink.setOnClickListener(v -> {
-                Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-                startActivity(intent);
-                // Wyłączamy animację przejścia, aby zmiana wyglądała jak podmienienie widoku
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
                 overridePendingTransition(0, 0);
-                finish(); // Niszczymy ekran logowania, aby nie śmiecić w stosie nawigacji
+                finish();
+            });
+        }
+
+        // Logika Firebase
+        if (btnLogin != null) {
+            btnLogin.setOnClickListener(v -> {
+                // Zabezpieczenie przed crashem, gdyby pola nadal nie miały ID
+                if (etEmail == null || etPassword == null) return;
+
+                String email = etEmail.getText().toString().trim();
+                String password = etPassword.getText().toString().trim();
+
+                if (email.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(LoginActivity.this, "Wypełnij wszystkie pola!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                mAuth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener(this, task -> {
+                            if (task.isSuccessful()) {
+                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                finish();
+                            } else {
+                                Toast.makeText(LoginActivity.this, "Błąd: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        });
             });
         }
     }
