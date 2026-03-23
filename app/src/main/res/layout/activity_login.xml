@@ -253,6 +253,6 @@
             android:text="@string/terms_policy"
             android:textColor="?android:attr/textColorSecondary"
             android:textSize="12sp" />
-
+//test
     </LinearLayout>
 </ScrollView>
