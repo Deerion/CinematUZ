@@ -3,8 +3,13 @@ package com.example.cinematuz.ui.activities;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.cinematuz.R;
@@ -22,26 +27,39 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // 1. Mówimy systemowi, że sami obsłużymy odstępy (żeby paski nie nachodziły na UI)
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // 2. Naprawiamy górny pasek (Toolbar) i dolny (BottomNav), żeby nie chowały się pod system
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
+            Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // Dodajemy padding na górze (dla Toolbaru) i na dole (dla NavView)
+            binding.appBarLayout.setPadding(0, systemBars.top, 0, 0);
+            binding.navView.setPadding(0, 0, 0, systemBars.bottom);
+
+            return windowInsets;
+        });
 
         // Ustawienie górnego paska (Toolbar)
         setSupportActionBar(binding.topAppBar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        // 1. Wczytanie domyślnego fragmentu (Start) po uruchomieniu aplikacji
+        // Wczytanie domyślnego fragmentu (Start) po uruchomieniu aplikacji
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new HomeFragment())
                     .commit();
         }
 
-        // 2. Logika obsługująca kliknięcia w dolnym pasku
+        // Logika obsługująca kliknięcia w dolnym pasku
         binding.navView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
 
-            // Przypisanie odpowiedniego fragmentu do klikniętej ikony
             if (itemId == R.id.nav_start) {
                 selectedFragment = new HomeFragment();
             } else if (itemId == R.id.nav_friends) {
@@ -52,19 +70,17 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = new ProfileFragment();
             }
 
-            // Jeśli fragment został pomyślnie wybrany, podmień go na ekranie
             if (selectedFragment != null) {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, selectedFragment)
                         .commit();
-                return true; // Zwracamy true, aby ikona na pasku zaświeciła się jako aktywna
+                return true;
             }
 
             return false;
         });
     }
 
-    // Obsługa górnego menu (np. Ustawienia)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -74,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_settings) {
-            // Tutaj w przyszłości można dodać przejście do ustawień
             return true;
         }
         return super.onOptionsItemSelected(item);

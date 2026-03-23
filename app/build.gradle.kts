@@ -51,4 +51,5 @@ dependencies {
     // Firebase - teraz korzysta z wersji z pliku .toml
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
 }
