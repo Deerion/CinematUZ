@@ -1,5 +1,6 @@
 package com.example.cinematuz.ui.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -13,6 +14,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.cinematuz.utils.LocaleHelper;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.example.cinematuz.R;
@@ -87,5 +89,11 @@ public class LoginActivity extends AppCompatActivity {
                         });
             });
         }
+    }
+
+    // Ta metoda upewnia się, że Activity użyje języka zapisanego w LocaleHelper
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase));
     }
 }
