@@ -75,12 +75,4 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <TextView
-        android:id="@+id/creditsTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:text="Icon made by Corner Pixel from www.flaticon.com" />
-
 </LinearLayout>
