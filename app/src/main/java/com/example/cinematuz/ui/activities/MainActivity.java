@@ -1,5 +1,6 @@
 package com.example.cinematuz.ui.activities;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,6 +19,7 @@ import com.example.cinematuz.ui.fragments.HomeFragment;
 import com.example.cinematuz.ui.fragments.FriendsFragment;
 import com.example.cinematuz.ui.fragments.MapFragment;
 import com.example.cinematuz.ui.fragments.ProfileFragment;
+import com.example.cinematuz.utils.LocaleHelper;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -93,5 +95,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    // Ta metoda upewnia się, że Activity użyje języka zapisanego w LocaleHelper
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase));
     }
 }

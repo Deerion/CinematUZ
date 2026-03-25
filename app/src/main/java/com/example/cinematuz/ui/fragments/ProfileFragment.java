@@ -1,7 +1,6 @@
 package com.example.cinematuz.ui.fragments;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -9,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.utils.LocaleHelper;
@@ -48,42 +48,57 @@ public class ProfileFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
-        View languageTile = view.findViewById(R.id.language_settings_tile);
 
-        // listener kliknięć
-        languageTile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showLanguageDialog();
+        View languageTile = view.findViewById(R.id.language_settings_tile);
+        TextView textPl = view.findViewById(R.id.textPl);
+        TextView textEn = view.findViewById(R.id.textEn);
+
+        // Pobranie aktualnie zapisanego języka
+        String currentLang = LocaleHelper.getLanguage(requireContext());
+
+        if ("en".equals(currentLang)) {
+            // Styl dla włączonego EN
+            textEn.setBackgroundResource(R.drawable.bg_switch_active);
+            textEn.setTextColor(Color.parseColor("#FFFFFF"));
+            // Styl dla wyłączonego PL
+            textPl.setBackgroundResource(android.R.color.transparent);
+            textPl.setTextColor(Color.parseColor("#9E9E9E"));
+        } else {
+            // Styl dla włączonego PL (domyślny)
+            textPl.setBackgroundResource(R.drawable.bg_switch_active);
+            textPl.setTextColor(Color.parseColor("#FFFFFF"));
+            // Styl dla wyłączonego EN
+            textEn.setBackgroundResource(android.R.color.transparent);
+            textEn.setTextColor(Color.parseColor("#9E9E9E"));
+        }
+
+        // Obsługa kliknięcia w przycisk "PL"
+        textPl.setOnClickListener(v -> {
+            if (!"pl".equals(LocaleHelper.getLanguage(requireContext()))) {
+                LocaleHelper.setLocale(requireContext(), "pl");
+                requireActivity().recreate(); // Przeładuj aktywność po zmianie
             }
+        });
+
+        // Obsługa kliknięcia w przycisk "EN"
+        textEn.setOnClickListener(v -> {
+            if (!"en".equals(LocaleHelper.getLanguage(requireContext()))) {
+                LocaleHelper.setLocale(requireContext(), "en");
+                requireActivity().recreate(); // Przeładuj aktywność po zmianie
+            }
+        });
+
+        // Opcjonalnie: Obsługa kliknięcia w dowolne miejsce kafelka działa jak Toggle (przełącznik)
+        languageTile.setOnClickListener(v -> {
+            String lang = LocaleHelper.getLanguage(requireContext());
+            if ("pl".equals(lang)) {
+                LocaleHelper.setLocale(requireContext(), "en");
+            } else {
+                LocaleHelper.setLocale(requireContext(), "pl");
+            }
+            requireActivity().recreate();
         });
 
         return view;
-    }
-
-    // Metoda do wyświetlania okienka z wyborem języka
-    private void showLanguageDialog() {
-        final String[] languages = {"Polski", "English"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Wybierz język");
-        builder.setItems(languages, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                if (which == 0) {
-                    // Wybrano "Polski" (indeks 0)
-                    LocaleHelper.setLocale(requireContext(), "pl");
-                } else if (which == 1) {
-                    // Wybrano "English" (indeks 1)
-                    LocaleHelper.setLocale(requireContext(), "en");
-                }
-
-                // Odświeżenie aktywności, aby zmiana języka była widoczna od razu
-                if (getActivity() != null) {
-                    getActivity().recreate();
-                }
-            }
-        });
-        builder.show();
     }
 }
