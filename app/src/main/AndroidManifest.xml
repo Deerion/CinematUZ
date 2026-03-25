@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".CinematUZApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
@@ -30,7 +31,7 @@
         <activity
             android:name=".ui.activities.RegisterActivity"
             android:windowSoftInputMode="adjustResize"
-            android:exported="false">
-        </activity>
+            android:exported="false"
+            android:theme="@style/Theme.CinematUZ" />
     </application>
 </manifest>

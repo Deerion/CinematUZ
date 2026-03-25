@@ -212,6 +212,17 @@
                 android:textStyle="bold"
                 app:backgroundTint="?attr/colorPrimary"
                 app:cornerRadius="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSkipLogin"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/skip_login"
+                android:textAllCaps="false"
+                android:textColor="?android:attr/textColorSecondary"
+                app:cornerRadius="8dp" />
         </LinearLayout>
 
         <Space

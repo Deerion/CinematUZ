@@ -37,5 +37,9 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="settings_language">Język</string>
+    <string name="settings_theme">Motyw</string>
+    <string name="theme_light">Jasny</string>
+    <string name="theme_dark">Ciemny</string>
+    <string name="skip_login">Tryb gościa</string>
 
 </resources>

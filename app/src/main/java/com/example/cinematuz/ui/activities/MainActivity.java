@@ -20,6 +20,7 @@ import com.example.cinematuz.ui.fragments.FriendsFragment;
 import com.example.cinematuz.ui.fragments.MapFragment;
 import com.example.cinematuz.ui.fragments.ProfileFragment;
 import com.example.cinematuz.utils.LocaleHelper;
+import com.example.cinematuz.utils.ThemeHelper;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ThemeHelper.applyTheme(this);
         super.onCreate(savedInstanceState);
 
         // 1. Mówimy systemowi, że sami obsłużymy odstępy (żeby paski nie nachodziły na UI)

@@ -21,14 +21,17 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:layout_marginHorizontal="16dp" android:background="@drawable/bg_settings_tile" android:foreground="?attr/selectableItemBackground" android:clickable="true"
+        android:layout_marginHorizontal="16dp"
+        android:background="@drawable/bg_settings_tile"
+        android:foreground="?attr/selectableItemBackground"
+        android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical">
         <ImageView
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/ic_language_change"
-        android:contentDescription="Ikona Języka"/>
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_language_change"
+            android:contentDescription="Ikona Języka"/>
 
         <TextView
             android:layout_width="0dp"
@@ -64,6 +67,63 @@
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="6dp"
                 android:text="EN"
+                android:textColor="#9E9E9E"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/theme_settings_tile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_settings_tile"
+        android:foreground="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical">
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_movie_filter"
+            android:contentDescription="Ikona Motywu"/>
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="@string/settings_theme"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_switch_container"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/textThemeLight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp"
+                android:text="@string/theme_light"
+                android:textColor="#9E9E9E"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textThemeDark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp"
+                android:text="@string/theme_dark"
                 android:textColor="#9E9E9E"
                 android:textStyle="bold" />
         </LinearLayout>
