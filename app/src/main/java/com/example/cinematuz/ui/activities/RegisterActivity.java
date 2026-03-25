@@ -109,6 +109,11 @@ public class RegisterActivity extends AppCompatActivity {
                     return;
                 }
 
+                if (name.length() < 3) {
+                    Toast.makeText(RegisterActivity.this, "Nazwa użytkownika musi mieć min. 3 znaki", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                     Toast.makeText(RegisterActivity.this, "Błędny format email", Toast.LENGTH_SHORT).show();
                     return;
@@ -118,11 +123,34 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(RegisterActivity.this, "Hasła nie są identyczne", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                
+                
 
-                if (password.length() < 6) {
-                    Toast.makeText(RegisterActivity.this, "Hasło musi mieć min. 6 znaków", Toast.LENGTH_SHORT).show();
+                if (password.length() < 8) {
+                    Toast.makeText(RegisterActivity.this, "Hasło musi mieć min. 8 znaków", Toast.LENGTH_SHORT).show();
                     return;
                 }
+
+                if (password.length() > 32) {
+                    Toast.makeText(RegisterActivity.this, "Hasło może mieć max. 32 znaki", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (!password.matches(".*[A-Z].*")) {
+                    Toast.makeText(RegisterActivity.this, "Hasło musi zawierać co najmniej jedną wielką literę", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (!password.matches(".*[a-z].*")) {
+                    Toast.makeText(RegisterActivity.this, "Hasło musi zawierać co najmniej jedną małą literę", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (!password.matches(".*\\d.*")) {
+                    Toast.makeText(RegisterActivity.this, "Hasło musi zawierać co najmniej jedną cyfrę", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
 
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(this, task -> {
