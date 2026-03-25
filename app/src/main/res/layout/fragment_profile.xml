@@ -21,16 +21,14 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true">
-
+        android:layout_marginHorizontal="16dp" android:background="@drawable/bg_settings_tile" android:foreground="?attr/selectableItemBackground" android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical">
         <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_language_change"
-            android:contentDescription="Ikona Języka"
-            app:tint="#000000" />
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_language_change"
+        android:contentDescription="Ikona Języka"/>
 
         <TextView
             android:layout_width="0dp"
@@ -38,18 +36,51 @@
             android:layout_weight="1"
             android:layout_marginStart="16dp"
             android:text="Language"
-            android:textSize="16sp"
-            android:layout_gravity="center_vertical"/>
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_switch_container"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/textPl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_switch_active"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp"
+                android:text="PL"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textEn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp"
+                android:text="EN"
+                android:textColor="#9E9E9E"
+                android:textStyle="bold" />
+        </LinearLayout>
+
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <TextView
         android:id="@+id/creditsTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="Icon made by Corner Pixel from www.flaticon.com"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:gravity="center"
+        android:text="Icon made by Corner Pixel from www.flaticon.com" />
 
 </LinearLayout>
