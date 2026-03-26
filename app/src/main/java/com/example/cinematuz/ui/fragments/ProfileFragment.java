@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.utils.LocaleHelper;
+import com.example.cinematuz.utils.ThemeHelper;
 
 public class ProfileFragment extends Fragment {
 
@@ -99,6 +100,51 @@ public class ProfileFragment extends Fragment {
             requireActivity().recreate();
         });
 
+        // --- OBSŁUGA MOTYWU ---
+        View themeTile = view.findViewById(R.id.theme_settings_tile);
+        TextView textThemeLight = view.findViewById(R.id.textThemeLight);
+        TextView textThemeDark = view.findViewById(R.id.textThemeDark);
+
+        boolean isDark = ThemeHelper.isDarkMode(requireContext());
+
+        if (isDark) {
+            setActiveStyle(textThemeDark);
+            setInactiveStyle(textThemeLight);
+        } else {
+            setActiveStyle(textThemeLight);
+            setInactiveStyle(textThemeDark);
+        }
+
+        textThemeLight.setOnClickListener(v -> {
+            if (ThemeHelper.isDarkMode(requireContext())) {
+                ThemeHelper.setDarkMode(requireContext(), false);
+                requireActivity().recreate();
+            }
+        });
+
+        textThemeDark.setOnClickListener(v -> {
+            if (!ThemeHelper.isDarkMode(requireContext())) {
+                ThemeHelper.setDarkMode(requireContext(), true);
+                requireActivity().recreate();
+            }
+        });
+
+        themeTile.setOnClickListener(v -> {
+            boolean current = ThemeHelper.isDarkMode(requireContext());
+            ThemeHelper.setDarkMode(requireContext(), !current);
+            requireActivity().recreate();
+        });
+
         return view;
+    }
+
+    private void setActiveStyle(TextView textView) {
+        textView.setBackgroundResource(R.drawable.bg_switch_active);
+        textView.setTextColor(Color.parseColor("#FFFFFF"));
+    }
+
+    private void setInactiveStyle(TextView textView) {
+        textView.setBackgroundResource(android.R.color.transparent);
+        textView.setTextColor(Color.parseColor("#9E9E9E"));
     }
 }

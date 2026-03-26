@@ -15,6 +15,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.cinematuz.utils.LocaleHelper;
+import com.example.cinematuz.utils.ThemeHelper;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.example.cinematuz.R;
@@ -25,7 +26,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        ThemeHelper.applyTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
@@ -42,6 +43,7 @@ public class LoginActivity extends AppCompatActivity {
         ImageButton btnClose = findViewById(R.id.btnClose);
         TextView tvSignUpLink = findViewById(R.id.tvSignUpLink);
         Button btnLogin = findViewById(R.id.btnLogin);
+        Button btnSkipLogin = findViewById(R.id.btnSkipLogin);
 
         // Pola, do których przed chwilą dodaliśmy ID w XML
         TextInputEditText etEmail = findViewById(R.id.etLoginEmail);
@@ -50,6 +52,14 @@ public class LoginActivity extends AppCompatActivity {
         // Zamknięcie ekranu
         if (btnClose != null) {
             btnClose.setOnClickListener(v -> {
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
+            });
+        }
+
+        // Pominięcie logowania
+        if (btnSkipLogin != null) {
+            btnSkipLogin.setOnClickListener(v -> {
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             });
