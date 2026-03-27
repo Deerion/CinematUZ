@@ -4,9 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginTop="16dp"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="16dp"
     app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
@@ -32,13 +30,6 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:background="#661A090A"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
             android:background="@drawable/gradient_overlay"
             app:layout_constraintHeight_percent="0.8"
             app:layout_constraintBottom_toBottomOf="parent" />
@@ -58,21 +49,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
                 android:layout_marginEnd="8dp"
-                android:text="@string/hero_button_trailer"
-                android:textColor="#ffffff"
+                android:text="Zwiastun"
+                android:textColor="?attr/colorOnPrimary"
                 android:textSize="13sp"
                 android:textStyle="bold"
-                app:backgroundTint="#e60a15"
+                app:backgroundTint="?attr/colorPrimary"
                 app:cornerRadius="8dp"
                 app:icon="@drawable/ic_play"
                 app:iconSize="18dp"
-                app:iconTint="#ffffff" />
+                app:iconTint="?attr/colorOnPrimary" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_details"
                 android:layout_width="wrap_content"
                 android:layout_height="44dp"
-                android:text="@string/hero_button_details"
+                android:text="Szczegóły"
                 android:textColor="#ffffff"
                 android:textSize="13sp"
                 android:textStyle="bold"
@@ -94,7 +85,7 @@
             app:layout_constraintBottom_toTopOf="@+id/ll_buttons"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:text="W przyszłości, w której dźwięk jest jedyną walutą, głucha buntowniczka musi zinfiltrować ciszę..." />
+            tools:text="Opis nadchodzącego lub aktualnie trenującego filmu ucięty do maksymalnie dwóch linijek tekstu..." />
 
         <TextView
             android:id="@+id/tv_hero_title"
@@ -102,6 +93,8 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:fontFamily="sans-serif-black"
             android:textAllCaps="true"
             android:textColor="#ffffff"
@@ -135,7 +128,7 @@
                     android:layout_height="wrap_content"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="2dp"
-                    android:text="@string/hero_badge_new"
+                    android:text="NOWOŚĆ"
                     android:textAllCaps="true"
                     android:textColor="#e60a15"
                     android:textSize="10sp"

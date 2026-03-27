@@ -1,15 +1,30 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.CinematUZ" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
-        <item name="colorOnPrimary">@color/text_primary_dark</item>
+        <item name="colorPrimaryVariant">@color/primary_variant</item>
+        <item name="colorOnPrimary">#ffffff</item>
+
+        <item name="colorSecondary">@color/primary</item>
+        <item name="colorSecondaryVariant">@color/primary_variant</item>
+        <item name="colorOnSecondary">#ffffff</item>
+
         <item name="android:colorBackground">@color/background_dark</item>
-        <item name="colorOnBackground">@color/text_primary_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
         <item name="colorOnSurface">@color/text_primary_dark</item>
+
+        <item name="colorSurfaceVariant">@color/surface_variant_dark</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary_dark</item>
+        <item name="colorError">#CF6679</item>
+
         <item name="android:textColorPrimary">@color/text_primary_dark</item>
         <item name="android:textColorSecondary">@color/text_secondary_dark</item>
         <item name="colorOutline">@color/border_dark</item>
         <item name="android:fontFamily">@font/inter</item>
+
+        <item name="android:statusBarColor">@color/background_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
     </style>
 
     <style name="Theme.CinematUZ" parent="Base.Theme.CinematUZ" />
