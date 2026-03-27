@@ -1,6 +1,7 @@
 package com.example.cinematuz.data.models;
 
 import com.google.gson.annotations.SerializedName;
+import java.util.List;
 
 public class MediaItem {
 
@@ -31,6 +32,12 @@ public class MediaItem {
     @SerializedName("media_type")
     private String mediaType; // Przyjmuje wartości np. "movie" lub "tv"
 
+    @SerializedName("genre_ids")
+    private List<Integer> genreIds; // Lista ID gatunków (przydatne do filtrowania/wyświetlania tagów)
+
+    @SerializedName("runtime")
+    private Integer runtime; // Czas trwania w minutach (Integer pozwala na null, bo na liście wyników tego pola nie ma)
+
     // Gettery
     public int getId() { return id; }
     public String getTitle() { return title; }
@@ -40,4 +47,6 @@ public class MediaItem {
     public String getReleaseDate() { return releaseDate; }
     public double getVoteAverage() { return voteAverage; }
     public String getMediaType() { return mediaType; }
+    public List<Integer> getGenreIds() { return genreIds; }
+    public Integer getRuntime() { return runtime; }
 }
