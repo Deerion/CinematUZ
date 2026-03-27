@@ -3,7 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="420dp"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="8dp"
     app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
@@ -11,64 +14,71 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <ImageView
             android:id="@+id/iv_hero_poster"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
             android:scaleType="centerCrop"
             android:src="@drawable/hero_cinema"
+            app:layout_constraintDimensionRatio="H,16:9"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:src="@drawable/hero_cinema" />
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="250dp"
-            android:background="@drawable/gradient_overlay"
+            android:layout_height="0dp"
+            android:background="#661A090A"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#33221011" />
+            android:layout_height="0dp"
+            android:background="@drawable/gradient_overlay"
+            app:layout_constraintHeight_percent="0.8"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
         <LinearLayout
             android:id="@+id/ll_buttons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingHorizontal="24dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="24dp"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="16dp"
             app:layout_constraintBottom_toBottomOf="parent">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_watch"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_marginEnd="12dp"
-                android:layout_weight="1"
-                android:text="Oglądaj"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginEnd="8dp"
+                android:text="@string/hero_button_trailer"
                 android:textColor="#ffffff"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold"
                 app:backgroundTint="#e60a15"
                 app:cornerRadius="8dp"
                 app:icon="@drawable/ic_play"
+                app:iconSize="18dp"
                 app:iconTint="#ffffff" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_details"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:text="Szczegóły"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:text="@string/hero_button_details"
                 android:textColor="#ffffff"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textStyle="bold"
-                app:backgroundTint="#26ffffff"
+                app:backgroundTint="#40000000"
                 app:cornerRadius="8dp"
-                app:strokeColor="#4Dffffff"
+                app:strokeColor="#66ffffff"
                 app:strokeWidth="1dp" />
         </LinearLayout>
 
@@ -76,36 +86,36 @@
             android:id="@+id/tv_hero_subtitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
+            android:layout_marginHorizontal="16dp"
             android:ellipsize="end"
             android:maxLines="2"
-            android:text="W przyszłości, w której dźwięk jest jedyną walutą, głucha buntowniczka musi zinfiltrować ciszę..."
-            android:textColor="#CCf8f5f6"
-            android:textSize="13sp"
+            android:textColor="#E6f8f5f6"
+            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@+id/ll_buttons"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="W przyszłości, w której dźwięk jest jedyną walutą, głucha buntowniczka musi zinfiltrować ciszę..." />
 
         <TextView
             android:id="@+id/tv_hero_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="4dp"
             android:fontFamily="sans-serif-black"
-            android:text="NEON RESONANCE"
             android:textAllCaps="true"
             android:textColor="#ffffff"
-            android:textSize="32sp"
+            android:textSize="24sp"
             app:layout_constraintBottom_toTopOf="@+id/tv_hero_subtitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="NEON RESONANCE" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
-            android:layout_marginBottom="12dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="6dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintBottom_toTopOf="@+id/tv_hero_title"
@@ -125,7 +135,7 @@
                     android:layout_height="wrap_content"
                     android:paddingHorizontal="6dp"
                     android:paddingVertical="2dp"
-                    android:text="NOWOŚĆ"
+                    android:text="@string/hero_badge_new"
                     android:textAllCaps="true"
                     android:textColor="#e60a15"
                     android:textSize="10sp"
@@ -133,21 +143,21 @@
             </com.google.android.material.card.MaterialCardView>
 
             <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:layout_marginStart="12dp"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="10dp"
                 android:src="@drawable/ic_star"
-                app:tint="#eab308" />
+                app:tint="@color/rating_star" />
 
             <TextView
                 android:id="@+id/tv_hero_rating"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="8.9"
                 android:textColor="#f8f5f6"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="8.9" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
