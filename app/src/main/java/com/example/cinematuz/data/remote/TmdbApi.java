@@ -62,4 +62,11 @@ public interface TmdbApi {
             @Path("movie_id") int movieId,
             @Query("language") String language
     );
+
+    // TRAILERY DLA SERIALI (Videos z YouTube)
+    @GET("tv/{tv_id}/videos")
+    Call<ApiResponse<Video>> getTvVideos(
+            @Path("tv_id") int tvId,
+            @Query("language") String language
+    );
 }

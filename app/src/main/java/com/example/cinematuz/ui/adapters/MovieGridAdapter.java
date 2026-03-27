@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.cinematuz.R;
-import com.example.cinematuz.data.models.MediaItem; // Upewnij się, że paczka jest zgodna z Twoją
+import com.example.cinematuz.data.models.MediaItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,27 +82,23 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
             // 1. Tytuł
             textTitle.setText(item.getTitle());
 
-            // 2. Ocena (formatowana do 1 miejsca po przecinku)
+            // 2. Ocena
             textRating.setText(String.format(Locale.getDefault(), "%.1f", item.getVoteAverage()));
 
-            // 3. Wyciąganie roku z daty (np. "2023-10-15" -> "2023")
+            // 3. Wyciąganie roku z daty
             String year = "";
             String releaseDate = item.getReleaseDate();
             if (releaseDate != null && releaseDate.length() >= 4) {
                 year = releaseDate.substring(0, 4);
             }
 
-            // 4. Gatunek (tutaj używamy typu media_type na start)
-            String mediaTypeString;
-            if ("tv".equals(item.getMediaType())) {
-                mediaTypeString = context.getString(R.string.media_type_tv);
-            } else {
-                mediaTypeString = context.getString(R.string.media_type_movie);
-            }
+            // 4. Mapowanie pierwszego gatunku z listy
+            String genre = getGenreName(item.getGenreIds());
 
-            textSubtitle.setText(context.getString(R.string.media_subtitle_format, mediaTypeString, year));
+            // Format: GATUNEK • ROK
+            textSubtitle.setText(String.format(Locale.getDefault(), "%s • %s", genre, year));
 
-            // 5. Ładowanie plakatu z TMDB
+            // 5. Plakat
             if (item.getPosterPath() != null && !item.getPosterPath().isEmpty()) {
                 String posterUrl = "https://image.tmdb.org/t/p/w500" + item.getPosterPath();
                 Glide.with(context)
@@ -110,7 +106,38 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
                         .transition(DrawableTransitionOptions.withCrossFade())
                         .into(imagePoster);
             } else {
-                imagePoster.setImageResource(0); // Możesz dodać @drawable/ic_placeholder
+                imagePoster.setImageResource(0);
+            }
+        }
+
+        // Pomocnicza metoda tłumacząca ID gatunku TMDB na polski string
+        private String getGenreName(List<Integer> genreIds) {
+            if (genreIds == null || genreIds.isEmpty()) return "Inne";
+            int id = genreIds.get(0);
+            switch(id) {
+                case 28: return "Akcja";
+                case 12: return "Przygoda";
+                case 16: return "Animacja";
+                case 35: return "Komedia";
+                case 80: return "Kryminał";
+                case 99: return "Dokument";
+                case 18: return "Dramat";
+                case 10751: return "Familijny";
+                case 14: return "Fantasy";
+                case 36: return "Historia";
+                case 27: return "Horror";
+                case 10402: return "Muzyka";
+                case 9648: return "Tajemnica";
+                case 10749: return "Romans";
+                case 878: return "Sci-Fi";
+                case 53: return "Thriller";
+                case 10752: return "Wojenny";
+                case 37: return "Western";
+                case 10759: return "Akcja/Przygoda";
+                case 10762: return "Dla Dzieci";
+                case 10765: return "Sci-Fi/Fantasy";
+                case 10768: return "Polityka";
+                default: return "Film";
             }
         }
     }

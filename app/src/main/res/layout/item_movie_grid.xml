@@ -4,53 +4,56 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"> <androidx.cardview.widget.CardView
-    android:id="@+id/card_poster"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    app:cardBackgroundColor="@android:color/transparent"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    app:layout_constraintDimensionRatio="2:3"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
+    android:layout_margin="8dp">
 
-    <ImageView
-        android:id="@+id/image_poster"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_poster"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:background="#2a1415"
-        tools:src="@tools:sample/backgrounds/scenic" />
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_margin="8dp"
-        android:background="@drawable/bg_rating_badge"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="6dp"
-        android:paddingVertical="4dp">
+        android:layout_height="0dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp"
+        app:layout_constraintDimensionRatio="2:3"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
-            android:layout_width="14dp"
-            android:layout_height="14dp"
-            android:src="@drawable/ic_star" />
+            android:id="@+id/image_poster"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/hero_cinema" />
 
-        <TextView
-            android:id="@+id/text_rating"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            tools:text="4.5" />
-    </LinearLayout>
-</androidx.cardview.widget.CardView>
+            android:layout_gravity="top|end"
+            android:layout_margin="8dp"
+            android:background="@drawable/bg_rating_badge"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="4dp">
+
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_star"
+                app:tint="@color/rating_star" />
+
+            <TextView
+                android:id="@+id/text_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                tools:text="4.5" />
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
     <TextView
         android:id="@+id/text_title"
@@ -58,14 +61,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:ellipsize="end"
-        android:fontFamily="sans-serif-medium"
         android:maxLines="1"
-        android:textColor="@color/text_primary_dark"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/card_poster"
+        app:layout_constraintTop_toBottomOf="@+id/card_poster"
         tools:text="Crimson Horizon" />
 
     <TextView
@@ -73,17 +75,15 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-condensed"
-        android:letterSpacing="0.05"
-        android:maxLines="1"
+        android:alpha="0.5"
         android:textAllCaps="true"
-        android:textColor="@color/text_secondary_dark"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="10sp"
         android:textStyle="bold"
+        android:letterSpacing="0.05"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_title"
-        tools:text="ACTION • 2024" />
+        app:layout_constraintTop_toBottomOf="@+id/text_title"
+        tools:text="AKCJA • 2023" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
