@@ -77,4 +77,7 @@ dependencies {
 
     // Glide (do ładowania obrazków)
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // Shimmer (skeleton loading)
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
 }

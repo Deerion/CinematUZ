@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,7 @@ import com.example.cinematuz.ui.adapters.MovieGridAdapter;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.example.cinematuz.data.models.Video;
+import com.example.cinematuz.ui.activities.DetailsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +50,12 @@ public class HomeFragment extends Fragment {
     private MovieGridAdapter adapter;
     private MaterialCardView cardSearch;
 
+    // Empty State i Szkielety (Shimmery)
+    private LinearLayout layoutEmptyTrending;
+    private TextView tvEmptyText;
+    private View skeletonHero;
+    private View skeletonTrending;
+
     // Przyciski filtrów
     private MaterialButton btnFilterAll, btnFilterMovies, btnFilterTv;
 
@@ -55,6 +63,7 @@ public class HomeFragment extends Fragment {
     private ImageView ivHeroPoster;
     private TextView tvHeroTitle, tvHeroSubtitle, tvHeroRating;
     private MaterialButton btnWatch, btnDetails;
+    private View layoutHeroMovie;
 
     // Dane z API
     private List<MediaItem> allTrendingItems = new ArrayList<>();
@@ -81,6 +90,9 @@ public class HomeFragment extends Fragment {
         initViews(view);
         setupRecyclerView();
         setupListeners();
+
+        // Pokaż szkielety przed startem pobierania
+        showSkeletons();
         fetchTrendingData();
     }
 
@@ -91,6 +103,7 @@ public class HomeFragment extends Fragment {
         btnFilterMovies = view.findViewById(R.id.btn_filter_movies);
         btnFilterTv = view.findViewById(R.id.btn_filter_tv);
 
+        layoutHeroMovie = view.findViewById(R.id.layout_hero_movie);
         ivHeroPoster = view.findViewById(R.id.iv_hero_poster);
         tvHeroTitle = view.findViewById(R.id.tv_hero_title);
         tvHeroSubtitle = view.findViewById(R.id.tv_hero_subtitle);
@@ -99,13 +112,24 @@ public class HomeFragment extends Fragment {
         btnDetails = view.findViewById(R.id.btn_details);
 
         rvTrending = view.findViewById(R.id.rv_trending);
+
+        layoutEmptyTrending = view.findViewById(R.id.layout_empty_trending);
+        tvEmptyText = view.findViewById(R.id.tv_empty_text);
+
+        // Podpięcie szkieletów
+        skeletonHero = view.findViewById(R.id.layout_skeleton_hero);
+        skeletonTrending = view.findViewById(R.id.layout_skeleton_trending);
     }
 
     private void setupRecyclerView() {
         if (rvTrending == null) return;
 
         adapter = new MovieGridAdapter(item -> {
-            Toast.makeText(getContext(), "Kliknięto: " + item.getTitle(), Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(getContext(), DetailsActivity.class);
+            if (item != null) {
+                intent.putExtra("MEDIA_ITEM", item);
+                startActivity(intent);
+            }
         });
 
         rvTrending.setLayoutManager(new GridLayoutManager(getContext(), 2));
@@ -123,7 +147,9 @@ public class HomeFragment extends Fragment {
 
         btnDetails.setOnClickListener(v -> {
             if (currentHeroItem != null) {
-                Toast.makeText(getContext(), "Szczegóły: " + currentHeroItem.getTitle(), Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getContext(), DetailsActivity.class);
+                intent.putExtra("MEDIA_ITEM", currentHeroItem);
+                startActivity(intent);
             }
         });
 
@@ -133,14 +159,9 @@ public class HomeFragment extends Fragment {
                 String mediaType = currentHeroItem.getMediaType();
                 TmdbApi api = RetrofitClient.getClient().create(TmdbApi.class);
 
-                // TMDB często nie ma zwiastunów po polsku, więc najbezpieczniej prosić o angielskie ("en-US")
-                // lub pozwolić API zwrócić to, co ma domyślnie.
-                Call<ApiResponse<Video>> call;
-                if ("tv".equals(mediaType)) {
-                    call = api.getTvVideos(mediaId, "en-US");
-                } else {
-                    call = api.getMovieVideos(mediaId, "en-US");
-                }
+                Call<ApiResponse<Video>> call = "tv".equals(mediaType) ?
+                        api.getTvVideos(mediaId, "en-US") :
+                        api.getMovieVideos(mediaId, "en-US");
 
                 call.enqueue(new Callback<ApiResponse<Video>>() {
                     @Override
@@ -149,15 +170,13 @@ public class HomeFragment extends Fragment {
                             List<Video> videos = response.body().getResults();
                             String youtubeKey = null;
 
-                            // Szukamy oficjalnego zwiastuna z YouTube
                             for (Video video : videos) {
                                 if ("YouTube".equals(video.getSite()) && "Trailer".equals(video.getType())) {
                                     youtubeKey = video.getKey();
-                                    break; // Znaleźliśmy, przerywamy pętlę
+                                    break;
                                 }
                             }
 
-                            // Jeśli nie ma typu "Trailer", bierzemy cokolwiek z YouTube (np. Teaser)
                             if (youtubeKey == null && !videos.isEmpty()) {
                                 for (Video video : videos) {
                                     if ("YouTube".equals(video.getSite())) {
@@ -194,17 +213,19 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     allTrendingItems = response.body().getResults();
                     if (!allTrendingItems.isEmpty()) {
-                        // Inicjalne załadowanie widoku z filtrem "wszystkie"
                         filterList("all");
+                    } else {
+                        showEmptyState("Brak danych do wyświetlenia.");
                     }
                 } else {
-                    Toast.makeText(getContext(), "Błąd pobierania danych", Toast.LENGTH_SHORT).show();
+                    showEmptyState("Błąd pobierania danych z serwera.");
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ApiResponse<MediaItem>> call, @NonNull Throwable t) {
                 Log.e(TAG, "API Call Failed: " + t.getMessage());
+                showEmptyState("Brak połączenia z siecią. Sprawdź internet.");
                 Toast.makeText(getContext(), "Brak połączenia z siecią", Toast.LENGTH_SHORT).show();
             }
         });
@@ -213,41 +234,67 @@ public class HomeFragment extends Fragment {
     private void filterList(String mediaType) {
         if (allTrendingItems == null || allTrendingItems.isEmpty() || adapter == null) return;
 
-        // Aktualizujemy wygląd przycisków w UI
         updateFilterButtonsUi(mediaType);
 
         List<MediaItem> filteredItems = new ArrayList<>();
         MediaItem newHeroItem = null;
 
-        // Przechodzimy przez całą listę pobraną z API
         for (MediaItem item : allTrendingItems) {
-            // Sprawdzamy, czy element pasuje do wybranego filtru
             boolean matchesFilter = mediaType.equals("all") || mediaType.equals(item.getMediaType());
 
             if (matchesFilter) {
                 if (newHeroItem == null) {
-                    // Pierwszy pasujący element staje się nowym ekranem Hero!
                     newHeroItem = item;
                 } else {
-                    // Pozostałe pasujące elementy dodajemy do listy w siatce
                     filteredItems.add(item);
                 }
             }
         }
 
-        // Zasilamy widok Hero nowymi danymi
-        if (newHeroItem != null) {
-            setupHeroItem(newHeroItem);
+        // Zabezpieczenie na brak pasujących danych (Empty State)
+        if (filteredItems.isEmpty() && newHeroItem == null) {
+            showEmptyState("Nie znaleziono żadnych produkcji w tej kategorii.");
+        } else {
+            hideSkeletonsAndShowData();
+            if (newHeroItem != null) setupHeroItem(newHeroItem);
+            adapter.submitList(filteredItems);
         }
-
-        // Zasilamy adapter nową listą
-        adapter.submitList(filteredItems);
     }
 
+    // Zarządzanie UI (Szkielety vs Dane)
+    private void showSkeletons() {
+        if (skeletonHero != null) skeletonHero.setVisibility(View.VISIBLE);
+        if (skeletonTrending != null) skeletonTrending.setVisibility(View.VISIBLE);
+
+        if (layoutHeroMovie != null) layoutHeroMovie.setVisibility(View.GONE);
+        if (rvTrending != null) rvTrending.setVisibility(View.GONE);
+        if (layoutEmptyTrending != null) layoutEmptyTrending.setVisibility(View.GONE);
+    }
+
+    private void hideSkeletonsAndShowData() {
+        if (skeletonHero != null) skeletonHero.setVisibility(View.GONE);
+        if (skeletonTrending != null) skeletonTrending.setVisibility(View.GONE);
+
+        if (layoutEmptyTrending != null) layoutEmptyTrending.setVisibility(View.GONE);
+
+        if (layoutHeroMovie != null) layoutHeroMovie.setVisibility(View.VISIBLE);
+        if (rvTrending != null) rvTrending.setVisibility(View.VISIBLE);
+    }
+
+    private void showEmptyState(String message) {
+        if (skeletonHero != null) skeletonHero.setVisibility(View.GONE);
+        if (skeletonTrending != null) skeletonTrending.setVisibility(View.GONE);
+
+        if (layoutEmptyTrending != null) layoutEmptyTrending.setVisibility(View.VISIBLE);
+        if (tvEmptyText != null) tvEmptyText.setText(message);
+
+        if (rvTrending != null) rvTrending.setVisibility(View.GONE);
+        if (layoutHeroMovie != null) layoutHeroMovie.setVisibility(View.GONE);
+    }
+
+    // Pozostałe metody bez zmian
     private void openYouTubeTrailer(String videoKey) {
-        // Natywny intent dla aplikacji YouTube
         Intent appIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("vnd.youtube:" + videoKey));
-        // Zwykły link przeglądarkowy jako fallback
         Intent webIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com/watch?v=" + videoKey));
 
         try {
@@ -273,20 +320,16 @@ public class HomeFragment extends Fragment {
         }
     }
 
-
     private void updateFilterButtonsUi(String selectedType) {
-        // Pomocnicza funkcja pobierająca odpowiednie kolory z motywu bieżącego (Light/Dark)
         int colorPrimary = getThemeColor(com.google.android.material.R.attr.colorPrimary);
         int colorOnPrimary = getThemeColor(com.google.android.material.R.attr.colorOnPrimary);
         int colorSurfaceVariant = getThemeColor(com.google.android.material.R.attr.colorSurfaceVariant);
         int colorOnSurfaceVariant = getThemeColor(com.google.android.material.R.attr.colorOnSurfaceVariant);
 
-        // Resetowanie wszystkich przycisków do trybu "wyłączonego" (Outline)
         setButtonToInactive(btnFilterAll, colorSurfaceVariant, colorOnSurfaceVariant);
         setButtonToInactive(btnFilterMovies, colorSurfaceVariant, colorOnSurfaceVariant);
         setButtonToInactive(btnFilterTv, colorSurfaceVariant, colorOnSurfaceVariant);
 
-        // Aktywowanie klikniętego przycisku (Wypełnienie)
         if (selectedType.equals("all")) {
             setButtonToActive(btnFilterAll, colorPrimary, colorOnPrimary);
         } else if (selectedType.equals("movie")) {
@@ -299,14 +342,14 @@ public class HomeFragment extends Fragment {
     private void setButtonToActive(MaterialButton button, int bgColor, int textColor) {
         button.setBackgroundTintList(ColorStateList.valueOf(bgColor));
         button.setTextColor(textColor);
-        button.setStrokeWidth(0); // Usuń obramowanie
+        button.setStrokeWidth(0);
     }
 
     private void setButtonToInactive(MaterialButton button, int strokeColor, int textColor) {
         button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.transparent)));
         button.setTextColor(textColor);
         button.setStrokeColor(ColorStateList.valueOf(strokeColor));
-        button.setStrokeWidth(3); // Dodaj obramowanie
+        button.setStrokeWidth(3);
     }
 
     private int getThemeColor(int attrResId) {
