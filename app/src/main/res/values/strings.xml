@@ -42,4 +42,11 @@
     <string name="theme_dark">Ciemny</string>
     <string name="skip_login">Tryb gościa</string>
 
+    <string name="media_type_movie">FILM</string>
+    <string name="media_type_tv">SERIAL</string>
+    <string name="media_subtitle_format">%1$s • %2$s</string>
+
+    <string name="hero_badge_new">Nowość</string>
+    <string name="hero_button_trailer">Zwiastun</string>
+    <string name="hero_button_details">Szczegóły</string>
 </resources>

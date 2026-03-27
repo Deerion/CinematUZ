@@ -39,4 +39,12 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="skip_login">Guest mode</string>
+
+    <string name="media_type_movie">MOVIE</string>
+    <string name="media_type_tv">TV SHOW</string>
+    <string name="media_subtitle_format">%1$s • %2$s</string>
+
+    <string name="hero_badge_new">New Release</string>
+    <string name="hero_button_trailer">Trailer</string>
+    <string name="hero_button_details">Details</string>
 </resources>
