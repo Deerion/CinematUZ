@@ -132,7 +132,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
                 case 10762: return context.getString(R.string.genre_kids);
                 case 10765: return context.getString(R.string.genre_scifi_fantasy);
                 case 10768: return context.getString(R.string.genre_politics);
-                default: return "Movie";
+                default: return "Other";
             }
         }
     }
