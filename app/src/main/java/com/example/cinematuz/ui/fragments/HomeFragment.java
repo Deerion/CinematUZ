@@ -206,7 +206,13 @@ public class HomeFragment extends Fragment {
     private void fetchTrendingData() {
         TmdbApi api = RetrofitClient.getClient().create(TmdbApi.class);
 
-        Call<ApiResponse<MediaItem>> call = api.getTrending("pl-PL", 1);
+        // Sprawdzamy aktualny język aplikacji
+        String currentLang = getResources().getConfiguration().locale.getLanguage();
+        String apiLang = currentLang.equals("pl") ? "pl-PL" : "en-US";
+
+        // Przekazujemy dynamiczny język (apiLang) zamiast "pl-PL"
+        Call<ApiResponse<MediaItem>> call = api.getTrending(apiLang, 1);
+
         call.enqueue(new Callback<ApiResponse<MediaItem>>() {
             @Override
             public void onResponse(@NonNull Call<ApiResponse<MediaItem>> call, @NonNull Response<ApiResponse<MediaItem>> response) {

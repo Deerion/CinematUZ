@@ -113,7 +113,10 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     private void fetchExtraDetails() {
-        tmdbApi.getMovieCredits(mediaItem.getId(), "pl-PL").enqueue(new Callback<CreditsResponse>() {
+        String currentLang = getResources().getConfiguration().locale.getLanguage();
+        String apiLang = currentLang.equals("pl") ? "pl-PL" : "en-US";
+
+        tmdbApi.getMovieCredits(mediaItem.getId(), apiLang).enqueue(new Callback<CreditsResponse>() {
             @Override
             public void onResponse(@NonNull Call<CreditsResponse> call, @NonNull Response<CreditsResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -139,8 +142,8 @@ public class DetailsActivity extends AppCompatActivity {
         });
 
         Call<MediaItem> detailsCall = "tv".equals(mediaItem.getMediaType()) ?
-                tmdbApi.getTvDetails(mediaItem.getId(), "pl-PL") :
-                tmdbApi.getMovieDetails(mediaItem.getId(), "pl-PL");
+                tmdbApi.getTvDetails(mediaItem.getId(), apiLang) :
+                tmdbApi.getMovieDetails(mediaItem.getId(), apiLang);
 
         detailsCall.enqueue(new Callback<MediaItem>() {
             @Override

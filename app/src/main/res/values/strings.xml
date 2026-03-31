@@ -33,8 +33,6 @@
     <string name="nav_friends">Znajomi</string>
     <string name="nav_map">Mapa</string>
     <string name="nav_profile">Profil</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string name="settings_language">Język</string>
     <string name="settings_theme">Motyw</string>
@@ -49,4 +47,46 @@
     <string name="hero_badge_new">Nowość</string>
     <string name="hero_button_trailer">Zwiastun</string>
     <string name="hero_button_details">Szczegóły</string>
+
+    <string name="search_hint">Szukaj filmów, seriali...</string>
+    <string name="filter_all">Wszystkie</string>
+    <string name="filter_movies">Filmy</string>
+    <string name="filter_tv">Seriale</string>
+    <string name="trending_header">Popularne</string>
+
+    <string name="to_watch">Do obejrzenia</string>
+    <string name="watched">Obejrzane</string>
+    <string name="add_to_group_vote">Dodaj do głosowania grupy</string>
+    <string name="cast">Obsada</string>
+
+    <string name="empty_trending">Brak danych do wyświetlenia.</string>
+    <string name="empty_trending_network">Brak połączenia z siecią. Sprawdź internet.</string>
+    <string name="empty_trending_category">Nie znaleziono żadnych produkcji w tej kategorii.</string>
+    <string name="no_trailer">Brak zwiastuna dla tej produkcji</string>
+    <string name="empty_cast">Brak informacji o obsadzie dla tej produkcji.</string>
+
+    <string name="genre_action">Akcja</string>
+    <string name="genre_adventure">Przygoda</string>
+    <string name="genre_animation">Animacja</string>
+    <string name="genre_comedy">Komedia</string>
+    <string name="genre_crime">Kryminał</string>
+    <string name="genre_documentary">Dokument</string>
+    <string name="genre_drama">Dramat</string>
+    <string name="genre_family">Familijny</string>
+    <string name="genre_fantasy">Fantasy</string>
+    <string name="genre_history">Historia</string>
+    <string name="genre_horror">Horror</string>
+    <string name="genre_music">Muzyka</string>
+    <string name="genre_mystery">Tajemnica</string>
+    <string name="genre_romance">Romans</string>
+    <string name="genre_scifi">Sci-Fi</string>
+    <string name="genre_thriller">Thriller</string>
+    <string name="genre_war">Wojenny</string>
+    <string name="genre_western">Western</string>
+    <string name="genre_action_adventure">Akcja/Przygoda</string>
+    <string name="genre_kids">Dla Dzieci</string>
+    <string name="genre_scifi_fantasy">Sci-Fi/Fantasy</string>
+    <string name="genre_politics">Polityka</string>
+    <string name="genre_movie">Film</string>
+    <string name="genre_other">Inne</string>
 </resources>
