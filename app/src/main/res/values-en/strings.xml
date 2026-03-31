@@ -47,4 +47,21 @@
     <string name="hero_badge_new">New Release</string>
     <string name="hero_button_trailer">Trailer</string>
     <string name="hero_button_details">Details</string>
+
+    <string name="search_hint">Search movies, TV shows...</string>
+    <string name="filter_all">All</string>
+    <string name="filter_movies">Movies</string>
+    <string name="filter_tv">TV Shows</string>
+    <string name="trending_header">Trending</string>
+
+    <string name="to_watch">To watch</string>
+    <string name="watched">Watched</string>
+    <string name="add_to_group_vote">Add to group vote</string>
+    <string name="cast">Cast</string>
+
+    <string name="empty_trending">No data to display.</string>
+    <string name="empty_trending_network">No network connection. Check your internet.</string>
+    <string name="empty_trending_category">No productions found in this category.</string>
+    <string name="no_trailer">No trailer available for this production</string>
+    <string name="empty_cast">No cast information available for this production.</string>
 </resources>
