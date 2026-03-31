@@ -79,23 +79,18 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         public void bind(MediaItem item) {
             Context context = itemView.getContext();
 
-            // 1. Tytuł
             textTitle.setText(item.getTitle());
 
-            // 2. Ocena
             textRating.setText(String.format(Locale.getDefault(), "%.1f", item.getVoteAverage()));
 
-            // 3. Wyciąganie roku z daty
             String year = "";
             String releaseDate = item.getReleaseDate();
             if (releaseDate != null && releaseDate.length() >= 4) {
                 year = releaseDate.substring(0, 4);
             }
 
-            // 4. Mapowanie pierwszego gatunku z listy
-            String genre = getGenreName(item.getGenreIds());
+            String genre = getGenreName(context, item.getGenreIds());
 
-            // Format: GATUNEK • ROK
             textSubtitle.setText(String.format(Locale.getDefault(), "%s • %s", genre, year));
 
             // 5. Plakat
@@ -111,33 +106,33 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         }
 
         // Pomocnicza metoda tłumacząca ID gatunku TMDB na polski string
-        private String getGenreName(List<Integer> genreIds) {
-            if (genreIds == null || genreIds.isEmpty()) return "Inne";
+        private String getGenreName(Context context, List<Integer> genreIds) {
+            if (genreIds == null || genreIds.isEmpty()) return context.getString(R.string.genre_other);
             int id = genreIds.get(0);
             switch(id) {
-                case 28: return "Akcja";
-                case 12: return "Przygoda";
-                case 16: return "Animacja";
-                case 35: return "Komedia";
-                case 80: return "Kryminał";
-                case 99: return "Dokument";
-                case 18: return "Dramat";
-                case 10751: return "Familijny";
-                case 14: return "Fantasy";
-                case 36: return "Historia";
-                case 27: return "Horror";
-                case 10402: return "Muzyka";
-                case 9648: return "Tajemnica";
-                case 10749: return "Romans";
-                case 878: return "Sci-Fi";
-                case 53: return "Thriller";
-                case 10752: return "Wojenny";
-                case 37: return "Western";
-                case 10759: return "Akcja/Przygoda";
-                case 10762: return "Dla Dzieci";
-                case 10765: return "Sci-Fi/Fantasy";
-                case 10768: return "Polityka";
-                default: return "Film";
+                case 28: return context.getString(R.string.genre_action);
+                case 12: return context.getString(R.string.genre_adventure);
+                case 16: return context.getString(R.string.genre_animation);
+                case 35: return context.getString(R.string.genre_comedy);
+                case 80: return context.getString(R.string.genre_crime);
+                case 99: return context.getString(R.string.genre_documentary);
+                case 18: return context.getString(R.string.genre_drama);
+                case 10751: return context.getString(R.string.genre_family);
+                case 14: return context.getString(R.string.genre_fantasy);
+                case 36: return context.getString(R.string.genre_history);
+                case 27: return context.getString(R.string.genre_horror);
+                case 10402: return context.getString(R.string.genre_music);
+                case 9648: return context.getString(R.string.genre_mystery);
+                case 10749: return context.getString(R.string.genre_romance);
+                case 878: return context.getString(R.string.genre_scifi);
+                case 53: return context.getString(R.string.genre_thriller);
+                case 10752: return context.getString(R.string.genre_war);
+                case 37: return context.getString(R.string.genre_western);
+                case 10759: return context.getString(R.string.genre_action_adventure);
+                case 10762: return context.getString(R.string.genre_kids);
+                case 10765: return context.getString(R.string.genre_scifi_fantasy);
+                case 10768: return context.getString(R.string.genre_politics);
+                default: return "Movie";
             }
         }
     }
