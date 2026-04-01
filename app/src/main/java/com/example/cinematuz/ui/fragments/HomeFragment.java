@@ -32,6 +32,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.example.cinematuz.data.models.Video;
 import com.example.cinematuz.ui.activities.DetailsActivity;
+// IMPORT MODALA FILTRÓW:
+import com.example.cinematuz.ui.fragments.FilterBottomSheetFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +51,7 @@ public class HomeFragment extends Fragment {
     private RecyclerView rvTrending;
     private MovieGridAdapter adapter;
     private MaterialCardView cardSearch;
+    private View btnFilter; // DODANE: Przycisk wywołujący filtry
 
     // Empty State i Szkielety (Shimmery)
     private LinearLayout layoutEmptyTrending;
@@ -99,6 +102,9 @@ public class HomeFragment extends Fragment {
     private void initViews(View view) {
         cardSearch = view.findViewById(R.id.card_search);
 
+        // DODANE: Znajdź przycisk filtra (Załóżmy, że w XML nadałaś mu id btn_filter)
+        btnFilter = view.findViewById(R.id.btn_filter);
+
         btnFilterAll = view.findViewById(R.id.btn_filter_all);
         btnFilterMovies = view.findViewById(R.id.btn_filter_movies);
         btnFilterTv = view.findViewById(R.id.btn_filter_tv);
@@ -137,6 +143,14 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupListeners() {
+        // DODANE: Akcja otwarcia Bottom Sheeta z filtrami
+        if (btnFilter != null) {
+            btnFilter.setOnClickListener(v -> {
+                FilterBottomSheetFragment bottomSheet = new FilterBottomSheetFragment();
+                bottomSheet.show(getParentFragmentManager(), "FilterBottomSheetTag");
+            });
+        }
+
         cardSearch.setOnClickListener(v -> {
             Toast.makeText(getContext(), "Otwieram wyszukiwarkę", Toast.LENGTH_SHORT).show();
         });
@@ -298,7 +312,7 @@ public class HomeFragment extends Fragment {
         if (layoutHeroMovie != null) layoutHeroMovie.setVisibility(View.GONE);
     }
 
-    // Pozostałe metody bez zmian
+    // TA FUNKCJA JUŻ ODPOWIADA ZA PRZEJŚCIE DO PRZEGLĄDARKI / APLIKACJI YOUTUBE
     private void openYouTubeTrailer(String videoKey) {
         Intent appIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("vnd.youtube:" + videoKey));
         Intent webIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://www.youtube.com/watch?v=" + videoKey));
