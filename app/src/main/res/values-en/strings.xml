@@ -89,4 +89,20 @@
     <string name="genre_politics">Politics</string>
     <string name="genre_movie">Movie</string>
     <string name="genre_other">Other</string>
+
+    <string name="filter_title">Filters</string>
+    <string name="filter_reset">RESET</string>
+    <string name="filter_sort_by">SORT BY</string>
+    <string name="filter_sort_popularity">Popularity</string>
+    <string name="filter_sort_release_date">Release Date</string>
+    <string name="filter_sort_rating">Rating</string>
+    <string name="filter_content_type">CONTENT TYPE</string>
+    <string name="filter_type_movie">Movie</string>
+    <string name="filter_type_tv">TV Show</string>
+    <string name="filter_genre">GENRE</string>
+    <string name="filter_release_year">RELEASE YEAR</string>
+    <string name="filter_min_rating">MINIMUM RATING</string>
+    <string name="filter_apply">Apply %1$d Results</string>
+    <string name="filter_year_range_mock">2010 - 2024</string>
+    <string name="filter_rating_mock">7.5+</string>
 </resources>
