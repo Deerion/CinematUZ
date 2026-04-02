@@ -80,4 +80,7 @@ dependencies {
 
     // Shimmer (skeleton loading)
     implementation("com.facebook.shimmer:shimmer:0.5.0")
+
+    implementation("com.github.hcaptcha:hcaptcha-android-sdk:3.10.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

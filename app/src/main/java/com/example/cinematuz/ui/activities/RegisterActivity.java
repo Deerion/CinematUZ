@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -16,173 +17,159 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.cinematuz.utils.LocaleHelper;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.example.cinematuz.R;
+import com.hcaptcha.sdk.HCaptcha;
 
+import org.json.JSONObject;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
+    private String hCaptchaToken = null;
+    private final String HCAPTCHA_SITE_KEY = "7ed4b1a6-92a6-4082-b4f0-5daa071e8440";
+
+    private MaterialCardView cvCaptchaContainer;
+    private CheckBox cbCaptcha;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // 1. Mówimy systemowi: "Sami obsłużymy klawiaturę i paski, nie wtrącaj się"
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
         setContentView(R.layout.activity_register);
 
         ScrollView scrollView = findViewById(R.id.registerScrollView);
-
-        // 2. Dodajemy ScrollView "margines" na dole.
-        // Jeśli nie ma klawiatury -> margines wielkości dolnego paska.
-        // Jeśli jest klawiatura -> margines wielkości klawiatury.
         ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
-
             int bottomPadding = Math.max(systemBars.bottom, ime.bottom);
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomPadding);
-
             return WindowInsetsCompat.CONSUMED;
         });
 
         mAuth = FirebaseAuth.getInstance();
 
-        // Znajdowanie elementów na podstawie ID z XML
-        ImageButton btnClose = findViewById(R.id.btnClose);
-        TextView tvLoginLink = findViewById(R.id.tvLoginLink);
         Button btnRegister = findViewById(R.id.btnRegister);
-
         TextInputEditText etName = findViewById(R.id.etRegisterName);
         TextInputEditText etEmail = findViewById(R.id.etRegisterEmail);
         TextInputEditText etPassword = findViewById(R.id.etRegisterPassword);
-        TextInputEditText etConfirmPassword = findViewById(R.id.etRegisterConfirmPassword);
 
-        // 3. Wymuszamy najazd ekranu po kliknięciu.
-        View.OnFocusChangeListener focusListener = (view, hasFocus) -> {
-            if (hasFocus) {
-                // Opóźnienie 300ms daje klawiaturze czas na wysunięcie się
-                scrollView.postDelayed(() -> {
-                    scrollView.smoothScrollTo(0, view.getBottom() + 150);
-                }, 300);
-            }
-        };
+        cvCaptchaContainer = findViewById(R.id.cvCaptchaContainer);
+        cbCaptcha = findViewById(R.id.cbCaptcha);
 
-        // Podpinamy nasłuchiwanie pod oba hasła
-        if (etPassword != null) etPassword.setOnFocusChangeListener(focusListener);
-        if (etConfirmPassword != null) etConfirmPassword.setOnFocusChangeListener(focusListener);
-
-        if (btnClose != null) {
-            btnClose.setOnClickListener(v -> {
-                startActivity(new Intent(RegisterActivity.this, MainActivity.class));
-                finish();
+        if (cvCaptchaContainer != null) {
+            cvCaptchaContainer.setOnClickListener(v -> {
+                HCaptcha.getClient(RegisterActivity.this).verifyWithHCaptcha(HCAPTCHA_SITE_KEY)
+                        .addOnSuccessListener(response -> {
+                            hCaptchaToken = response.getTokenResult();
+                            if (cbCaptcha != null) cbCaptcha.setChecked(true);
+                            cvCaptchaContainer.setClickable(false);
+                            Toast.makeText(RegisterActivity.this, "Weryfikacja udana!", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            hCaptchaToken = null;
+                            if (cbCaptcha != null) cbCaptcha.setChecked(false);
+                            Toast.makeText(RegisterActivity.this, "Błąd hCaptcha, Sprawdź połączenie z internetem", Toast.LENGTH_SHORT).show();
+                        });
             });
         }
 
-        if (tvLoginLink != null) {
-            tvLoginLink.setOnClickListener(v -> {
-                startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
-                overridePendingTransition(0, 0);
-                finish();
-            });
-        }
-
-        // Logika Rejestracji i Walidacji
         if (btnRegister != null) {
             btnRegister.setOnClickListener(v -> {
-                if (etEmail == null || etPassword == null || etConfirmPassword == null || etName == null) return;
-
                 String email = etEmail.getText().toString().trim();
                 String password = etPassword.getText().toString().trim();
-                String confirmPassword = etConfirmPassword.getText().toString().trim();
                 String name = etName.getText().toString().trim();
 
-                if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || name.isEmpty()) {
-                    Toast.makeText(RegisterActivity.this, "Wypełnij wszystkie pola", Toast.LENGTH_SHORT).show();
+                if (email.isEmpty() || password.isEmpty() || name.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, "Wypełnij pola!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                if (name.length() < 3) {
-                    Toast.makeText(RegisterActivity.this, "Nazwa użytkownika musi mieć min. 3 znaki", Toast.LENGTH_SHORT).show();
+                if (hCaptchaToken == null) {
+                    Toast.makeText(RegisterActivity.this, "Potwierdź, że nie jesteś robotem!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    Toast.makeText(RegisterActivity.this, "Błędny format email", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                // KOPIOWANIE I RESETOWANIE TOKENA
+                String tokenToVerify = hCaptchaToken;
+                hCaptchaToken = null;
+                if (cbCaptcha != null) cbCaptcha.setChecked(false);
+                if (cvCaptchaContainer != null) cvCaptchaContainer.setClickable(true);
 
-                if (!password.equals(confirmPassword)) {
-                    Toast.makeText(RegisterActivity.this, "Hasła nie są identyczne", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                
-                
-
-                if (password.length() < 8) {
-                    Toast.makeText(RegisterActivity.this, "Hasło musi mieć min. 8 znaków", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (password.length() > 32) {
-                    Toast.makeText(RegisterActivity.this, "Hasło może mieć max. 32 znaki", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (!password.matches(".*[A-Z].*")) {
-                    Toast.makeText(RegisterActivity.this, "Hasło musi zawierać co najmniej jedną wielką literę", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (!password.matches(".*[a-z].*")) {
-                    Toast.makeText(RegisterActivity.this, "Hasło musi zawierać co najmniej jedną małą literę", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (!password.matches(".*\\d.*")) {
-                    Toast.makeText(RegisterActivity.this, "Hasło musi zawierać co najmniej jedną cyfrę", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-
-                mAuth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(this, task -> {
-                            if (task.isSuccessful()) {
-                                FirebaseUser user = mAuth.getCurrentUser();
-                                if (user != null) {
-                                    FirebaseFirestore db = FirebaseFirestore.getInstance();
-                                    Map<String, Object> profile = new HashMap<>();
-                                    profile.put("username", name);
-                                    profile.put("avatar_url", "");
-                                    profile.put("email", email);
-
-                                    db.collection("profiles").document(user.getUid())
-                                            .set(profile)
-                                            .addOnSuccessListener(aVoid -> {
-                                                Toast.makeText(RegisterActivity.this, "Zarejestrowano pomyślnie!", Toast.LENGTH_SHORT).show();
-                                                startActivity(new Intent(RegisterActivity.this, MainActivity.class));
-                                                finish();
-                                            })
-                                            .addOnFailureListener(e -> {
-                                                Toast.makeText(RegisterActivity.this, "Konto powstało, ale błąd bazy: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                                            });
-                                }
-                            } else {
-                                Toast.makeText(RegisterActivity.this, "Błąd rejestracji: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                            }
-                        });
+                verifyCaptchaAndRegister(tokenToVerify, name, email, password);
             });
         }
     }
 
-    // Ta metoda upewnia się, że Activity użyje języka zapisanego w LocaleHelper
+    private void verifyCaptchaAndRegister(String token, String name, String email, String password) {
+        OkHttpClient client = new OkHttpClient();
+        JSONObject json = new JSONObject();
+        try { json.put("token", token); } catch (Exception e) { e.printStackTrace(); }
+
+        RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json; charset=utf-8"));
+
+        Request request = new Request.Builder()
+                .url("https://verifycaptcha-lbmgq5tbhq-uc.a.run.app")
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                runOnUiThread(() -> Toast.makeText(RegisterActivity.this, "Błąd sieci: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    runOnUiThread(() -> performFirebaseRegistration(name, email, password));
+                } else {
+                    runOnUiThread(() -> Toast.makeText(RegisterActivity.this, "Weryfikacja nieudana. Spróbuj ponownie.", Toast.LENGTH_LONG).show());
+                }
+            }
+        });
+    }
+
+    private void performFirebaseRegistration(String name, String email, String password) {
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+                            Map<String, Object> profile = new HashMap<>();
+                            profile.put("username", name);
+                            profile.put("email", email);
+                            profile.put("avatar_url", "");
+
+                            db.collection("profiles").document(user.getUid())
+                                    .set(profile)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(RegisterActivity.this, "Zarejestrowano pomyślnie!", Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                                        finish();
+                                    });
+                        }
+                    } else {
+                        Toast.makeText(RegisterActivity.this, "Błąd: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase));
