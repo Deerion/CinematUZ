@@ -27,6 +27,7 @@
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical">
+
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
@@ -70,7 +71,6 @@
                 android:textColor="#9E9E9E"
                 android:textStyle="bold" />
         </LinearLayout>
-
     </LinearLayout>
 
     <LinearLayout
@@ -86,6 +86,7 @@
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical">
+
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
@@ -127,7 +128,39 @@
                 android:textColor="#9E9E9E"
                 android:textStyle="bold" />
         </LinearLayout>
+    </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/logout_settings_tile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/bg_settings_tile"
+        android:foreground="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_close"
+            android:contentDescription="Ikona Wyloguj"
+            app:tint="#FF5252" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="Wyloguj się"
+            android:textColor="#FF5252"
+            android:textSize="16sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <View
