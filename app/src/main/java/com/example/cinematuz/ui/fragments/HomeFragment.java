@@ -8,6 +8,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -71,6 +72,10 @@ public class HomeFragment extends Fragment {
     // Dane z API
     private List<MediaItem> allTrendingItems = new ArrayList<>();
     private MediaItem currentHeroItem = null;
+
+    private EditText etSearch;
+    private android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable searchRunnable;
 
     public HomeFragment() {
         // Wymagany pusty konstruktor
@@ -215,6 +220,55 @@ public class HomeFragment extends Fragment {
                 });
             }
         });
+
+        if (etSearch != null) {
+            etSearch.addTextChangedListener(new android.text.TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (searchRunnable != null) {
+                        searchHandler.removeCallbacks(searchRunnable);
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(android.text.Editable s) {
+                    String query = s.toString().trim();
+
+                    TextView tvPopularHeader = getView() != null ? getView().findViewById(R.id.tv_popular_header) : null;
+
+                    if (query.isEmpty()) {
+                        // POWRÓT: Użytkownik wyczyścił pole wyszukiwania
+                        if (layoutHeroMovie != null) layoutHeroMovie.setVisibility(View.VISIBLE);
+                        if (tvPopularHeader != null) tvPopularHeader.setVisibility(View.VISIBLE);
+
+                        filterList("all"); // Przywracamy domyślną listę z ekranu głównego
+                        return;
+                    }
+
+                    if (layoutHeroMovie != null) layoutHeroMovie.setVisibility(View.GONE);
+                    if (tvPopularHeader != null) tvPopularHeader.setVisibility(View.GONE);
+
+                    searchRunnable = () -> performLiveSearch(query);
+                    searchHandler.postDelayed(searchRunnable, 500);
+                }
+            });
+
+            // Zamknięcie klawiatury po kliknięciu "Lupa" / "Szukaj" na klawiaturze telefonu
+            etSearch.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+                    android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    }
+                    etSearch.clearFocus();
+                    return true;
+                }
+                return false;
+            });
+        }
     }
 
     private void fetchTrendingData() {
@@ -376,5 +430,47 @@ public class HomeFragment extends Fragment {
         TypedValue typedValue = new TypedValue();
         requireContext().getTheme().resolveAttribute(attrResId, typedValue, true);
         return typedValue.data;
+    }
+
+    private void performLiveSearch(String query) {
+        String currentLang = getResources().getConfiguration().locale.getLanguage();
+        String apiLang = currentLang.equals("pl") ? "pl-PL" : "en-US";
+
+        TmdbApi api = RetrofitClient.getClient().create(TmdbApi.class);
+
+        api.searchMulti(query, apiLang, 1).enqueue(new retrofit2.Callback<ApiResponse<MediaItem>>() {
+            @Override
+            public void onResponse(retrofit2.Call<ApiResponse<MediaItem>> call, retrofit2.Response<ApiResponse<MediaItem>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    java.util.List<MediaItem> results = response.body().getResults();
+                    java.util.List<MediaItem> filteredResults = new java.util.ArrayList<>();
+
+                    for (MediaItem item : results) {
+                        if ("person".equals(item.getMediaType())) {
+                            continue;
+                        }
+                        filteredResults.add(item);
+                    }
+
+                    if (adapter != null) {
+                        adapter.submitList(filteredResults);
+
+                        // Zabezpieczenie przed pustą listą
+                        if (filteredResults.isEmpty()) {
+                            showEmptyState("Brak wyników dla: " + query);
+                        } else {
+                            if (layoutEmptyTrending != null) layoutEmptyTrending.setVisibility(View.GONE);
+                            if (rvTrending != null) rvTrending.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<ApiResponse<MediaItem>> call, Throwable t) {
+                android.util.Log.e("LiveSearch", "Błąd wyszukiwania: " + t.getMessage());
+                showEmptyState("Błąd połączenia. Spróbuj ponownie.");
+            }
+        });
     }
 }
