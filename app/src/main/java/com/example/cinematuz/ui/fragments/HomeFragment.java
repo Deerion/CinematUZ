@@ -27,6 +27,7 @@ import com.example.cinematuz.data.models.ApiResponse;
 import com.example.cinematuz.data.models.MediaItem;
 import com.example.cinematuz.data.remote.RetrofitClient;
 import com.example.cinematuz.data.remote.TmdbApi;
+import com.example.cinematuz.ui.activities.SearchActivity;
 import com.example.cinematuz.ui.adapters.MovieGridAdapter;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -151,10 +152,6 @@ public class HomeFragment extends Fragment {
             });
         }
 
-        cardSearch.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Otwieram wyszukiwarkę", Toast.LENGTH_SHORT).show();
-        });
-
         btnFilterAll.setOnClickListener(v -> filterList("all"));
         btnFilterMovies.setOnClickListener(v -> filterList("movie"));
         btnFilterTv.setOnClickListener(v -> filterList("tv"));
@@ -173,9 +170,9 @@ public class HomeFragment extends Fragment {
                 String mediaType = currentHeroItem.getMediaType();
                 TmdbApi api = RetrofitClient.getClient().create(TmdbApi.class);
 
-                Call<ApiResponse<Video>> call = "tv".equals(mediaType) ?
-                        api.getTvVideos(mediaId, "en-US") :
-                        api.getMovieVideos(mediaId, "en-US");
+                Call<ApiResponse<Video>> call = "tv".equals(mediaType)
+                        ? api.getTvVideos(mediaId, "en-US")
+                        : api.getMovieVideos(mediaId, "en-US");
 
                 call.enqueue(new Callback<ApiResponse<Video>>() {
                     @Override
@@ -215,6 +212,8 @@ public class HomeFragment extends Fragment {
                 });
             }
         });
+
+        cardSearch.setOnClickListener(v -> startActivity(new Intent(getContext(), SearchActivity.class)));
     }
 
     private void fetchTrendingData() {

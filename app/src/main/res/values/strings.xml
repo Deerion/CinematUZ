@@ -48,6 +48,7 @@
     <string name="hero_button_trailer">Zwiastun</string>
     <string name="hero_button_details">Szczegóły</string>
 
+    <string name="search_title">Szukaj</string>
     <string name="search_hint">Szukaj filmów, seriali...</string>
     <string name="filter_all">Wszystkie</string>
     <string name="filter_movies">Filmy</string>
@@ -105,4 +106,10 @@
     <string name="filter_apply">Zastosuj (%1$d wyników)</string>
     <string name="filter_year_range_mock">2010 - 2024</string>
     <string name="filter_rating_mock">7.5+</string>
+    <string name="cd_navigate_back">Wróć</string>
+    <string name="cd_filter_results">Filtruj wyniki</string>
+    <string name="cd_add_result">Dodaj do listy</string>
+
+    <string name="tmdb_attribution">Dane pochodzą z serwisu</string>
+    <string name="cd_tmdb_logo">Logo TMDB</string>
 </resources>

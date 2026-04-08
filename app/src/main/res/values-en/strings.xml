@@ -105,4 +105,7 @@
     <string name="filter_apply">Apply %1$d Results</string>
     <string name="filter_year_range_mock">2010 - 2024</string>
     <string name="filter_rating_mock">7.5+</string>
+    <string name="cd_navigate_back">Go back</string>
+    <string name="cd_filter_results">Filter results</string>
+    <string name="cd_add_result">Add to list</string>
 </resources>
