@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,8 +37,10 @@ public class SearchFragment extends Fragment {
     private RecyclerView rvSearchResults;
     private ImageButton btnClearSearch;
     private ImageButton btnSearchBack;
+    private TextView tvSearchEmpty;
 
     private MaterialButton btnFilterAll, btnFilterMovies, btnFilterTv;
+    private SearchResultAdapter.FilterType currentFilter = SearchResultAdapter.FilterType.ALL;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -54,6 +57,7 @@ public class SearchFragment extends Fragment {
         rvSearchResults = view.findViewById(R.id.rvSearchResults);
         btnClearSearch = view.findViewById(R.id.btnClearSearch);
         btnSearchBack = view.findViewById(R.id.btnSearchBack);
+        tvSearchEmpty = view.findViewById(R.id.tvSearchEmpty);
 
         btnFilterAll = view.findViewById(R.id.btnFilterAll);
         btnFilterMovies = view.findViewById(R.id.btnFilterMovies);
@@ -63,6 +67,8 @@ public class SearchFragment extends Fragment {
         setupListeners();
         setupObservers();
 
+        setFilter(currentFilter);
+        showInitialEmptyState();
         etSearch.requestFocus();
     }
 
@@ -90,22 +96,26 @@ public class SearchFragment extends Fragment {
                 btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
                 String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
                 viewModel.onSearchTextChanged(s.toString(), lang);
+
+                if (s.toString().trim().isEmpty()) {
+                    adapter.submitList(null);
+                    showInitialEmptyState();
+                }
             }
 
             @Override
             public void afterTextChanged(Editable s) {}
         });
 
-        // Nasłuchiwacze dla filtrów
         btnFilterAll.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.ALL));
         btnFilterMovies.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.MOVIE));
         btnFilterTv.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.TV));
     }
 
     private void setFilter(SearchResultAdapter.FilterType filterType) {
+        currentFilter = filterType;
         adapter.setFilter(filterType);
 
-        // Aktualizacja wyglądu przycisków
         updateButtonStyle(btnFilterAll, filterType == SearchResultAdapter.FilterType.ALL);
         updateButtonStyle(btnFilterMovies, filterType == SearchResultAdapter.FilterType.MOVIE);
         updateButtonStyle(btnFilterTv, filterType == SearchResultAdapter.FilterType.TV);
@@ -133,6 +143,19 @@ public class SearchFragment extends Fragment {
 
         viewModel.searchResults.observe(getViewLifecycleOwner(), results -> {
             adapter.submitList(results);
+            if (etSearch.getText() == null || etSearch.getText().toString().trim().isEmpty()) {
+                showInitialEmptyState();
+            } else if (results == null || results.isEmpty()) {
+                tvSearchEmpty.setText(R.string.empty_search_results);
+                tvSearchEmpty.setVisibility(View.VISIBLE);
+            } else {
+                tvSearchEmpty.setVisibility(View.GONE);
+            }
         });
+    }
+
+    private void showInitialEmptyState() {
+        tvSearchEmpty.setText(R.string.empty_search_initial);
+        tvSearchEmpty.setVisibility(View.VISIBLE);
     }
 }

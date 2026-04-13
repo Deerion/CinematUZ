@@ -1,6 +1,9 @@
 package com.example.cinematuz.ui.fragments.home;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +20,17 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.MediaItem;
 import com.example.cinematuz.databinding.FragmentHomeBinding;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.color.MaterialColors;
+
+import java.util.Locale;
 
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private HomeViewModel viewModel;
     private MovieGridAdapter adapter;
     private View rootView; // Caching widoku powraca!
+    private String currentFilter = "all";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -44,9 +52,8 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
 
-        // Obserwatorów odpalamy za każdym razem (ponieważ LifecycleOwner się odświeża po powrocie),
-        // ale dzięki zamrożonemu rootView, dane wstrzykną się w ułamek milisekundy.
         setupObservers();
+        applyFilter(currentFilter, false);
 
         // Strzał do API tylko za pierwszym razem
         if (viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty()) {
@@ -75,6 +82,7 @@ public class HomeFragment extends Fragment {
 
     private void setupInitialState() {
         binding.rvTrending.setVisibility(View.GONE);
+        binding.layoutEmptyTrending.setVisibility(View.GONE);
     }
 
     private void hideSkeletonsInstantly() {
@@ -82,16 +90,24 @@ public class HomeFragment extends Fragment {
         binding.layoutSkeletonHero.getRoot().setVisibility(View.GONE);
         binding.layoutSkeletonTrending.getRoot().setVisibility(View.GONE);
         binding.layoutHeroMovie.getRoot().setVisibility(View.VISIBLE);
-        binding.rvTrending.setVisibility(View.VISIBLE);
+    }
+
+    private void showEmptyTrendingState(boolean show) {
+        binding.layoutEmptyTrending.setVisibility(show ? View.VISIBLE : View.GONE);
+        // Hero zostaje widoczny i pokazuje fallbacki nawet przy braku danych.
+        binding.layoutHeroMovie.getRoot().setVisibility(View.VISIBLE);
+        binding.rvTrending.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
     private void setupObservers() {
         viewModel.heroItem.observe(getViewLifecycleOwner(), this::updateHeroUi);
 
         viewModel.trendingList.observe(getViewLifecycleOwner(), list -> {
-            if (list != null && !list.isEmpty()) {
+            hideSkeletonsInstantly();
+            boolean isEmpty = list == null || list.isEmpty();
+            showEmptyTrendingState(isEmpty);
+            if (!isEmpty) {
                 adapter.submitList(list);
-                hideSkeletonsInstantly();
             }
         });
 
@@ -99,16 +115,19 @@ public class HomeFragment extends Fragment {
             if (loading && (viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty())) {
                 binding.layoutSkeletonHero.getRoot().setVisibility(View.VISIBLE);
                 binding.layoutSkeletonTrending.getRoot().setVisibility(View.VISIBLE);
+                binding.layoutEmptyTrending.setVisibility(View.GONE);
             } else if (!loading) {
                 hideSkeletonsInstantly();
+                boolean isEmpty = viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty();
+                showEmptyTrendingState(isEmpty);
             }
         });
     }
 
     private void setupListeners() {
-        binding.btnFilterAll.setOnClickListener(v -> viewModel.applyFilter("all"));
-        binding.btnFilterMovies.setOnClickListener(v -> viewModel.applyFilter("movie"));
-        binding.btnFilterTv.setOnClickListener(v -> viewModel.applyFilter("tv"));
+        binding.btnFilterAll.setOnClickListener(v -> applyFilter("all", true));
+        binding.btnFilterMovies.setOnClickListener(v -> applyFilter("movie", true));
+        binding.btnFilterTv.setOnClickListener(v -> applyFilter("tv", true));
 
         binding.layoutHeroMovie.btnDetails.setOnClickListener(v -> {
             MediaItem hero = viewModel.heroItem.getValue();
@@ -131,16 +150,68 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateHeroUi(MediaItem item) {
-        if (item == null || binding == null) return;
-        binding.layoutHeroMovie.tvHeroTitle.setText(item.getTitle());
-        binding.layoutHeroMovie.tvHeroRating.setText(String.format("%.1f", item.getVoteAverage()));
+        if (binding == null) return;
 
-        Glide.with(this)
-                .load("https://image.tmdb.org/t/p/w780" + item.getPosterPath())
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .dontAnimate() // Wyłączona animacja dla błyskawicznego powrotu
-                .placeholder(R.drawable.hero_cinema)
-                .into(binding.layoutHeroMovie.ivHeroPoster);
+        String heroTitle = item != null ? item.getTitle() : null;
+        String heroOverview = item != null ? item.getOverview() : null;
+        double heroRating = item != null ? item.getVoteAverage() : 0d;
+        String posterPath = item != null ? item.getPosterPath() : null;
+
+        binding.layoutHeroMovie.tvHeroTitle.setText(orFallback(heroTitle, R.string.hero_empty_title));
+        binding.layoutHeroMovie.tvHeroSubtitle.setText(orFallback(heroOverview, R.string.hero_empty_overview));
+        binding.layoutHeroMovie.tvHeroRating.setText(getHeroRatingText(heroRating));
+
+        if (posterPath != null && !posterPath.trim().isEmpty()) {
+            Glide.with(this)
+                    .load("https://image.tmdb.org/t/p/w780" + posterPath)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .dontAnimate()
+                    .placeholder(R.drawable.hero_cinema)
+                    .error(R.drawable.hero_cinema)
+                    .into(binding.layoutHeroMovie.ivHeroPoster);
+        } else {
+            Glide.with(this)
+                    .load(R.drawable.hero_cinema)
+                    .into(binding.layoutHeroMovie.ivHeroPoster);
+        }
+    }
+
+    private String getHeroRatingText(double rating) {
+        if (rating > 0d) {
+            return String.format(Locale.getDefault(), "%.1f", rating);
+        }
+        return getString(R.string.hero_empty_rating);
+    }
+
+    private String orFallback(String value, int fallbackRes) {
+        if (value == null || value.trim().isEmpty()) {
+            return getString(fallbackRes);
+        }
+        return value;
+    }
+
+    private void applyFilter(String filter, boolean updateData) {
+        currentFilter = filter;
+        if (updateData) {
+            viewModel.applyFilter(filter);
+        }
+
+        updateButtonStyle(binding.btnFilterAll, "all".equals(filter));
+        updateButtonStyle(binding.btnFilterMovies, "movie".equals(filter));
+        updateButtonStyle(binding.btnFilterTv, "tv".equals(filter));
+    }
+
+    private void updateButtonStyle(MaterialButton button, boolean isSelected) {
+        if (isSelected) {
+            button.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorPrimary)));
+            button.setTextColor(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnPrimary));
+            button.setStrokeWidth(0);
+        } else {
+            button.setBackgroundTintList(ColorStateList.valueOf(Color.TRANSPARENT));
+            button.setTextColor(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOnSurfaceVariant));
+            button.setStrokeColor(ColorStateList.valueOf(MaterialColors.getColor(requireView(), com.google.android.material.R.attr.colorOutline)));
+            button.setStrokeWidth(Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics())));
+        }
     }
 
     @Override

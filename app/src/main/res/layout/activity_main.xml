@@ -14,7 +14,7 @@
         android:layout_height="0dp"
         app:defaultNavHost="true"
         app:navGraph="@navigation/nav_graph"
-        app:layout_constraintBottom_toTopOf="@id/divider_line"
+        app:layout_constraintBottom_toTopOf="@id/nav_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -22,7 +22,7 @@
     <View
         android:id="@+id/divider_line"
         android:layout_width="match_parent"
-        android:layout_height="12dp"
+        android:layout_height="6dp"
         android:background="@drawable/bottom_nav_top_shadow"
         app:layout_constraintBottom_toTopOf="@id/nav_view" />
 

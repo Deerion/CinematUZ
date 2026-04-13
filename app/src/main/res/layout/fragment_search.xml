@@ -178,6 +178,18 @@
             android:paddingHorizontal="16dp"
             android:paddingBottom="16dp" />
 
+        <TextView
+            android:id="@+id/tvSearchEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingHorizontal="24dp"
+            android:text="@string/empty_search_initial"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
         <ProgressBar
             android:id="@+id/searchProgressBar"
             android:layout_width="wrap_content"
