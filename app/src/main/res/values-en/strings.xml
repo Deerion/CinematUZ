@@ -105,4 +105,15 @@
     <string name="filter_apply">Apply %1$d Results</string>
     <string name="filter_year_range_mock">2010 - 2024</string>
     <string name="filter_rating_mock">7.5+</string>
+
+    <string name="tab_recommended">RECOMMENDED</string>
+    <string name="tab_to_watch">TO WATCH</string>
+    <string name="tab_watched">WATCHED</string>
+
+    <string name="empty_recommendations">No recommendations for selected filters.</string>
+    <string name="empty_library_to_watch">You have nothing to watch yet.</string>
+    <string name="empty_library_watched">Your watched list is empty.</string>
+    <string name="error_no_data">No data to display.</string>
+    <string name="error_server">Error fetching data from server.</string>
+    <string name="error_network">No network connection. Check your internet.</string>
 </resources>

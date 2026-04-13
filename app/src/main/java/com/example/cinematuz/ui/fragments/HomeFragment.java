@@ -8,6 +8,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -58,9 +59,7 @@ public class HomeFragment extends Fragment {
     private TextView tvEmptyText;
     private View skeletonHero;
     private View skeletonTrending;
-
-    // Przyciski filtrów
-    private MaterialButton btnFilterAll, btnFilterMovies, btnFilterTv;
+    private TextView tvPopularHeader; // DODANE: Do kontrolowania napisu "POPULARNE"
 
     // Widoki Hero
     private ImageView ivHeroPoster;
@@ -71,6 +70,10 @@ public class HomeFragment extends Fragment {
     // Dane z API
     private List<MediaItem> allTrendingItems = new ArrayList<>();
     private MediaItem currentHeroItem = null;
+
+    private MaterialButton btnFilterRecommended, btnFilterToWatch, btnFilterWatched;
+    private CheckBox cbMovies, cbTvSeries;
+    private String currentTab = "recommended";
 
     public HomeFragment() {
         // Wymagany pusty konstruktor
@@ -105,9 +108,12 @@ public class HomeFragment extends Fragment {
         // DODANE: Znajdź przycisk filtra (Załóżmy, że w XML nadałaś mu id btn_filter)
         btnFilter = view.findViewById(R.id.btn_filter);
 
-        btnFilterAll = view.findViewById(R.id.btn_filter_all);
-        btnFilterMovies = view.findViewById(R.id.btn_filter_movies);
-        btnFilterTv = view.findViewById(R.id.btn_filter_tv);
+        btnFilterRecommended = view.findViewById(R.id.btn_filter_recommended);
+        btnFilterToWatch = view.findViewById(R.id.btn_filter_to_watch);
+        btnFilterWatched = view.findViewById(R.id.btn_filter_watched);
+
+        cbMovies = view.findViewById(R.id.cb_movies);
+        cbTvSeries = view.findViewById(R.id.cb_tv_series);
 
         layoutHeroMovie = view.findViewById(R.id.layout_hero_movie);
         ivHeroPoster = view.findViewById(R.id.iv_hero_poster);
@@ -121,6 +127,7 @@ public class HomeFragment extends Fragment {
 
         layoutEmptyTrending = view.findViewById(R.id.layout_empty_trending);
         tvEmptyText = view.findViewById(R.id.tv_empty_text);
+        tvPopularHeader = view.findViewById(R.id.tv_popular_header);
 
         // Podpięcie szkieletów
         skeletonHero = view.findViewById(R.id.layout_skeleton_hero);
@@ -154,10 +161,6 @@ public class HomeFragment extends Fragment {
         cardSearch.setOnClickListener(v -> {
             Toast.makeText(getContext(), "Otwieram wyszukiwarkę", Toast.LENGTH_SHORT).show();
         });
-
-        btnFilterAll.setOnClickListener(v -> filterList("all"));
-        btnFilterMovies.setOnClickListener(v -> filterList("movie"));
-        btnFilterTv.setOnClickListener(v -> filterList("tv"));
 
         btnDetails.setOnClickListener(v -> {
             if (currentHeroItem != null) {
@@ -215,6 +218,32 @@ public class HomeFragment extends Fragment {
                 });
             }
         });
+
+        btnFilterRecommended.setOnClickListener(v -> switchTab("recommended"));
+        btnFilterToWatch.setOnClickListener(v -> switchTab("to_watch"));
+        btnFilterWatched.setOnClickListener(v -> switchTab("watched"));
+
+        cbMovies.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked && !cbTvSeries.isChecked()) {
+                cbMovies.setChecked(true); // Blokada odznaczenia obu
+                return;
+            }
+            refreshCurrentList();
+        });
+
+        cbTvSeries.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked && !cbMovies.isChecked()) {
+                cbTvSeries.setChecked(true); // Blokada odznaczenia obu
+                return;
+            }
+            refreshCurrentList();
+        });
+    }
+
+    private void switchTab(String tab) {
+        currentTab = tab;
+        updateFilterButtonsUi();
+        refreshCurrentList();
     }
 
     private void fetchTrendingData() {
@@ -233,36 +262,47 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     allTrendingItems = response.body().getResults();
                     if (!allTrendingItems.isEmpty()) {
-                        filterList("all");
+                        switchTab("recommended"); // Automatyczne załadowanie pierwszej zakładki
                     } else {
-                        showEmptyState("Brak danych do wyświetlenia.");
+                        showEmptyState(getString(R.string.error_no_data));
                     }
                 } else {
-                    showEmptyState("Błąd pobierania danych z serwera.");
+                    showEmptyState(getString(R.string.error_server));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ApiResponse<MediaItem>> call, @NonNull Throwable t) {
                 Log.e(TAG, "API Call Failed: " + t.getMessage());
-                showEmptyState("Brak połączenia z siecią. Sprawdź internet.");
-                Toast.makeText(getContext(), "Brak połączenia z siecią", Toast.LENGTH_SHORT).show();
+                showEmptyState(getString(R.string.error_network));
+                Toast.makeText(getContext(), getString(R.string.error_network), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void filterList(String mediaType) {
-        if (allTrendingItems == null || allTrendingItems.isEmpty() || adapter == null) return;
+    private void refreshCurrentList() {
+        if (currentTab.equals("recommended")) {
+            applyRecommendedFilters();
+        } else {
+            loadFromLibrary(currentTab.equals("watched"));
+        }
+    }
 
-        updateFilterButtonsUi(mediaType);
+    private void applyRecommendedFilters() {
+        // Przywracamy nagłówek "POPULARNE" w zakładce Rekomendowane
+        if (tvPopularHeader != null) tvPopularHeader.setVisibility(View.VISIBLE);
 
         List<MediaItem> filteredItems = new ArrayList<>();
         MediaItem newHeroItem = null;
 
-        for (MediaItem item : allTrendingItems) {
-            boolean matchesFilter = mediaType.equals("all") || mediaType.equals(item.getMediaType());
+        boolean showMovies = cbMovies.isChecked();
+        boolean showTv = cbTvSeries.isChecked();
 
-            if (matchesFilter) {
+        for (MediaItem item : allTrendingItems) {
+            boolean isMovie = "movie".equals(item.getMediaType());
+            boolean isTv = "tv".equals(item.getMediaType());
+
+            if ((isMovie && showMovies) || (isTv && showTv)) {
                 if (newHeroItem == null) {
                     newHeroItem = item;
                 } else {
@@ -271,14 +311,26 @@ public class HomeFragment extends Fragment {
             }
         }
 
-        // Zabezpieczenie na brak pasujących danych (Empty State)
+        // Wyświetlanie danych z poprawnym tłumaczeniem
         if (filteredItems.isEmpty() && newHeroItem == null) {
-            showEmptyState("Nie znaleziono żadnych produkcji w tej kategorii.");
+            showEmptyState(getString(R.string.empty_recommendations));
         } else {
             hideSkeletonsAndShowData();
             if (newHeroItem != null) setupHeroItem(newHeroItem);
             adapter.submitList(filteredItems);
         }
+    }
+
+    private void loadFromLibrary(boolean isWatched) {
+        // Na razie ukrywamy Hero (biblioteka nie potrzebuje Hero) i szkielety
+        if (layoutHeroMovie != null) layoutHeroMovie.setVisibility(View.GONE);
+        if (skeletonHero != null) skeletonHero.setVisibility(View.GONE);
+
+        // Ukrywamy nagłówek "POPULARNE" w bibliotece
+        if (tvPopularHeader != null) tvPopularHeader.setVisibility(View.GONE);
+
+        // Używamy tłumaczeń dla pustego stanu
+        showEmptyState(getString(isWatched ? R.string.empty_library_watched : R.string.empty_library_to_watch));
     }
 
     // Zarządzanie UI (Szkielety vs Dane)
@@ -340,36 +392,40 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void updateFilterButtonsUi(String selectedType) {
+    private void updateFilterButtonsUi() {
         int colorPrimary = getThemeColor(com.google.android.material.R.attr.colorPrimary);
         int colorOnPrimary = getThemeColor(com.google.android.material.R.attr.colorOnPrimary);
         int colorSurfaceVariant = getThemeColor(com.google.android.material.R.attr.colorSurfaceVariant);
         int colorOnSurfaceVariant = getThemeColor(com.google.android.material.R.attr.colorOnSurfaceVariant);
 
-        setButtonToInactive(btnFilterAll, colorSurfaceVariant, colorOnSurfaceVariant);
-        setButtonToInactive(btnFilterMovies, colorSurfaceVariant, colorOnSurfaceVariant);
-        setButtonToInactive(btnFilterTv, colorSurfaceVariant, colorOnSurfaceVariant);
+        setButtonToInactive(btnFilterRecommended, colorSurfaceVariant, colorOnSurfaceVariant);
+        setButtonToInactive(btnFilterToWatch, colorSurfaceVariant, colorOnSurfaceVariant);
+        setButtonToInactive(btnFilterWatched, colorSurfaceVariant, colorOnSurfaceVariant);
 
-        if (selectedType.equals("all")) {
-            setButtonToActive(btnFilterAll, colorPrimary, colorOnPrimary);
-        } else if (selectedType.equals("movie")) {
-            setButtonToActive(btnFilterMovies, colorPrimary, colorOnPrimary);
-        } else if (selectedType.equals("tv")) {
-            setButtonToActive(btnFilterTv, colorPrimary, colorOnPrimary);
+        if (currentTab.equals("recommended")) {
+            setButtonToActive(btnFilterRecommended, colorPrimary, colorOnPrimary);
+        } else if (currentTab.equals("to_watch")) {
+            setButtonToActive(btnFilterToWatch, colorPrimary, colorOnPrimary);
+        } else if (currentTab.equals("watched")) {
+            setButtonToActive(btnFilterWatched, colorPrimary, colorOnPrimary);
         }
     }
 
     private void setButtonToActive(MaterialButton button, int bgColor, int textColor) {
-        button.setBackgroundTintList(ColorStateList.valueOf(bgColor));
-        button.setTextColor(textColor);
-        button.setStrokeWidth(0);
+        if (button != null) {
+            button.setBackgroundTintList(ColorStateList.valueOf(bgColor));
+            button.setTextColor(textColor);
+            button.setStrokeWidth(0);
+        }
     }
 
     private void setButtonToInactive(MaterialButton button, int strokeColor, int textColor) {
-        button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.transparent)));
-        button.setTextColor(textColor);
-        button.setStrokeColor(ColorStateList.valueOf(strokeColor));
-        button.setStrokeWidth(3);
+        if (button != null) {
+            button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), android.R.color.transparent)));
+            button.setTextColor(textColor);
+            button.setStrokeColor(ColorStateList.valueOf(strokeColor));
+            button.setStrokeWidth(3);
+        }
     }
 
     private int getThemeColor(int attrResId) {
