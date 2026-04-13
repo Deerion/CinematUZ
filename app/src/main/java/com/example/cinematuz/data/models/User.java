@@ -1,4 +1,4 @@
-package com.example.cinematuz.models;
+package com.example.cinematuz.data.models;
 
 import com.google.firebase.firestore.IgnoreExtraProperties;
 

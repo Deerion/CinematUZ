@@ -1,4 +1,4 @@
-package com.example.cinematuz.data.remote;
+package com.example.cinematuz.data.api;
 
 import com.example.cinematuz.BuildConfig; // Import wygenerowanej klasy BuildConfig
 

@@ -4,21 +4,18 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.databinding.ActivityMainBinding;
-import com.example.cinematuz.ui.fragments.HomeFragment;
-import com.example.cinematuz.ui.fragments.FriendsFragment;
-import com.example.cinematuz.ui.fragments.MapFragment;
-import com.example.cinematuz.ui.fragments.ProfileFragment;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.example.cinematuz.utils.ThemeHelper;
 
@@ -31,58 +28,34 @@ public class MainActivity extends AppCompatActivity {
         ThemeHelper.applyTheme(this);
         super.onCreate(savedInstanceState);
 
-        // 1. Mówimy systemowi, że sami obsłużymy odstępy (żeby paski nie nachodziły na UI)
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // 2. Naprawiamy górny pasek (Toolbar) i dolny (BottomNav), żeby nie chowały się pod system
+        // Konfiguracja paddingów dla system bars
         ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
             Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-
-            // Dodajemy padding na górze (dla Toolbaru) i na dole (dla NavView)
             binding.appBarLayout.setPadding(0, systemBars.top, 0, 0);
             binding.navView.setPadding(0, 0, 0, systemBars.bottom);
-
             return windowInsets;
         });
 
-        // Ustawienie górnego paska (Toolbar)
         setSupportActionBar(binding.topAppBar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        // Wczytanie domyślnego fragmentu (Start) po uruchomieniu aplikacji
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new HomeFragment())
-                    .commit();
+        // KONFIGURACJA NAWIGACJI
+        // 1. Znajdujemy hosta nawigacji zdefiniowanego w XML
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+
+        if (navHostFragment != null) {
+            NavController navController = navHostFragment.getNavController();
+
+            // 2. Automatyczne powiązanie BottomNavigationView z NavController
+            // UWAGA: ID elementów w menu_bottom_nav.xml MUSZĄ być takie same jak ID w nav_graph.xml
+            NavigationUI.setupWithNavController(binding.navView, navController);
         }
-
-        // Logika obsługująca kliknięcia w dolnym pasku
-        binding.navView.setOnItemSelectedListener(item -> {
-            Fragment selectedFragment = null;
-            int itemId = item.getItemId();
-
-            if (itemId == R.id.nav_start) {
-                selectedFragment = new HomeFragment();
-            } else if (itemId == R.id.nav_friends) {
-                selectedFragment = new FriendsFragment();
-            } else if (itemId == R.id.nav_map) {
-                selectedFragment = new MapFragment();
-            } else if (itemId == R.id.nav_profile) {
-                selectedFragment = new ProfileFragment();
-            }
-
-            if (selectedFragment != null) {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, selectedFragment)
-                        .commit();
-                return true;
-            }
-
-            return false;
-        });
     }
 
     @Override
@@ -91,15 +64,8 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
-    // Ta metoda upewnia się, że Activity użyje języka zapisanego w LocaleHelper
+
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase));

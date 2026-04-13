@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.adapters;
+package com.example.cinematuz.ui.fragments.details;
 
 import android.view.LayoutInflater;
 import android.view.View;

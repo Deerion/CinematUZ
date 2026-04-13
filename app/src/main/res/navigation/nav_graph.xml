@@ -3,26 +3,44 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/nav_start">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.example.cinematuz.ui.fragments.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
-
+        android:id="@+id/nav_start"
+        android:name="com.example.cinematuz.ui.fragments.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home">
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_home_to_details"
+            app:destination="@id/detailsFragment" />
     </fragment>
+
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.example.cinematuz.ui.fragments.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:id="@+id/nav_friends"
+        android:name="com.example.cinematuz.ui.fragments.FriendsFragment"
+        android:label="Friends"
+        tools:layout="@layout/fragment_friends" />
 
-        <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+    <fragment
+        android:id="@+id/nav_map"
+        android:name="com.example.cinematuz.ui.fragments.MapFragment"
+        android:label="Map"
+        tools:layout="@layout/fragment_map" />
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.cinematuz.ui.fragments.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/detailsFragment"
+        android:name="com.example.cinematuz.ui.fragments.details.DetailsFragment"
+        android:label="Details"
+        tools:layout="@layout/fragment_details">
+        <argument
+            android:name="MEDIA_ITEM"
+            app:argType="com.example.cinematuz.data.models.MediaItem" />
     </fragment>
+
 </navigation>

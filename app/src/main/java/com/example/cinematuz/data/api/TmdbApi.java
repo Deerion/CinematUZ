@@ -1,4 +1,4 @@
-package com.example.cinematuz.data.remote;
+package com.example.cinematuz.data.api;
 
 import com.example.cinematuz.data.models.ApiResponse;
 import com.example.cinematuz.data.models.MediaItem;
