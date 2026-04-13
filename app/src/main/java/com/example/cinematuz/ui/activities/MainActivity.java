@@ -33,37 +33,26 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Konfiguracja paddingów dla system bars
+        // Konfiguracja paddingów dla system bars (odsuwamy cały główny widok od góry, a nie appBarLayout)
         ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
             Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
-            binding.appBarLayout.setPadding(0, systemBars.top, 0, 0);
+            v.setPadding(0, systemBars.top, 0, 0); // Odsunięcie od zegarka/baterii
             binding.navView.setPadding(0, 0, 0, systemBars.bottom);
             return windowInsets;
         });
 
-        setSupportActionBar(binding.topAppBar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        // TĘ LINIJKĘ CAŁKOWICIE USUNĘLIŚMY, BO POWODOWAŁA CRASH:
+        // getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         // KONFIGURACJA NAWIGACJI
-        // 1. Znajdujemy hosta nawigacji zdefiniowanego w XML
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
 
         if (navHostFragment != null) {
             NavController navController = navHostFragment.getNavController();
-
-            // 2. Automatyczne powiązanie BottomNavigationView z NavController
-            // UWAGA: ID elementów w menu_bottom_nav.xml MUSZĄ być takie same jak ID w nav_graph.xml
             NavigationUI.setupWithNavController(binding.navView, navController);
         }
     }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
 
 
     @Override

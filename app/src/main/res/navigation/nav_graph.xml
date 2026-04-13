@@ -23,7 +23,7 @@
 
     <fragment
         android:id="@+id/nav_map"
-        android:name="com.example.cinematuz.ui.fragments.MapFragment"
+        android:name="com.example.cinematuz.ui.fragments.map.MapFragment"
         android:label="Map"
         tools:layout="@layout/fragment_map" />
 
