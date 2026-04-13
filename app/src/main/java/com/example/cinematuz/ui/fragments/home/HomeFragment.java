@@ -118,6 +118,16 @@ public class HomeFragment extends Fragment {
                 Navigation.findNavController(v).navigate(R.id.detailsFragment, b);
             }
         });
+
+        // --- NOWE: Przejście do wyszukiwarki ---
+        binding.cardSearch.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.searchFragment);
+        });
+
+        // Na wszelki wypadek przypinamy też do samego tekstu, by kliknięcie było bezbłędne
+        binding.tvSearchBar.setOnClickListener(v -> {
+            Navigation.findNavController(v).navigate(R.id.searchFragment);
+        });
     }
 
     private void updateHeroUi(MediaItem item) {

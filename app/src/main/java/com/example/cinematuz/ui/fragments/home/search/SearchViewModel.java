@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments.search;
+package com.example.cinematuz.ui.fragments.home.search;
 
 import android.os.Handler;
 import android.os.Looper;

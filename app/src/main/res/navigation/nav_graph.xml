@@ -17,7 +17,7 @@
 
     <fragment
         android:id="@+id/searchFragment"
-        android:name="com.example.cinematuz.ui.fragments.search.SearchFragment"
+        android:name="com.example.cinematuz.ui.fragments.home.search.SearchFragment"
         android:label="Search"
         tools:layout="@layout/fragment_search">
         <action
@@ -45,7 +45,7 @@
 
     <fragment
         android:id="@+id/detailsFragment"
-        android:name="com.example.cinematuz.ui.fragments.details.DetailsFragment"
+        android:name="com.example.cinematuz.ui.fragments.home.details.DetailsFragment"
         android:label="Details"
         tools:layout="@layout/fragment_details">
         <argument
