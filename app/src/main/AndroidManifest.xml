@@ -15,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CinematUZ">
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
         <activity
             android:name=".ui.activities.LoginActivity"
             android:exported="true"
@@ -36,8 +39,5 @@
             android:exported="false"
             android:theme="@style/Theme.CinematUZ" />
 
-        <activity
-            android:name=".ui.activities.DetailsActivity"
-            android:theme="@style/Theme.CinematUZ" />
     </application>
 </manifest>
