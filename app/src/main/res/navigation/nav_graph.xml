@@ -16,6 +16,16 @@
     </fragment>
 
     <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.cinematuz.ui.fragments.search.SearchFragment"
+        android:label="Search"
+        tools:layout="@layout/fragment_search">
+        <action
+            android:id="@+id/action_search_to_details"
+            app:destination="@id/detailsFragment" />
+    </fragment>
+
+    <fragment
         android:id="@+id/nav_friends"
         android:name="com.example.cinematuz.ui.fragments.FriendsFragment"
         android:label="Friends"

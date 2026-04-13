@@ -1,4 +1,6 @@
 <resources>
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com</string>
+
     <string name="app_name">CinematUZ</string>
     <string name="welcome_back">Witaj ponownie</string>
     <string name="login_subtitle">Zaloguj się na swoje konto, aby kontynuować oglądanie</string>
@@ -33,6 +35,7 @@
     <string name="nav_friends">Znajomi</string>
     <string name="nav_map">Mapa</string>
     <string name="nav_profile">Profil</string>
+    <string name="nav_search">Szukaj</string>
 
     <string name="settings_language">Język</string>
     <string name="settings_theme">Motyw</string>

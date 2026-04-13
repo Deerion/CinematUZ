@@ -14,12 +14,16 @@ public class MovieRepository {
     private final TmdbApi api;
 
     public MovieRepository() {
-        // Inicjalizacja API przez RetrofitClient
         this.api = RetrofitClient.getClient().create(TmdbApi.class);
     }
 
     public void getTrending(String lang, Callback<ApiResponse<MediaItem>> callback) {
         api.getTrending(lang, 1).enqueue(callback);
+    }
+
+    // --- NOWA METODA WYSZUKIWANIA ---
+    public void searchMulti(String query, String lang, int page, Callback<ApiResponse<MediaItem>> callback) {
+        api.searchMulti(query, lang, page).enqueue(callback);
     }
 
     public void getDetails(int id, String type, String lang, Callback<MediaItem> callback) {
