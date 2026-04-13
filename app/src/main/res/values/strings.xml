@@ -50,6 +50,9 @@
     <string name="hero_badge_new">Nowość</string>
     <string name="hero_button_trailer">Zwiastun</string>
     <string name="hero_button_details">Szczegóły</string>
+    <string name="hero_empty_title">Brak tytułu</string>
+    <string name="hero_empty_overview">Brak opisu dla tej produkcji.</string>
+    <string name="hero_empty_rating">Brak oceny</string>
 
     <string name="search_hint">Szukaj filmów, seriali...</string>
     <string name="filter_all">Wszystkie</string>
@@ -65,8 +68,16 @@
     <string name="empty_trending">Brak danych do wyświetlenia.</string>
     <string name="empty_trending_network">Brak połączenia z siecią. Sprawdź internet.</string>
     <string name="empty_trending_category">Nie znaleziono żadnych produkcji w tej kategorii.</string>
+    <string name="empty_search_initial">Wpisz tytuł filmu lub serialu, aby rozpocząć wyszukiwanie.</string>
+    <string name="empty_search_results">Brak wyników. Spróbuj innej frazy.</string>
     <string name="no_trailer">Brak zwiastuna dla tej produkcji</string>
     <string name="empty_cast">Brak informacji o obsadzie dla tej produkcji.</string>
+    <string name="details_empty_title">Brak tytułu</string>
+    <string name="details_empty_overview">Brak opisu dla tej produkcji.</string>
+    <string name="details_empty_rating">Brak oceny</string>
+    <string name="details_empty_year">Brak roku</string>
+    <string name="details_empty_duration">Brak czasu trwania</string>
+    <string name="details_empty_genres">Brak gatunków</string>
 
     <string name="genre_action">Akcja</string>
     <string name="genre_adventure">Przygoda</string>

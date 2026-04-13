@@ -50,6 +50,9 @@
     <string name="hero_badge_new">New Release</string>
     <string name="hero_button_trailer">Trailer</string>
     <string name="hero_button_details">Details</string>
+    <string name="hero_empty_title">Title not available</string>
+    <string name="hero_empty_overview">No description available for this production.</string>
+    <string name="hero_empty_rating">No rating</string>
 
     <string name="search_hint">Search movies, TV shows...</string>
     <string name="filter_all">All</string>
@@ -65,8 +68,16 @@
     <string name="empty_trending">No data to display.</string>
     <string name="empty_trending_network">No network connection. Check your internet.</string>
     <string name="empty_trending_category">No productions found in this category.</string>
+    <string name="empty_search_initial">Enter a movie or TV show title to start searching.</string>
+    <string name="empty_search_results">No results found. Try a different phrase.</string>
     <string name="no_trailer">No trailer available for this production</string>
     <string name="empty_cast">No cast information available for this production.</string>
+    <string name="details_empty_title">Title not available</string>
+    <string name="details_empty_overview">No description available for this production.</string>
+    <string name="details_empty_rating">No rating</string>
+    <string name="details_empty_year">Year unavailable</string>
+    <string name="details_empty_duration">Duration unavailable</string>
+    <string name="details_empty_genres">No genres</string>
 
     <string name="genre_action">Action</string>
     <string name="genre_adventure">Adventure</string>

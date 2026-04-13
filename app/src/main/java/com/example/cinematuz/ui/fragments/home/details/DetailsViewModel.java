@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments.details;
+package com.example.cinematuz.ui.fragments.home.details;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

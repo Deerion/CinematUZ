@@ -51,7 +51,12 @@ public class HomeViewModel extends ViewModel {
     }
 
     public void applyFilter(String type) {
-        if (allItemsBuffer.isEmpty()) return;
+        if (allItemsBuffer.isEmpty()) {
+            _heroItem.setValue(null);
+            _trendingList.setValue(new ArrayList<>());
+            return;
+        }
+
         List<MediaItem> filtered = new ArrayList<>();
         MediaItem firstMatch = null;
 
@@ -61,6 +66,7 @@ public class HomeViewModel extends ViewModel {
                 else filtered.add(item);
             }
         }
+
         _heroItem.setValue(firstMatch);
         _trendingList.setValue(filtered);
     }
