@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments;
+package com.example.cinematuz.ui.fragments.profile;
 
 import android.content.Intent;
 import android.graphics.Color;

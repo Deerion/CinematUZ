@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments;
+package com.example.cinematuz.ui.fragments.map;
 
 import android.os.Bundle;
 
