@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/nav_start"
         android:name="com.example.cinematuz.ui.fragments.home.HomeFragment"
-        android:label="Home"
+        android:label="@string/nav_start"
         tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_home_to_details"
@@ -18,7 +18,7 @@
     <fragment
         android:id="@+id/searchFragment"
         android:name="com.example.cinematuz.ui.fragments.home.search.SearchFragment"
-        android:label="Search"
+        android:label="@string/nav_search"
         tools:layout="@layout/fragment_search">
         <action
             android:id="@+id/action_search_to_details"
@@ -28,25 +28,25 @@
     <fragment
         android:id="@+id/nav_friends"
         android:name="com.example.cinematuz.ui.fragments.FriendsFragment"
-        android:label="Friends"
+        android:label="@string/nav_friends"
         tools:layout="@layout/fragment_friends" />
 
     <fragment
         android:id="@+id/nav_map"
         android:name="com.example.cinematuz.ui.fragments.map.MapFragment"
-        android:label="Map"
+        android:label="@string/nav_map"
         tools:layout="@layout/fragment_map" />
 
     <fragment
         android:id="@+id/nav_profile"
         android:name="com.example.cinematuz.ui.fragments.profile.ProfileFragment"
-        android:label="Profile"
+        android:label="@string/nav_profile"
         tools:layout="@layout/fragment_profile" />
 
     <fragment
         android:id="@+id/detailsFragment"
         android:name="com.example.cinematuz.ui.fragments.home.details.DetailsFragment"
-        android:label="Details"
+        android:label="@string/second_fragment_label"
         tools:layout="@layout/fragment_details">
         <argument
             android:name="MEDIA_ITEM"

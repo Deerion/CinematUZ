@@ -146,13 +146,6 @@ public class HomeFragment extends Fragment {
         binding.tvSearchBar.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.searchFragment);
         });
-
-        // KLIKNIĘCIE w przycisk FILTRA przenosi do SearchFragment, podając flagę (arguments)
-        binding.btnFilter.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putBoolean("open_filters", true); // Flaga mówiąca "Otwórz od razu modal"
-            Navigation.findNavController(v).navigate(R.id.searchFragment, bundle);
-        });
     }
 
     private void updateHeroUi(MediaItem item) {
