@@ -111,6 +111,7 @@
     <string name="filter_sort_release_date">Release Date</string>
     <string name="filter_sort_rating">Rating</string>
     <string name="filter_content_type">CONTENT TYPE</string>
+    <string name="filter_type_all">All</string>
     <string name="filter_type_movie">Movie</string>
     <string name="filter_type_tv">TV Show</string>
     <string name="filter_genre">GENRE</string>

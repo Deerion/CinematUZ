@@ -20,13 +20,17 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <View
-        android:id="@+id/divider_line"
+        android:id="@+id/bottom_nav_blend_shadow"
         android:layout_width="0dp"
-        android:layout_height="6dp"
+        android:layout_height="10dp"
         android:background="@drawable/bottom_nav_top_shadow"
+        android:alpha="0.75"
+        android:clickable="false"
+        android:focusable="false"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/nav_view" />
+
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"

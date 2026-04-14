@@ -86,17 +86,33 @@
                     app:tint="?attr/colorPrimary"
                     tools:visibility="visible" />
 
-                <ImageView
-                    android:id="@+id/btn_filter"
+                <FrameLayout
                     android:layout_width="32dp"
                     android:layout_height="32dp"
-                    android:layout_marginStart="8dp"
-                    android:padding="4dp"
-                    android:src="@drawable/ic_filter"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:tint="?attr/colorPrimary" />
+                    android:layout_marginStart="8dp">
+
+                    <ImageView
+                        android:id="@+id/btn_filter"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="4dp"
+                        android:src="@drawable/ic_filter"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:id="@+id/tv_filter_badge"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:background="@drawable/bg_filter_badge_dot"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+                </FrameLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

@@ -4,6 +4,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -30,6 +31,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import android.widget.ImageView;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+
 public class SearchFragment extends Fragment {
 
     private SearchViewModel viewModel;
@@ -41,10 +45,15 @@ public class SearchFragment extends Fragment {
     private ImageButton btnClearSearch;
     private ImageButton btnSearchBack;
     private ImageView btnOpenFilters;
+    private TextView tvFilterBadge;
     private TextView tvSearchEmpty;
 
     private MaterialButton btnFilterAll, btnFilterMovies, btnFilterTv;
     private SearchResultAdapter.FilterType currentFilter = SearchResultAdapter.FilterType.ALL;
+    private FilterCriteria lastAppliedCriteria;
+    private boolean updatingFilterFromModal;
+
+    private static final String STATE_LAST_FILTER = "state_last_filter";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -62,6 +71,12 @@ public class SearchFragment extends Fragment {
         setupObservers();
         setupFilterResultListener();
 
+        if (savedInstanceState != null) {
+            lastAppliedCriteria = (FilterCriteria) savedInstanceState.getSerializable(STATE_LAST_FILTER);
+        }
+
+        updateFilterBadge();
+
         setFilter(currentFilter);
         showInitialEmptyState();
         etSearch.requestFocus();
@@ -72,9 +87,14 @@ public class SearchFragment extends Fragment {
             getArguments().putBoolean("open_filters", false);
 
             // Otwieramy modal z filtrami
-            FilterBottomSheetFragment bottomSheet = new FilterBottomSheetFragment();
-            bottomSheet.show(getChildFragmentManager(), "FilterBottomSheet");
+            openFilterBottomSheet();
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(STATE_LAST_FILTER, lastAppliedCriteria);
     }
 
     private void initViews(View view) {
@@ -87,6 +107,7 @@ public class SearchFragment extends Fragment {
 
         // ID przycisku filtrów w Twoim fragment_search.xml
         btnOpenFilters = view.findViewById(R.id.btn_filter);
+        tvFilterBadge = view.findViewById(R.id.tv_filter_badge);
 
         btnFilterAll = view.findViewById(R.id.btnFilterAll);
         btnFilterMovies = view.findViewById(R.id.btnFilterMovies);
@@ -114,10 +135,7 @@ public class SearchFragment extends Fragment {
 
         // Otwieranie BottomSheet z filtrami
         if (btnOpenFilters != null) {
-            btnOpenFilters.setOnClickListener(v -> {
-                FilterBottomSheetFragment bottomSheet = new FilterBottomSheetFragment();
-                bottomSheet.show(getChildFragmentManager(), "FilterBottomSheet");
-            });
+            btnOpenFilters.setOnClickListener(v -> openFilterBottomSheet());
         }
 
         etSearch.addTextChangedListener(new TextWatcher() {
@@ -132,8 +150,7 @@ public class SearchFragment extends Fragment {
                     adapter.submitList(null);
                     showInitialEmptyState();
                 } else {
-                    String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
-                    viewModel.onSearchTextChanged(s.toString(), lang);
+                    viewModel.onSearchTextChanged(s.toString());
                 }
             }
 
@@ -141,9 +158,9 @@ public class SearchFragment extends Fragment {
             public void afterTextChanged(Editable s) {}
         });
 
-        btnFilterAll.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.ALL));
-        btnFilterMovies.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.MOVIE));
-        btnFilterTv.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.TV));
+        btnFilterAll.setOnClickListener(v -> onTopFilterSelected(SearchResultAdapter.FilterType.ALL));
+        btnFilterMovies.setOnClickListener(v -> onTopFilterSelected(SearchResultAdapter.FilterType.MOVIE));
+        btnFilterTv.setOnClickListener(v -> onTopFilterSelected(SearchResultAdapter.FilterType.TV));
     }
 
     /**
@@ -153,21 +170,74 @@ public class SearchFragment extends Fragment {
         getChildFragmentManager().setFragmentResultListener("filter_request", getViewLifecycleOwner(), (requestKey, bundle) -> {
             FilterCriteria criteria = (FilterCriteria) bundle.getSerializable("filter_data");
             if (criteria != null) {
-                // Czyścimy tekst wyszukiwania, bo TMDB nie miesza filtrów Discover z zapytaniem tekstowym Search
-                etSearch.setText("");
+                lastAppliedCriteria = copyCriteria(criteria);
+                updateFilterBadge();
                 String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
+                String currentQuery = etSearch.getText() == null ? "" : etSearch.getText().toString().trim();
 
                 // Wywołujemy zaawansowane filtrowanie w ViewModelu
-                viewModel.applyAdvancedFilters(criteria, lang);
+                viewModel.applyAdvancedFilters(criteria, currentQuery, lang);
 
-                // Opcjonalnie: wizualnie dopasuj górne przełączniki (Filmy/TV) do tego co wybrano w modalu
-                if ("tv".equals(criteria.contentType)) {
-                    setFilter(SearchResultAdapter.FilterType.TV);
-                } else {
-                    setFilter(SearchResultAdapter.FilterType.MOVIE);
-                }
+                // Górne chipy odzwierciedlają aktualny typ z modala.
+                updatingFilterFromModal = true;
+                setFilter(mapContentTypeToTopFilter(criteria.contentType));
+                updatingFilterFromModal = false;
             }
         });
+    }
+
+    private void openFilterBottomSheet() {
+        FilterBottomSheetFragment bottomSheet = new FilterBottomSheetFragment();
+        if (lastAppliedCriteria != null) {
+            Bundle args = new Bundle();
+            args.putSerializable(FilterBottomSheetFragment.ARG_INITIAL_FILTER, copyCriteria(lastAppliedCriteria));
+            bottomSheet.setArguments(args);
+        }
+        bottomSheet.show(getChildFragmentManager(), "FilterBottomSheet");
+    }
+
+    private void onTopFilterSelected(SearchResultAdapter.FilterType filterType) {
+        setFilter(filterType);
+
+        if (updatingFilterFromModal || lastAppliedCriteria == null) {
+            return;
+        }
+
+        FilterCriteria updated = copyCriteria(lastAppliedCriteria);
+        updated.contentType = mapTopFilterToContentType(filterType);
+        lastAppliedCriteria = updated;
+        updateFilterBadge();
+
+        String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
+        String currentQuery = etSearch.getText() == null ? "" : etSearch.getText().toString().trim();
+        viewModel.applyAdvancedFilters(updated, currentQuery, lang);
+    }
+
+    private SearchResultAdapter.FilterType mapContentTypeToTopFilter(String contentType) {
+        if ("movie".equals(contentType)) return SearchResultAdapter.FilterType.MOVIE;
+        if ("tv".equals(contentType)) return SearchResultAdapter.FilterType.TV;
+        return SearchResultAdapter.FilterType.ALL;
+    }
+
+    private String mapTopFilterToContentType(SearchResultAdapter.FilterType filterType) {
+        if (filterType == SearchResultAdapter.FilterType.MOVIE) return "movie";
+        if (filterType == SearchResultAdapter.FilterType.TV) return "tv";
+        return "all";
+    }
+
+    private FilterCriteria copyCriteria(FilterCriteria source) {
+        if (source == null) return null;
+        FilterCriteria copy = new FilterCriteria();
+        copy.sortBy = source.sortBy;
+        copy.contentType = source.contentType;
+        copy.genreIds = source.genreIds == null ? new ArrayList<>() : new ArrayList<>(source.genreIds);
+        copy.yearFrom = source.yearFrom;
+        copy.yearTo = source.yearTo;
+        copy.minRating = source.minRating;
+        if (TextUtils.isEmpty(copy.contentType)) {
+            copy.contentType = "all";
+        }
+        return copy;
     }
 
     private void setFilter(SearchResultAdapter.FilterType filterType) {
@@ -222,5 +292,32 @@ public class SearchFragment extends Fragment {
     private void showInitialEmptyState() {
         tvSearchEmpty.setText(R.string.empty_search_initial);
         tvSearchEmpty.setVisibility(View.VISIBLE);
+    }
+
+    private void updateFilterBadge() {
+        if (tvFilterBadge == null) return;
+
+        int activeCount = getActiveFilterCount(lastAppliedCriteria);
+        tvFilterBadge.setVisibility(activeCount > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    private int getActiveFilterCount(@Nullable FilterCriteria criteria) {
+        if (criteria == null) return 0;
+
+        int active = 0;
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+        String contentType = TextUtils.isEmpty(criteria.contentType) ? "all" : criteria.contentType;
+        String sortBy = TextUtils.isEmpty(criteria.sortBy) ? "popularity.desc" : criteria.sortBy;
+        int yearFrom = criteria.yearFrom > 0 ? criteria.yearFrom : 1950;
+        int yearTo = criteria.yearTo > 0 ? criteria.yearTo : currentYear;
+
+        if (!"all".equals(contentType)) active++;
+        if (!"popularity.desc".equals(sortBy)) active++;
+        if (yearFrom != 1950 || yearTo != currentYear) active++;
+        if (criteria.minRating > 0f) active++;
+        if (criteria.genreIds != null && !criteria.genreIds.isEmpty()) active++;
+
+        return active;
     }
 }

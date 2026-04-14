@@ -111,6 +111,7 @@
     <string name="filter_sort_release_date">Data wydania</string>
     <string name="filter_sort_rating">Ocena</string>
     <string name="filter_content_type">TYP TREŚCI</string>
+    <string name="filter_type_all">Wszystkie</string>
     <string name="filter_type_movie">Film</string>
     <string name="filter_type_tv">Serial</string>
     <string name="filter_genre">GATUNEK</string>

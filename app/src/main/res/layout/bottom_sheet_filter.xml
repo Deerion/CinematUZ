@@ -127,6 +127,14 @@
                 app:selectionRequired="true">
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_type_all"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/filter_type_all" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_type_movie"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
@@ -272,7 +280,10 @@
             android:textColor="@color/surface_light"
             android:textStyle="bold"
             android:textSize="16sp"
-            app:cornerRadius="12dp" />
+            android:elevation="4dp"
+            app:backgroundTint="?attr/colorPrimary"
+            app:cornerRadius="12dp"
+            app:rippleColor="?attr/colorOnPrimary" />
     </FrameLayout>
 
 </LinearLayout>

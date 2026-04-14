@@ -57,6 +57,7 @@ public class MediaItem implements Serializable {
     public String getReleaseDate() { return releaseDate; }
     public double getVoteAverage() { return voteAverage; }
     public String getMediaType() { return mediaType; }
+    public void setMediaType(String mediaType) { this.mediaType = mediaType; }
     public Integer getRuntime() { return runtime; }
     public List<Integer> getGenreIds() { return genreIds; } // Dodano
     public List<Genre> getGenres() { return genres; }
