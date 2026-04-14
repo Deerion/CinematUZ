@@ -30,7 +30,8 @@ public class HomeFragment extends Fragment {
     private HomeViewModel viewModel;
     private MovieGridAdapter adapter;
     private View rootView; // Caching widoku powraca!
-    private String currentFilter = "all";
+
+    private String currentTab = "recommended";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -53,7 +54,7 @@ public class HomeFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
 
         setupObservers();
-        applyFilter(currentFilter, false);
+        switchTab(currentTab);
 
         // Strzał do API tylko za pierwszym razem
         if (viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty()) {
@@ -100,18 +101,26 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupObservers() {
-        viewModel.heroItem.observe(getViewLifecycleOwner(), this::updateHeroUi);
+        viewModel.heroItem.observe(getViewLifecycleOwner(), item -> {
+            if ("recommended".equals(currentTab)) {
+                updateHeroUi(item);
+            }
+        });
 
         viewModel.trendingList.observe(getViewLifecycleOwner(), list -> {
-            hideSkeletonsInstantly();
-            boolean isEmpty = list == null || list.isEmpty();
-            showEmptyTrendingState(isEmpty);
-            if (!isEmpty) {
-                adapter.submitList(list);
+            if ("recommended".equals(currentTab)) {
+                hideSkeletonsInstantly();
+                boolean isEmpty = list == null || list.isEmpty();
+                showEmptyTrendingState(isEmpty);
+                if (!isEmpty) {
+                    adapter.submitList(list);
+                }
             }
         });
 
         viewModel.isLoading.observe(getViewLifecycleOwner(), loading -> {
+            if (!"recommended".equals(currentTab)) return;
+
             if (loading && (viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty())) {
                 binding.layoutSkeletonHero.getRoot().setVisibility(View.VISIBLE);
                 binding.layoutSkeletonTrending.getRoot().setVisibility(View.VISIBLE);
@@ -125,9 +134,27 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupListeners() {
-        binding.btnFilterAll.setOnClickListener(v -> applyFilter("all", true));
-        binding.btnFilterMovies.setOnClickListener(v -> applyFilter("movie", true));
-        binding.btnFilterTv.setOnClickListener(v -> applyFilter("tv", true));
+        // Przełączanie zakładek
+        binding.btnFilterRecommended.setOnClickListener(v -> switchTab("recommended"));
+        binding.btnFilterToWatch.setOnClickListener(v -> switchTab("to_watch"));
+        binding.btnFilterWatched.setOnClickListener(v -> switchTab("watched"));
+
+        // Logika checkboxów
+        binding.cbMovies.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked && !binding.cbTvSeries.isChecked()) {
+                binding.cbMovies.setChecked(true); // Blokada odznaczenia obu
+                return;
+            }
+            refreshCurrentList();
+        });
+
+        binding.cbTvSeries.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isChecked && !binding.cbMovies.isChecked()) {
+                binding.cbTvSeries.setChecked(true); // Blokada odznaczenia obu
+                return;
+            }
+            refreshCurrentList();
+        });
 
         binding.layoutHeroMovie.btnDetails.setOnClickListener(v -> {
             MediaItem hero = viewModel.heroItem.getValue();
@@ -138,14 +165,54 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // --- NOWE: Przejście do wyszukiwarki ---
-        // ZWYKŁE kliknięcie w pasek lub lupkę przenosi do SearchFragment normalnie
+        // --- Przejście do wyszukiwarki ---
         binding.cardSearch.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.searchFragment);
         });
         binding.tvSearchBar.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.searchFragment);
         });
+    }
+
+    private void switchTab(String tab) {
+        currentTab = tab;
+        updateFilterButtonsUi();
+        refreshCurrentList();
+    }
+
+    private void refreshCurrentList() {
+        if ("recommended".equals(currentTab)) {
+            binding.tvPopularHeader.setVisibility(View.VISIBLE);
+
+            // Mapujemy zaznaczone checkboxy na filtr, który obsłuży HomeViewModel z GitHuba
+            String filter = "all";
+            if (binding.cbMovies.isChecked() && !binding.cbTvSeries.isChecked()) filter = "movie";
+            else if (!binding.cbMovies.isChecked() && binding.cbTvSeries.isChecked()) filter = "tv";
+
+            viewModel.applyFilter(filter);
+
+            // Przywracamy Hero
+            if (viewModel.heroItem.getValue() != null) {
+                binding.layoutHeroMovie.getRoot().setVisibility(View.VISIBLE);
+                updateHeroUi(viewModel.heroItem.getValue());
+            }
+
+        } else {
+            // Tryb Biblioteki (Do Obejrzenia / Obejrzane)
+            binding.tvPopularHeader.setVisibility(View.GONE);
+            binding.layoutHeroMovie.getRoot().setVisibility(View.GONE);
+            binding.rvTrending.setVisibility(View.GONE);
+            binding.layoutSkeletonHero.getRoot().setVisibility(View.GONE);
+            binding.layoutSkeletonTrending.getRoot().setVisibility(View.GONE);
+
+            // Wyświetlenie "Pustego Stanu"
+            binding.layoutEmptyTrending.setVisibility(View.VISIBLE);
+            if ("watched".equals(currentTab)) {
+                binding.tvEmptyText.setText(R.string.empty_library_watched);
+            } else {
+                binding.tvEmptyText.setText(R.string.empty_library_to_watch);
+            }
+        }
     }
 
     private void updateHeroUi(MediaItem item) {
@@ -189,15 +256,10 @@ public class HomeFragment extends Fragment {
         return value;
     }
 
-    private void applyFilter(String filter, boolean updateData) {
-        currentFilter = filter;
-        if (updateData) {
-            viewModel.applyFilter(filter);
-        }
-
-        updateButtonStyle(binding.btnFilterAll, "all".equals(filter));
-        updateButtonStyle(binding.btnFilterMovies, "movie".equals(filter));
-        updateButtonStyle(binding.btnFilterTv, "tv".equals(filter));
+    private void updateFilterButtonsUi() {
+        updateButtonStyle(binding.btnFilterRecommended, "recommended".equals(currentTab));
+        updateButtonStyle(binding.btnFilterToWatch, "to_watch".equals(currentTab));
+        updateButtonStyle(binding.btnFilterWatched, "watched".equals(currentTab));
     }
 
     private void updateButtonStyle(MaterialButton button, boolean isSelected) {
