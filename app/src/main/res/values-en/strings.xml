@@ -69,7 +69,7 @@
     <string name="empty_trending_network">No network connection. Check your internet.</string>
     <string name="empty_trending_category">No productions found in this category.</string>
     <string name="empty_search_initial">Enter a movie or TV show title to start searching.</string>
-    <string name="empty_search_results">No results found. Try a different phrase.</string>
+    <string name="empty_search_results">No results found. Try adjusting your search or filters.</string>
     <string name="no_trailer">No trailer available for this production</string>
     <string name="empty_cast">No cast information available for this production.</string>
     <string name="details_empty_title">Title not available</string>
@@ -111,12 +111,15 @@
     <string name="filter_sort_release_date">Release Date</string>
     <string name="filter_sort_rating">Rating</string>
     <string name="filter_content_type">CONTENT TYPE</string>
+    <string name="filter_type_all">All</string>
     <string name="filter_type_movie">Movie</string>
     <string name="filter_type_tv">TV Show</string>
     <string name="filter_genre">GENRE</string>
     <string name="filter_release_year">RELEASE YEAR</string>
     <string name="filter_min_rating">MINIMUM RATING</string>
-    <string name="filter_apply">Apply %1$d Results</string>
-    <string name="filter_year_range_mock">2010 - 2024</string>
-    <string name="filter_rating_mock">7.5+</string>
+
+    <string name="filter_apply">Apply (%1$d Results)</string>
+    <string name="filter_apply_simple">Apply</string>
+    <string name="filter_year_range_default">1950 - 2024</string>
+    <string name="filter_rating_default">0.0+</string>
 </resources>

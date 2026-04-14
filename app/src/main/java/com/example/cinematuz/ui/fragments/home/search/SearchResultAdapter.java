@@ -41,7 +41,8 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         allItems.clear();
         if (newItems != null) {
             for (MediaItem item : newItems) {
-                if ("movie".equals(item.getMediaType()) || "tv".equals(item.getMediaType())) {
+                String mediaType = item.getMediaType();
+                if ("movie".equals(mediaType) || "tv".equals(mediaType) || TextUtils.isEmpty(mediaType)) {
                     allItems.add(item);
                 }
             }

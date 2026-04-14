@@ -1,6 +1,7 @@
 package com.example.cinematuz.ui.fragments.home.details;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -19,6 +21,7 @@ import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.MediaItem;
 import com.example.cinematuz.databinding.FragmentDetailsBinding;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.color.MaterialColors;
 
 import java.util.List;
 import java.util.Locale;
@@ -106,12 +109,17 @@ public class DetailsFragment extends Fragment {
 
     private void bindGenres(List<MediaItem.Genre> genres) {
         binding.cgGenres.removeAllViews();
+        int colorPrimary = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimary, 0);
 
         if (genres == null || genres.isEmpty()) {
             Chip emptyChip = new Chip(getContext());
             emptyChip.setText(R.string.details_empty_genres);
             emptyChip.setClickable(false);
             emptyChip.setCheckable(false);
+            emptyChip.setChipBackgroundColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(colorPrimary, 12)));
+            emptyChip.setChipStrokeColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(colorPrimary, 25)));
+            emptyChip.setChipStrokeWidth(1f);
+            emptyChip.setTextColor(ColorUtils.setAlphaComponent(colorPrimary, 200));
             binding.cgGenres.addView(emptyChip);
             return;
         }
@@ -119,6 +127,13 @@ public class DetailsFragment extends Fragment {
         for (MediaItem.Genre g : genres) {
             Chip chip = new Chip(getContext());
             chip.setText(g.getName());
+            chip.setClickable(false);
+            chip.setCheckable(false);
+            chip.setCheckedIconVisible(false);
+            chip.setChipBackgroundColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(colorPrimary, 51)));
+            chip.setChipStrokeColor(ColorStateList.valueOf(ColorUtils.setAlphaComponent(colorPrimary, 102)));
+            chip.setChipStrokeWidth(1f);
+            chip.setTextColor(colorPrimary);
             binding.cgGenres.addView(chip);
         }
     }

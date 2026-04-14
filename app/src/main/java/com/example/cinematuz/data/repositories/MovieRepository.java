@@ -45,4 +45,12 @@ public class MovieRepository {
             api.getMovieVideos(id, "en-US").enqueue(callback);
         }
     }
+
+    public void discoverContent(String type, String lang, String sortBy, String dateFrom, String dateTo, float minRating, String genres, Callback<ApiResponse<MediaItem>> callback) {
+        if ("tv".equals(type)) {
+            api.discoverTv(lang, sortBy, dateFrom, dateTo, minRating, genres, 1).enqueue(callback);
+        } else {
+            api.discoverMovies(lang, sortBy, dateFrom, dateTo, minRating, genres, 1).enqueue(callback);
+        }
+    }
 }

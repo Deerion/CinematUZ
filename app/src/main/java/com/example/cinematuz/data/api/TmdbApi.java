@@ -69,4 +69,27 @@ public interface TmdbApi {
             @Path("tv_id") int tvId,
             @Query("language") String language
     );
+
+    // --- 6. DISCOVER (Zaawansowane filtrowanie) ---
+    @GET("discover/movie")
+    Call<ApiResponse<MediaItem>> discoverMovies(
+            @Query("language") String language,
+            @Query("sort_by") String sortBy,
+            @Query("primary_release_date.gte") String dateFrom,
+            @Query("primary_release_date.lte") String dateTo,
+            @Query("vote_average.gte") float minRating,
+            @Query("with_genres") String genreIds,
+            @Query("page") int page
+    );
+
+    @GET("discover/tv")
+    Call<ApiResponse<MediaItem>> discoverTv(
+            @Query("language") String language,
+            @Query("sort_by") String sortBy,
+            @Query("first_air_date.gte") String dateFrom,
+            @Query("first_air_date.lte") String dateTo,
+            @Query("vote_average.gte") float minRating,
+            @Query("with_genres") String genreIds,
+            @Query("page") int page
+    );
 }
