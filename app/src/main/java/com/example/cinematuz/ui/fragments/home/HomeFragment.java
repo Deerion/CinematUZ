@@ -139,13 +139,19 @@ public class HomeFragment extends Fragment {
         });
 
         // --- NOWE: Przejście do wyszukiwarki ---
+        // ZWYKŁE kliknięcie w pasek lub lupkę przenosi do SearchFragment normalnie
         binding.cardSearch.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.searchFragment);
         });
-
-        // Na wszelki wypadek przypinamy też do samego tekstu, by kliknięcie było bezbłędne
         binding.tvSearchBar.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.searchFragment);
+        });
+
+        // KLIKNIĘCIE w przycisk FILTRA przenosi do SearchFragment, podając flagę (arguments)
+        binding.btnFilter.setOnClickListener(v -> {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("open_filters", true); // Flaga mówiąca "Otwórz od razu modal"
+            Navigation.findNavController(v).navigate(R.id.searchFragment, bundle);
         });
     }
 

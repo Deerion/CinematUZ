@@ -69,7 +69,7 @@
     <string name="empty_trending_network">Brak połączenia z siecią. Sprawdź internet.</string>
     <string name="empty_trending_category">Nie znaleziono żadnych produkcji w tej kategorii.</string>
     <string name="empty_search_initial">Wpisz tytuł filmu lub serialu, aby rozpocząć wyszukiwanie.</string>
-    <string name="empty_search_results">Brak wyników. Spróbuj innej frazy.</string>
+    <string name="empty_search_results">Brak wyników. Spróbuj innej frazy lub zmień filtry.</string>
     <string name="no_trailer">Brak zwiastuna dla tej produkcji</string>
     <string name="empty_cast">Brak informacji o obsadzie dla tej produkcji.</string>
     <string name="details_empty_title">Brak tytułu</string>
@@ -110,13 +110,15 @@
     <string name="filter_sort_popularity">Popularność</string>
     <string name="filter_sort_release_date">Data wydania</string>
     <string name="filter_sort_rating">Ocena</string>
-    <string name="filter_content_type">TYP KONTENTU</string>
+    <string name="filter_content_type">TYP TREŚCI</string>
     <string name="filter_type_movie">Film</string>
     <string name="filter_type_tv">Serial</string>
     <string name="filter_genre">GATUNEK</string>
     <string name="filter_release_year">ROK WYDANIA</string>
     <string name="filter_min_rating">MINIMALNA OCENA</string>
+
     <string name="filter_apply">Zastosuj (%1$d wyników)</string>
-    <string name="filter_year_range_mock">2010 - 2024</string>
-    <string name="filter_rating_mock">7.5+</string>
+    <string name="filter_apply_simple">Zastosuj</string>
+    <string name="filter_year_range_default">1950 - 2024</string>
+    <string name="filter_rating_default">0.0+</string>
 </resources>

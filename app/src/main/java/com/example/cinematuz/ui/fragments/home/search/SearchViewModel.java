@@ -16,6 +16,8 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import android.text.TextUtils;
+import com.example.cinematuz.data.models.FilterCriteria;
 
 public class SearchViewModel extends ViewModel {
 
@@ -68,5 +70,39 @@ public class SearchViewModel extends ViewModel {
     protected void onCleared() {
         super.onCleared();
         if (searchRunnable != null) handler.removeCallbacks(searchRunnable);
+    }
+
+    public void applyAdvancedFilters(FilterCriteria criteria, String lang) {
+        _isLoading.setValue(true);
+
+        String dateFrom = criteria.yearFrom + "-01-01";
+        String dateTo = criteria.yearTo + "-12-31";
+
+        // Konwersja listy ID gatunków na string oddzielony przecinkami np. "28,878"
+        String genresString = TextUtils.join(",", criteria.genreIds);
+
+        repository.discoverContent(
+                criteria.contentType,
+                lang,
+                criteria.sortBy,
+                dateFrom,
+                dateTo,
+                criteria.minRating,
+                genresString,
+                new Callback<ApiResponse<MediaItem>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<MediaItem>> call, Response<ApiResponse<MediaItem>> response) {
+                        _isLoading.setValue(false);
+                        if (response.isSuccessful() && response.body() != null) {
+                            _searchResults.setValue(response.body().getResults());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<MediaItem>> call, Throwable t) {
+                        _isLoading.setValue(false);
+                    }
+                }
+        );
     }
 }

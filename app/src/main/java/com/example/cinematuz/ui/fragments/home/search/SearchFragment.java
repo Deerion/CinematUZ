@@ -23,9 +23,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
+import com.example.cinematuz.data.models.FilterCriteria;
+import com.example.cinematuz.ui.fragments.home.FilterBottomSheetFragment;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
+import android.widget.ImageView;
 
 public class SearchFragment extends Fragment {
 
@@ -37,6 +40,7 @@ public class SearchFragment extends Fragment {
     private RecyclerView rvSearchResults;
     private ImageButton btnClearSearch;
     private ImageButton btnSearchBack;
+    private ImageView btnOpenFilters;
     private TextView tvSearchEmpty;
 
     private MaterialButton btnFilterAll, btnFilterMovies, btnFilterTv;
@@ -52,6 +56,28 @@ public class SearchFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(SearchViewModel.class);
 
+        initViews(view);
+        setupRecyclerView();
+        setupListeners();
+        setupObservers();
+        setupFilterResultListener();
+
+        setFilter(currentFilter);
+        showInitialEmptyState();
+        etSearch.requestFocus();
+
+        // --- NOWY KOD: Sprawdzamy czy przyszliśmy tutaj z ikonki filtra na ekranie głównym ---
+        if (getArguments() != null && getArguments().getBoolean("open_filters", false)) {
+            // Czyścimy flagę, aby przy ewentualnym obrocie ekranu modal nie wyskakiwał w kółko
+            getArguments().putBoolean("open_filters", false);
+
+            // Otwieramy modal z filtrami
+            FilterBottomSheetFragment bottomSheet = new FilterBottomSheetFragment();
+            bottomSheet.show(getChildFragmentManager(), "FilterBottomSheet");
+        }
+    }
+
+    private void initViews(View view) {
         etSearch = view.findViewById(R.id.etSearch);
         progressBar = view.findViewById(R.id.searchProgressBar);
         rvSearchResults = view.findViewById(R.id.rvSearchResults);
@@ -59,17 +85,12 @@ public class SearchFragment extends Fragment {
         btnSearchBack = view.findViewById(R.id.btnSearchBack);
         tvSearchEmpty = view.findViewById(R.id.tvSearchEmpty);
 
+        // ID przycisku filtrów w Twoim fragment_search.xml
+        btnOpenFilters = view.findViewById(R.id.btn_filter);
+
         btnFilterAll = view.findViewById(R.id.btnFilterAll);
         btnFilterMovies = view.findViewById(R.id.btnFilterMovies);
         btnFilterTv = view.findViewById(R.id.btnFilterTv);
-
-        setupRecyclerView();
-        setupListeners();
-        setupObservers();
-
-        setFilter(currentFilter);
-        showInitialEmptyState();
-        etSearch.requestFocus();
     }
 
     private void setupRecyclerView() {
@@ -85,7 +106,19 @@ public class SearchFragment extends Fragment {
 
     private void setupListeners() {
         btnSearchBack.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
-        btnClearSearch.setOnClickListener(v -> etSearch.setText(""));
+
+        btnClearSearch.setOnClickListener(v -> {
+            etSearch.setText("");
+            showInitialEmptyState();
+        });
+
+        // Otwieranie BottomSheet z filtrami
+        if (btnOpenFilters != null) {
+            btnOpenFilters.setOnClickListener(v -> {
+                FilterBottomSheetFragment bottomSheet = new FilterBottomSheetFragment();
+                bottomSheet.show(getChildFragmentManager(), "FilterBottomSheet");
+            });
+        }
 
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -94,12 +127,13 @@ public class SearchFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-                String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
-                viewModel.onSearchTextChanged(s.toString(), lang);
 
                 if (s.toString().trim().isEmpty()) {
                     adapter.submitList(null);
                     showInitialEmptyState();
+                } else {
+                    String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
+                    viewModel.onSearchTextChanged(s.toString(), lang);
                 }
             }
 
@@ -110,6 +144,30 @@ public class SearchFragment extends Fragment {
         btnFilterAll.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.ALL));
         btnFilterMovies.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.MOVIE));
         btnFilterTv.setOnClickListener(v -> setFilter(SearchResultAdapter.FilterType.TV));
+    }
+
+    /**
+     * Kluczowa funkcja odbierająca dane z modalu filtrów
+     */
+    private void setupFilterResultListener() {
+        getChildFragmentManager().setFragmentResultListener("filter_request", getViewLifecycleOwner(), (requestKey, bundle) -> {
+            FilterCriteria criteria = (FilterCriteria) bundle.getSerializable("filter_data");
+            if (criteria != null) {
+                // Czyścimy tekst wyszukiwania, bo TMDB nie miesza filtrów Discover z zapytaniem tekstowym Search
+                etSearch.setText("");
+                String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
+
+                // Wywołujemy zaawansowane filtrowanie w ViewModelu
+                viewModel.applyAdvancedFilters(criteria, lang);
+
+                // Opcjonalnie: wizualnie dopasuj górne przełączniki (Filmy/TV) do tego co wybrano w modalu
+                if ("tv".equals(criteria.contentType)) {
+                    setFilter(SearchResultAdapter.FilterType.TV);
+                } else {
+                    setFilter(SearchResultAdapter.FilterType.MOVIE);
+                }
+            }
+        });
     }
 
     private void setFilter(SearchResultAdapter.FilterType filterType) {
@@ -143,10 +201,17 @@ public class SearchFragment extends Fragment {
 
         viewModel.searchResults.observe(getViewLifecycleOwner(), results -> {
             adapter.submitList(results);
-            if (etSearch.getText() == null || etSearch.getText().toString().trim().isEmpty()) {
-                showInitialEmptyState();
-            } else if (results == null || results.isEmpty()) {
-                tvSearchEmpty.setText(R.string.empty_search_results);
+
+            // Logika wyświetlania "pustego stanu"
+            boolean isQueryEmpty = etSearch.getText() == null || etSearch.getText().toString().trim().isEmpty();
+
+            if (results == null || results.isEmpty()) {
+                if (isQueryEmpty) {
+                    // Tutaj możemy być po filtrowaniu (Discover), więc jeśli są wyniki = null, pokazujemy info
+                    tvSearchEmpty.setText(R.string.empty_search_results);
+                } else {
+                    tvSearchEmpty.setText(R.string.empty_search_results);
+                }
                 tvSearchEmpty.setVisibility(View.VISIBLE);
             } else {
                 tvSearchEmpty.setVisibility(View.GONE);
