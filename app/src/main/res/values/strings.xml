@@ -18,7 +18,7 @@
 
     <string name="next">Dalej</string>
     <string name="previous">Wstecz</string>
-    <string name="lorem_ipsum">Tutaj pojawi się lista filmów...</string>
+    <string name="lorem_ipsum">Tutaj pojawi się lista filmów…</string>
     <string name="action_settings">Ustawienia</string>
     <string name="first_fragment_label">Główny Ekran</string>
     <string name="second_fragment_label">Szczegóły</string>
@@ -33,9 +33,13 @@
 
     <string name="nav_start">Start</string>
     <string name="nav_friends">Znajomi</string>
-    <string name="nav_map">Mapa</string>
+    <string name="nav_map">Mapa kin</string>
     <string name="nav_profile">Profil</string>
-    <string name="nav_search">Szukaj</string>
+    <string name="nav_search">Wyszukiwarka</string>
+
+    <string name="action_notifications">Powiadomienia</string>
+    <string name="action_filters">Filtry</string>
+    <string name="action_clear_search">Wyczyść wyszukiwanie</string>
 
     <string name="settings_language">Język</string>
     <string name="settings_theme">Motyw</string>
@@ -54,7 +58,7 @@
     <string name="hero_empty_overview">Brak opisu dla tej produkcji.</string>
     <string name="hero_empty_rating">Brak oceny</string>
 
-    <string name="search_hint">Szukaj filmów, seriali...</string>
+    <string name="search_hint">Szukaj filmów i seriali</string>
     <string name="filter_all">Wszystkie</string>
     <string name="filter_movies">Filmy</string>
     <string name="filter_tv">Seriale</string>

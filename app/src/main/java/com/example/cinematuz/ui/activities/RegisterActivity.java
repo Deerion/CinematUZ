@@ -14,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.User;
+import com.example.cinematuz.utils.CaptchaStateManager;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
@@ -35,11 +36,12 @@ import okhttp3.Response;
 public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
-    private String hCaptchaToken = null;
     private final String HCAPTCHA_SITE_KEY = "7ed4b1a6-92a6-4082-b4f0-5daa071e8440";
 
+    private Button btnRegister;
     private MaterialCardView cvCaptchaContainer;
     private CheckBox cbCaptcha;
+    private CaptchaStateManager captchaStateManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,24 +61,22 @@ public class RegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        Button btnRegister = findViewById(R.id.btnRegister);
+        btnRegister = findViewById(R.id.btnRegister);
         TextInputEditText etName = findViewById(R.id.etRegisterName);
         TextInputEditText etEmail = findViewById(R.id.etRegisterEmail);
         TextInputEditText etPassword = findViewById(R.id.etRegisterPassword);
         cvCaptchaContainer = findViewById(R.id.cvCaptchaContainer);
         cbCaptcha = findViewById(R.id.cbCaptcha);
+        captchaStateManager = new CaptchaStateManager(cvCaptchaContainer, cbCaptcha, btnRegister);
 
         if (cvCaptchaContainer != null) {
             cvCaptchaContainer.setOnClickListener(v -> {
                 HCaptcha.getClient(RegisterActivity.this).verifyWithHCaptcha(HCAPTCHA_SITE_KEY)
                         .addOnSuccessListener(response -> {
-                            hCaptchaToken = response.getTokenResult();
-                            if (cbCaptcha != null) cbCaptcha.setChecked(true);
-                            cvCaptchaContainer.setClickable(false);
+                            captchaStateManager.onCaptchaVerified(response.getTokenResult());
                         })
                         .addOnFailureListener(e -> {
-                            hCaptchaToken = null;
-                            if (cbCaptcha != null) cbCaptcha.setChecked(false);
+                            captchaStateManager.onCaptchaReset();
                             Toast.makeText(RegisterActivity.this, "Błąd hCaptcha", Toast.LENGTH_SHORT).show();
                         });
             });
@@ -93,19 +93,22 @@ public class RegisterActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (hCaptchaToken == null) {
+                if (!captchaStateManager.hasVerifiedCaptcha()) {
                     Toast.makeText(RegisterActivity.this, "Potwierdź, że nie jesteś robotem!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                // Kopiowanie i natychmiastowe resetowanie tokena
-                String tokenToVerify = hCaptchaToken;
-                hCaptchaToken = null;
-                if (cbCaptcha != null) cbCaptcha.setChecked(false);
-                if (cvCaptchaContainer != null) cvCaptchaContainer.setClickable(true);
+                String tokenToVerify = captchaStateManager.getCaptchaToken();
+                captchaStateManager.onSubmitStarted();
 
                 verifyCaptchaAndRegister(tokenToVerify, name, email, password);
             });
+        }
+    }
+
+    private void resetCaptchaState() {
+        if (captchaStateManager != null) {
+            captchaStateManager.onCaptchaReset();
         }
     }
 
@@ -124,7 +127,10 @@ public class RegisterActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                runOnUiThread(() -> Toast.makeText(RegisterActivity.this, "Błąd sieci", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    resetCaptchaState();
+                    Toast.makeText(RegisterActivity.this, "Błąd sieci", Toast.LENGTH_SHORT).show();
+                });
             }
 
             @Override
@@ -132,7 +138,10 @@ public class RegisterActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     runOnUiThread(() -> performFirebaseRegistration(name, email, password));
                 } else {
-                    runOnUiThread(() -> Toast.makeText(RegisterActivity.this, "Weryfikacja nieudana. Spróbuj ponownie.", Toast.LENGTH_LONG).show());
+                    runOnUiThread(() -> {
+                        resetCaptchaState();
+                        Toast.makeText(RegisterActivity.this, "Weryfikacja nieudana. Spróbuj ponownie.", Toast.LENGTH_LONG).show();
+                    });
                 }
             }
         });
@@ -157,10 +166,14 @@ public class RegisterActivity extends AppCompatActivity {
                                         finish();
                                     })
                                     .addOnFailureListener(e -> {
+                                        resetCaptchaState();
                                         Toast.makeText(RegisterActivity.this, "Błąd zapisu danych: " + e.getMessage(), Toast.LENGTH_LONG).show();
                                     });
                         }
                     } else {
+                        if (captchaStateManager != null) {
+                            captchaStateManager.onSubmitFinished();
+                        }
                         Toast.makeText(RegisterActivity.this, "Błąd: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });

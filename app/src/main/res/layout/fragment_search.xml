@@ -20,7 +20,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/previous"
+            android:importantForAutofill="no"
             android:src="@drawable/ic_arrow_back"
+            tools:ignore="MissingContentDescription"
             app:tint="?android:attr/textColorPrimary" />
 
         <TextView
@@ -32,6 +35,39 @@
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="20sp"
             android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_width="32dp"
+            android:layout_height="32dp">
+
+            <ImageView
+                android:id="@+id/btn_filter"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="@string/action_filters"
+                android:importantForAutofill="no"
+                android:padding="4dp"
+                android:src="@drawable/ic_filter"
+                tools:ignore="MissingContentDescription"
+                app:tint="?attr/colorPrimary" />
+
+            <TextView
+                android:id="@+id/tv_filter_badge"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/bg_filter_badge_dot"
+                android:contentDescription="@null"
+                android:importantForAutofill="no"
+                android:visibility="gone"
+                tools:ignore="MissingContentDescription"
+                tools:visibility="visible" />
+        </FrameLayout>
     </LinearLayout>
 
     <FrameLayout
@@ -59,7 +95,10 @@
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
+                    android:contentDescription="@null"
                     android:src="@drawable/ic_search"
+                    android:importantForAutofill="no"
+                    tools:ignore="MissingContentDescription"
                     app:tint="?attr/colorOnSurfaceVariant" />
 
                 <EditText
@@ -69,6 +108,7 @@
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
                     android:background="@null"
+                    android:importantForAutofill="no"
                     android:hint="@string/search_hint"
                     android:inputType="text"
                     android:textColor="?attr/colorOnSurfaceVariant"
@@ -79,40 +119,16 @@
                     android:id="@+id/btnClearSearch"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
+                    android:contentDescription="@string/action_clear_search"
+                    android:importantForAutofill="no"
                     android:padding="4dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_close"
                     android:visibility="gone"
+                    tools:ignore="MissingContentDescription"
                     app:tint="?attr/colorPrimary"
                     tools:visibility="visible" />
 
-                <FrameLayout
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_marginStart="8dp">
-
-                    <ImageView
-                        android:id="@+id/btn_filter"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:padding="4dp"
-                        android:src="@drawable/ic_filter"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        app:tint="?attr/colorPrimary" />
-
-                    <TextView
-                        android:id="@+id/tv_filter_badge"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:layout_gravity="top|end"
-                        android:layout_marginTop="2dp"
-                        android:layout_marginEnd="2dp"
-                        android:background="@drawable/bg_filter_badge_dot"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
-                </FrameLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

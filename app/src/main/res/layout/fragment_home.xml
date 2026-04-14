@@ -10,12 +10,56 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/layout_home_top_bar"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/ic_movie_filter" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="@string/app_name"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btn_home_notifications"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_notifications"
+                android:padding="8dp"
+                android:src="@drawable/ic_notifications"
+                app:tint="@color/primary" />
+
+        </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card_search"
             android:layout_width="0dp"
             android:layout_height="56dp"
+            android:layout_marginTop="16dp"
             app:cardBackgroundColor="?attr/colorSurfaceVariant"
             app:cardCornerRadius="28dp"
             app:cardElevation="0dp"
@@ -23,7 +67,7 @@
             app:strokeColor="?attr/colorOutline"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@+id/layout_home_top_bar">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -48,16 +92,6 @@
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="15sp" />
 
-                <ImageView
-                    android:id="@+id/btn_filter"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:padding="4dp"
-                    android:src="@drawable/ic_filter"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:tint="?attr/colorPrimary" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

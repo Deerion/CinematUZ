@@ -18,6 +18,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.cinematuz.R;
+import com.example.cinematuz.utils.CaptchaStateManager;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.example.cinematuz.utils.ThemeHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -51,11 +52,12 @@ public class LoginActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignInClient;
     private ActivityResultLauncher<Intent> googleSignInLauncher;
 
-    private String hCaptchaToken = null;
     private final String HCAPTCHA_SITE_KEY = "7ed4b1a6-92a6-4082-b4f0-5daa071e8440";
 
+    private Button btnLogin;
     private MaterialCardView cvCaptchaContainer;
     private CheckBox cbCaptcha;
+    private CaptchaStateManager captchaStateManager;
 
     @Override
     protected void onStart() {
@@ -110,27 +112,25 @@ public class LoginActivity extends AppCompatActivity {
         // --- INICJALIZACJA WIDOKÓW ---
         ImageButton btnClose = findViewById(R.id.btnClose);
         TextView tvSignUpLink = findViewById(R.id.tvSignUpLink);
-        Button btnLogin = findViewById(R.id.btnLogin);
+        btnLogin = findViewById(R.id.btnLogin);
         Button btnGoogle = findViewById(R.id.btnGoogle);
         TextInputEditText etEmail = findViewById(R.id.etLoginEmail);
         TextInputEditText etPassword = findViewById(R.id.etLoginPassword);
 
         cvCaptchaContainer = findViewById(R.id.cvCaptchaContainer);
         cbCaptcha = findViewById(R.id.cbCaptcha);
+        captchaStateManager = new CaptchaStateManager(cvCaptchaContainer, cbCaptcha, btnLogin);
 
         // --- LISTENERY ---
         if (cvCaptchaContainer != null) {
             cvCaptchaContainer.setOnClickListener(v -> {
                 HCaptcha.getClient(LoginActivity.this).verifyWithHCaptcha(HCAPTCHA_SITE_KEY)
                         .addOnSuccessListener(response -> {
-                            hCaptchaToken = response.getTokenResult();
-                            if (cbCaptcha != null) cbCaptcha.setChecked(true);
-                            cvCaptchaContainer.setClickable(false);
+                            captchaStateManager.onCaptchaVerified(response.getTokenResult());
                             Toast.makeText(LoginActivity.this, "Weryfikacja udana!", Toast.LENGTH_SHORT).show();
                         })
                         .addOnFailureListener(e -> {
-                            hCaptchaToken = null;
-                            if (cbCaptcha != null) cbCaptcha.setChecked(false);
+                            captchaStateManager.onCaptchaReset();
                             Toast.makeText(LoginActivity.this, "Błąd hCaptcha", Toast.LENGTH_SHORT).show();
                         });
             });
@@ -150,15 +150,13 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (hCaptchaToken == null) {
+                if (!captchaStateManager.hasVerifiedCaptcha()) {
                     Toast.makeText(LoginActivity.this, "Potwierdź, że nie jesteś robotem!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                String tokenToVerify = hCaptchaToken;
-                hCaptchaToken = null;
-                if (cbCaptcha != null) cbCaptcha.setChecked(false);
-                if (cvCaptchaContainer != null) cvCaptchaContainer.setClickable(true);
+                String tokenToVerify = captchaStateManager.getCaptchaToken();
+                captchaStateManager.onSubmitStarted();
 
                 verifyCaptchaAndLogin(tokenToVerify, email, password);
             });
@@ -177,6 +175,12 @@ public class LoginActivity extends AppCompatActivity {
                 overridePendingTransition(0, 0);
                 finish();
             });
+        }
+    }
+
+    private void resetCaptchaState() {
+        if (captchaStateManager != null) {
+            captchaStateManager.onCaptchaReset();
         }
     }
 
@@ -225,7 +229,10 @@ public class LoginActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Błąd sieci: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    resetCaptchaState();
+                    Toast.makeText(LoginActivity.this, "Błąd sieci: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
             }
 
             @Override
@@ -233,7 +240,10 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     runOnUiThread(() -> performFirebaseLogin(email, password));
                 } else {
-                    runOnUiThread(() -> Toast.makeText(LoginActivity.this, "Weryfikacja hCaptcha nieudana.", Toast.LENGTH_LONG).show());
+                    runOnUiThread(() -> {
+                        resetCaptchaState();
+                        Toast.makeText(LoginActivity.this, "Weryfikacja hCaptcha nieudana.", Toast.LENGTH_LONG).show();
+                    });
                 }
             }
         });
@@ -245,6 +255,9 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         goToMainActivity();
                     } else {
+                        if (captchaStateManager != null) {
+                            captchaStateManager.onSubmitFinished();
+                        }
                         String errorMessage = "Nieprawidłowy e-mail lub hasło.";
                         if (task.getException() instanceof com.google.firebase.FirebaseNetworkException) {
                             errorMessage = "Brak połączenia z internetem.";
