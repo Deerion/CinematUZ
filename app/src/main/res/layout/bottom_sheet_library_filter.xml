@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_switch_container"> <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Sortuj bibliotekę"
+    android:textSize="20sp"
+    android:textStyle="bold"
+    android:textColor="?attr/colorOnSurface"
+    android:layout_marginBottom="16dp"/>
+
+    <RadioGroup
+        android:id="@+id/radioGroupSort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/radio_sort_newest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ostatnio dodane"
+            android:paddingVertical="12dp"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/radio_sort_rating"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="12dp"
+            android:text="Najwyżej oceniane"/>
+
+        <RadioButton
+            android:id="@+id/radio_sort_alpha"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="12dp"
+            android:text="Alfabetycznie (A-Z)"/>
+    </RadioGroup>
+
+</LinearLayout>

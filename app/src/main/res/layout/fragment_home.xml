@@ -52,7 +52,6 @@
                 android:padding="8dp"
                 android:src="@drawable/ic_notifications"
                 app:tint="@color/primary" />
-
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
@@ -91,8 +90,6 @@
                     android:text="@string/search_hint"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="15sp" />
-
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -111,14 +108,14 @@
                 android:paddingVertical="4dp">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_filter_recommended"
+                    android:id="@+id/btn_filter_all"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="12dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:minHeight="40dp"
-                    android:text="@string/tab_recommended"
+                    android:text="@string/filter_all"
                     android:textColor="?attr/colorOnPrimary"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -128,7 +125,7 @@
                     app:cornerRadius="20dp" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_filter_to_watch"
+                    android:id="@+id/btn_filter_movies"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -136,7 +133,7 @@
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:minHeight="40dp"
-                    android:text="@string/tab_to_watch"
+                    android:text="@string/filter_movies"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -146,14 +143,14 @@
                     app:strokeColor="?attr/colorOutline" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_filter_watched"
+                    android:id="@+id/btn_filter_tv"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:minHeight="40dp"
-                    android:text="@string/tab_watched"
+                    android:text="@string/filter_tv"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -161,59 +158,30 @@
                     android:textAllCaps="true"
                     app:cornerRadius="20dp"
                     app:strokeColor="?attr/colorOutline" />
-
             </LinearLayout>
         </HorizontalScrollView>
-
-        <LinearLayout
-            android:id="@+id/layout_type_filters"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/scroll_categories">
-
-            <CheckBox
-                android:id="@+id/cb_movies"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/filter_movies"
-                android:checked="true"
-                android:buttonTint="?attr/colorPrimary" />
-
-            <CheckBox
-                android:id="@+id/cb_tv_series"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/filter_tv"
-                android:checked="true"
-                android:buttonTint="?attr/colorPrimary" />
-        </LinearLayout>
 
         <include
             android:id="@+id/layout_skeleton_hero"
             layout="@layout/skeleton_hero"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="24dp"
             android:visibility="visible"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/layout_type_filters" />
+            app:layout_constraintTop_toBottomOf="@+id/scroll_categories" />
 
         <include
             android:id="@+id/layout_hero_movie"
             layout="@layout/item_hero"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="24dp"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/layout_type_filters" />
+            app:layout_constraintTop_toBottomOf="@+id/scroll_categories" />
 
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/barrier_hero"
