@@ -53,4 +53,10 @@
             app:argType="com.example.cinematuz.data.models.MediaItem" />
     </fragment>
 
+    <fragment
+        android:id="@+id/nav_library"
+        android:name="com.example.cinematuz.ui.fragments.library.LibraryFragment"
+        android:label="Biblioteka"
+        tools:layout="@layout/fragment_library" />
+
 </navigation>
