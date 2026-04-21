@@ -165,7 +165,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Nie masz nic do obejrzenia"
+                android:text="@string/empty_library_to_watch"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -175,8 +175,8 @@
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Odkryj nowości"
+                android:layout_marginTop="24dp"
+                android:text="@string/empty_library_whats_new"
                 android:textColor="?attr/colorPrimary" />
         </LinearLayout>
     </FrameLayout>

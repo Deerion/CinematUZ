@@ -131,6 +131,8 @@
 
     <string name="tab_to_watch">TO WATCH</string>
     <string name="tab_watched">WATCHED</string>
-    <string name="empty_library_to_watch">You don\'t have anything to watch yet.</string>
+    <string name="empty_library_to_watch">You don\'t have anything to watch.</string>
     <string name="empty_library_watched">Your watchlist is empty.</string>
+    <string name="empty_library_whats_new">DISCOVER WHAT\'S NEW</string>
+
 </resources>

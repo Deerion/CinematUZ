@@ -131,6 +131,7 @@
 
     <string name="tab_to_watch">DO OBEJRZENIA</string>
     <string name="tab_watched">OBEJRZANE</string>
-    <string name="empty_library_to_watch">Nie masz jeszcze nic do obejrzenia.</string>
+    <string name="empty_library_to_watch">Nie masz nic do obejrzenia.</string>
     <string name="empty_library_watched">Twoja lista obejrzanych jest pusta.</string>
+    <string name="empty_library_whats_new">ODKRYJ NOWOŚCI</string>
 </resources>
