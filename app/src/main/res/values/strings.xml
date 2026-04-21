@@ -32,6 +32,7 @@
     <string name="already_have_account">Masz już konto?</string>
 
     <string name="nav_start">Start</string>
+    <string name="nav_library">Biblioteka</string>
     <string name="nav_friends">Znajomi</string>
     <string name="nav_map">Mapa kin</string>
     <string name="nav_profile">Profil</string>
@@ -46,6 +47,7 @@
     <string name="theme_light">Jasny</string>
     <string name="theme_dark">Ciemny</string>
     <string name="skip_login">Tryb gościa</string>
+    <string name="settings_logout">Wyloguj się</string>
 
     <string name="media_type_movie">FILM</string>
     <string name="media_type_tv">SERIAL</string>
@@ -127,10 +129,8 @@
     <string name="filter_year_range_default">1950 - 2024</string>
     <string name="filter_rating_default">0.0+</string>
 
-    <string name="tab_recommended">REKOMENDOWANE</string>
     <string name="tab_to_watch">DO OBEJRZENIA</string>
     <string name="tab_watched">OBEJRZANE</string>
-
     <string name="empty_library_to_watch">Nie masz jeszcze nic do obejrzenia.</string>
     <string name="empty_library_watched">Twoja lista obejrzanych jest pusta.</string>
 </resources>

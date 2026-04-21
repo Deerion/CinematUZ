@@ -181,7 +181,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="16dp"
-            android:text="Wyloguj się"
+            android:text="@string/settings_logout"
             android:textColor="#FF5252"
             android:textSize="16sp"
             android:textStyle="bold" />

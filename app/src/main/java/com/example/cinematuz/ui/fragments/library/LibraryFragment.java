@@ -123,10 +123,11 @@ public class LibraryFragment extends Fragment {
             binding.layoutEmptyLibrary.setVisibility(View.VISIBLE);
 
             if ("watched".equals(currentStatus)) {
-                binding.tvEmptyLibraryText.setText("Jeszcze nic nie obejrzałeś.");
+                binding.tvEmptyLibraryText.setText(getString(R.string.empty_library_watched));
             } else {
-                binding.tvEmptyLibraryText.setText("Nie masz nic do obejrzenia.");
+                binding.tvEmptyLibraryText.setText(getString(R.string.empty_library_to_watch));
             }
+
         } else {
             binding.rvLibrary.setVisibility(View.VISIBLE);
             binding.layoutEmptyLibrary.setVisibility(View.GONE);

@@ -6,7 +6,7 @@
     <item
         android:id="@+id/nav_library"
         android:icon="@drawable/ic_movie_filter"
-        android:title="Biblioteka" />
+        android:title="@string/nav_library" />
     <item
         android:id="@+id/nav_friends"
         android:icon="@drawable/ic_people"
