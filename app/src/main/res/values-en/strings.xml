@@ -152,5 +152,6 @@
     <string name="profile_update_failed">Error updating profile</string>
     <string name="profile_uploading">Uploading image...</string>
     <string name="profile_avatar_updated">Avatar updated</string>
+    <string name="profile_title">Profile</string>
 
 </resources>
