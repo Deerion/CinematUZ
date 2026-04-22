@@ -29,5 +29,8 @@
     </style>
 
     <style name="Theme.CinematUZ" parent="Base.Theme.CinematUZ" />
+    <style name="RoundedCornerImage">
+        <item name="cornerSize">12dp</item>
+    </style>
 
 </resources>
