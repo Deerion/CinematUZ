@@ -3,6 +3,7 @@ package com.example.cinematuz.ui.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -18,6 +19,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.cinematuz.R;
+import com.example.cinematuz.data.models.User;
 import com.example.cinematuz.utils.CaptchaStateManager;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.example.cinematuz.utils.ThemeHelper;
@@ -31,7 +33,9 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.hcaptcha.sdk.HCaptcha;
 
 import org.json.JSONObject;
@@ -48,7 +52,10 @@ import okhttp3.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String TAG = "LoginActivity";
+
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private GoogleSignInClient mGoogleSignInClient;
     private ActivityResultLauncher<Intent> googleSignInLauncher;
 
@@ -62,7 +69,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Sprawdzamy sesję ZANIM użytkownik zacznie coś wpisywać
         if (mAuth != null && mAuth.getCurrentUser() != null) {
             goToMainActivity();
         }
@@ -81,8 +87,8 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
-        // Ustawienia Insets (Edge-to-Edge)
         View mainView = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, windowInsets) -> {
             Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -90,7 +96,6 @@ public class LoginActivity extends AppCompatActivity {
             return windowInsets;
         });
 
-        // --- KONFIGURACJA GOOGLE SIGN-IN ---
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -109,7 +114,10 @@ public class LoginActivity extends AppCompatActivity {
                 }
         );
 
-        // --- INICJALIZACJA WIDOKÓW ---
+        setupViews();
+    }
+
+    private void setupViews() {
         ImageButton btnClose = findViewById(R.id.btnClose);
         TextView tvSignUpLink = findViewById(R.id.tvSignUpLink);
         btnLogin = findViewById(R.id.btnLogin);
@@ -121,7 +129,6 @@ public class LoginActivity extends AppCompatActivity {
         cbCaptcha = findViewById(R.id.cbCaptcha);
         captchaStateManager = new CaptchaStateManager(cvCaptchaContainer, cbCaptcha, btnLogin);
 
-        // --- LISTENERY ---
         if (cvCaptchaContainer != null) {
             cvCaptchaContainer.setOnClickListener(v -> {
                 HCaptcha.getClient(LoginActivity.this).verifyWithHCaptcha(HCAPTCHA_SITE_KEY)
@@ -131,7 +138,6 @@ public class LoginActivity extends AppCompatActivity {
                         })
                         .addOnFailureListener(e -> {
                             captchaStateManager.onCaptchaReset();
-                            Toast.makeText(LoginActivity.this, "Błąd hCaptcha", Toast.LENGTH_SHORT).show();
                         });
             });
         }
@@ -157,7 +163,6 @@ public class LoginActivity extends AppCompatActivity {
 
                 String tokenToVerify = captchaStateManager.getCaptchaToken();
                 captchaStateManager.onSubmitStarted();
-
                 verifyCaptchaAndLogin(tokenToVerify, email, password);
             });
         }
@@ -172,19 +177,11 @@ public class LoginActivity extends AppCompatActivity {
         if (tvSignUpLink != null) {
             tvSignUpLink.setOnClickListener(v -> {
                 startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
-                overridePendingTransition(0, 0);
                 finish();
             });
         }
     }
 
-    private void resetCaptchaState() {
-        if (captchaStateManager != null) {
-            captchaStateManager.onCaptchaReset();
-        }
-    }
-
-    // --- METODY GOOGLE SIGN-IN ---
     private void signInWithGoogle() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         googleSignInLauncher.launch(signInIntent);
@@ -206,21 +203,63 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        goToMainActivity();
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            checkAndCreateProfile(user);
+                        }
                     } else {
                         Toast.makeText(LoginActivity.this, "Błąd autoryzacji Firebase", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    // --- METODY LOGOWANIA EMAIL + CAPTCHA ---
+    private void checkAndCreateProfile(FirebaseUser firebaseUser) {
+        db.collection("profiles").document(firebaseUser.getUid()).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (task.getResult() != null && task.getResult().exists()) {
+                            goToMainActivity();
+                        } else {
+                            createProfileFromEmail(firebaseUser);
+                        }
+                    } else {
+                        Log.e(TAG, "Błąd sprawdzania profilu", task.getException());
+                        goToMainActivity();
+                    }
+                });
+    }
+
+    private void createProfileFromEmail(FirebaseUser firebaseUser) {
+        final String email = firebaseUser.getEmail();
+        String tempUsername = "User";
+
+        if (email != null && email.contains("@")) {
+            tempUsername = email.split("@")[0];
+        }
+
+        // Ta zmienna musi być finalna, aby lambda mogła jej użyć
+        final String finalUsername = tempUsername;
+
+        User newUser = new User(finalUsername, email);
+
+        db.collection("profiles").document(firebaseUser.getUid())
+                .set(newUser)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(LoginActivity.this, "Witaj w CinematUZ, " + finalUsername + "!", Toast.LENGTH_SHORT).show();
+                    goToMainActivity();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Błąd zapisu profilu", e);
+                    goToMainActivity();
+                });
+    }
+
     private void verifyCaptchaAndLogin(String token, String email, String password) {
         OkHttpClient client = new OkHttpClient();
         JSONObject json = new JSONObject();
         try { json.put("token", token); } catch (Exception e) { e.printStackTrace(); }
 
         RequestBody body = RequestBody.create(json.toString(), MediaType.get("application/json; charset=utf-8"));
-
         Request request = new Request.Builder()
                 .url("https://verifycaptcha-lbmgq5tbhq-uc.a.run.app")
                 .post(body)
@@ -230,7 +269,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call call, IOException e) {
                 runOnUiThread(() -> {
-                    resetCaptchaState();
+                    if (captchaStateManager != null) captchaStateManager.onCaptchaReset();
                     Toast.makeText(LoginActivity.this, "Błąd sieci: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
@@ -241,8 +280,8 @@ public class LoginActivity extends AppCompatActivity {
                     runOnUiThread(() -> performFirebaseLogin(email, password));
                 } else {
                     runOnUiThread(() -> {
-                        resetCaptchaState();
-                        Toast.makeText(LoginActivity.this, "Weryfikacja hCaptcha nieudana.", Toast.LENGTH_LONG).show();
+                        if (captchaStateManager != null) captchaStateManager.onCaptchaReset();
+                        Toast.makeText(LoginActivity.this, "Weryfikacja nieudana.", Toast.LENGTH_LONG).show();
                     });
                 }
             }
@@ -258,11 +297,7 @@ public class LoginActivity extends AppCompatActivity {
                         if (captchaStateManager != null) {
                             captchaStateManager.onSubmitFinished();
                         }
-                        String errorMessage = "Nieprawidłowy e-mail lub hasło.";
-                        if (task.getException() instanceof com.google.firebase.FirebaseNetworkException) {
-                            errorMessage = "Brak połączenia z internetem.";
-                        }
-                        Toast.makeText(LoginActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, "Nieprawidłowy e-mail lub hasło.", Toast.LENGTH_LONG).show();
                     }
                 });
     }
