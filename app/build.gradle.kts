@@ -69,6 +69,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation("com.google.firebase:firebase-storage")
 
     // Lokalna baza Room
     val room_version = "2.8.4"

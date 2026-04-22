@@ -134,4 +134,22 @@
     <string name="empty_library_to_watch">Nie masz nic do obejrzenia.</string>
     <string name="empty_library_watched">Twoja lista obejrzanych jest pusta.</string>
     <string name="empty_library_whats_new">ODKRYJ NOWOŚCI</string>
+
+    <string name="profile_movies_watched">OBEJRZANE FILMY</string>
+    <string name="profile_points">PUNKTY</string>
+    <string name="profile_rank_newcomer">Nowicjusz</string>
+    <string name="profile_rank_cinephile">Kinoman</string>
+    <string name="profile_rank_cinephile_elite">Elitarny Kinoman</string>
+    <string name="profile_xp_to_next_rank">%1$d / %2$d XP DO NASTĘPNEJ RANGI</string>
+    <string name="profile_max_rank">Osiągnięto maksymalną rangę</string>
+    <string name="profile_personalization">PERSONALIZACJA</string>
+    <string name="profile_account">KONTO</string>
+    <string name="profile_edit_profile">Edytuj profil</string>
+    <string name="profile_edit_title">Edytuj profil</string>
+    <string name="profile_save">Zapisz</string>
+    <string name="profile_cancel">Anuluj</string>
+    <string name="profile_updated">Profil zaktualizowany</string>
+    <string name="profile_update_failed">Błąd aktualizacji profilu</string>
+    <string name="profile_uploading">Przesyłanie zdjęcia...</string>
+    <string name="profile_avatar_updated">Awatar zaktualizowany</string>
 </resources>

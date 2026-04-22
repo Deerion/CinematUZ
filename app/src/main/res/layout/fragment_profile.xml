@@ -1,204 +1,420 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground"
-    android:orientation="vertical"
-    tools:context=".ui.fragments.profile.ProfileFragment">
+    android:background="?android:attr/colorBackground">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_profile"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
-        <ImageButton
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/action_notifications"
-            android:padding="8dp"
-            android:src="@drawable/ic_notifications"
-            app:tint="@color/primary" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/language_settings_tile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/bg_settings_tile"
-        android:foreground="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:paddingBottom="24dp"
+        tools:context=".ui.fragments.profile.ProfileFragment">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_language_change"
-            android:contentDescription="Ikona Języka"/>
+        <!-- Header -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:paddingHorizontal="16dp">
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            android:text="@string/settings_language"
-            android:textSize="16sp" />
+            <ImageButton
+                android:id="@+id/btn_notifications"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/action_notifications"
+                android:padding="12dp"
+                android:src="@drawable/ic_notifications"
+                app:tint="@color/primary" />
+        </RelativeLayout>
 
+        <!-- Profile Info -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_switch_container"
-            android:orientation="horizontal"
-            android:padding="4dp">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingTop="24dp">
+
+            <FrameLayout
+                android:layout_width="140dp"
+                android:layout_height="140dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/profile_avatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:padding="4dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_person"
+                    app:shapeAppearanceOverlay="@style/CircleImage"
+                    app:strokeColor="@color/primary"
+                    app:strokeWidth="2dp" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btn_edit_avatar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="4dp"
+                    android:src="@drawable/ic_add"
+                    app:fabCustomSize="36dp"
+                    app:tint="@android:color/white" />
+            </FrameLayout>
 
             <TextView
-                android:id="@+id/textPl"
+                android:id="@+id/profile_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_switch_active"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="6dp"
-                android:text="PL"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/textEn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:background="@android:color/transparent"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="6dp"
-                android:text="EN"
-                android:textColor="#9E9E9E"
+                android:text="Loading..."
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="24sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/profile_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="\@username"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="14sp" />
         </LinearLayout>
-    </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/theme_settings_tile"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_settings_tile"
-        android:foreground="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_movie_filter"
-            android:contentDescription="Ikona Motywu"/>
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            android:text="@string/settings_theme"
-            android:textSize="16sp" />
-
+        <!-- Stats -->
         <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:paddingHorizontal="16dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/stat_movies_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/primary"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/profile_movies_watched"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/stat_points"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/primary"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/stat_points_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/profile_points"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <!-- Rank Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/rank_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="Cinephile Elite"
+                    android:textColor="@color/primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ProgressBar
+                    android:id="@+id/rank_progress"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="12dp"
+                    android:progress="60"
+                    android:progressDrawable="@drawable/bg_switch_active" />
+
+                <TextView
+                    android:id="@+id/rank_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
+                    android:text="LEVEL 48 • 250 XP TO NEXT RANK"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Personalization Header -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_switch_container"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/profile_personalization"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorSecondary" />
+
+        <LinearLayout
+            android:id="@+id/theme_settings_tile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:padding="16dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_settings_tile"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_movie_filter"
+                app:tint="?android:attr/textColorPrimary" />
 
             <TextView
-                android:id="@+id/textThemeLight"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="@string/settings_theme"
+                android:textSize="16sp" />
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="6dp"
-                android:text="@string/theme_light"
-                android:textColor="#9E9E9E"
-                android:textStyle="bold" />
+                android:background="@drawable/bg_switch_container"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/textThemeLight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/theme_light"
+                    android:textColor="#9E9E9E"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textThemeDark"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="6dp"
+                    android:text="@string/theme_dark"
+                    android:textColor="#9E9E9E"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/language_settings_tile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_settings_tile"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_language_change"
+                app:tint="?android:attr/textColorPrimary" />
 
             <TextView
-                android:id="@+id/textThemeDark"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="@string/settings_language"
+                android:textSize="16sp" />
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="6dp"
-                android:text="@string/theme_dark"
-                android:textColor="#9E9E9E"
+                android:background="@drawable/bg_switch_container"
+                android:orientation="horizontal"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/textPl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="6dp"
+                    android:text="PL"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textEn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="6dp"
+                    android:text="EN"
+                    android:textColor="#9E9E9E"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Account Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:text="@string/profile_account"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorSecondary" />
+
+        <LinearLayout
+            android:id="@+id/edit_profile_tile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_settings_tile"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_person"
+                app:tint="?android:attr/textColorPrimary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="@string/profile_edit_profile"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_arrow_back"
+                android:rotation="180"
+                app:tint="?android:attr/textColorSecondary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/logout_settings_tile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_settings_tile"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_logout"
+                android:textColor="@color/primary"
+                android:textSize="16sp"
                 android:textStyle="bold" />
         </LinearLayout>
-    </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/logout_settings_tile"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/bg_settings_tile"
-        android:foreground="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:visibility="gone">
-
+        <!-- TMDB Attribution -->
         <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_close"
-            android:contentDescription="Ikona Wyloguj"
-            app:tint="#FF5252" />
-
-        <TextView
-            android:layout_width="0dp"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            android:text="@string/settings_logout"
-            android:textColor="#FF5252"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="48dp"
+            android:layout_marginBottom="24dp"
+            android:alpha="0.5"
+            android:src="@drawable/tmdb_logo"
+            app:tint="?android:attr/textColorSecondary" />
+
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="24dp"
-        android:adjustViewBounds="true"
-        android:contentDescription="Powered by TMDB"
-        android:src="@drawable/tmdb_logo" />
-
-</LinearLayout>
+</ScrollView>

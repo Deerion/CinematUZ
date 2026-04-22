@@ -135,4 +135,22 @@
     <string name="empty_library_watched">Your watchlist is empty.</string>
     <string name="empty_library_whats_new">DISCOVER WHAT\'S NEW</string>
 
+    <string name="profile_movies_watched">MOVIES WATCHED</string>
+    <string name="profile_points">POINTS</string>
+    <string name="profile_rank_newcomer">Newcomer</string>
+    <string name="profile_rank_cinephile">Cinemaphile</string>
+    <string name="profile_rank_cinephile_elite">Cinemaphile Elite</string>
+    <string name="profile_xp_to_next_rank">%1$d / %2$d XP TO NEXT RANK</string>
+    <string name="profile_max_rank">Max Rank Achieved</string>
+    <string name="profile_personalization">CUSTOMISATION</string>
+    <string name="profile_account">ACCOUNT</string>
+    <string name="profile_edit_profile">Edit profile</string>
+    <string name="profile_edit_title">Edit profile</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_cancel">Cancel</string>
+    <string name="profile_updated">Profile updated</string>
+    <string name="profile_update_failed">Error updating profile</string>
+    <string name="profile_uploading">Uploading image...</string>
+    <string name="profile_avatar_updated">Avatar updated</string>
+
 </resources>
