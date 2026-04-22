@@ -152,4 +152,5 @@
     <string name="profile_update_failed">Błąd aktualizacji profilu</string>
     <string name="profile_uploading">Przesyłanie zdjęcia...</string>
     <string name="profile_avatar_updated">Awatar zaktualizowany</string>
+    <string name="profile_title">Profil</string>
 </resources>

@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
+import com.example.cinematuz.data.models.User;
 import com.example.cinematuz.ui.activities.LoginActivity;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.example.cinematuz.utils.ThemeHelper;
@@ -40,7 +41,6 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 
 public class ProfileFragment extends Fragment {
 
@@ -70,23 +70,19 @@ public class ProfileFragment extends Fragment {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        
-        // Inicjalizacja Storage z próbą pobrania domyślnego wiaderka
+
         try {
             storage = FirebaseStorage.getInstance();
-            Log.d(TAG, "Storage bucket: " + storage.getReference().getBucket());
         } catch (Exception e) {
-            Log.e(TAG, "Failed to initialize default Storage. You might need to provide the bucket URL explicitly.", e);
+            Log.e(TAG, "Failed to initialize Storage", e);
         }
 
-        // Konfiguracja Google Sign-In do pełnego wylogowania
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireContext(), gso);
 
-        // Rejestracja launchera dla wyboru obrazu
         mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
                 uri -> {
                     if (uri != null) {
@@ -101,7 +97,7 @@ public class ProfileFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        // Inicjalizacja widoków profilu
+        // Inicjalizacja widoków
         profileAvatar = view.findViewById(R.id.profile_avatar);
         profileName = view.findViewById(R.id.profile_name);
         profileUsername = view.findViewById(R.id.profile_username);
@@ -112,10 +108,11 @@ public class ProfileFragment extends Fragment {
         rankProgress = view.findViewById(R.id.rank_progress);
         btnEditAvatar = view.findViewById(R.id.btn_edit_avatar);
         editProfileTile = view.findViewById(R.id.edit_profile_tile);
+
         btnEditAvatar.setOnClickListener(v -> mGetContent.launch("image/*"));
         editProfileTile.setOnClickListener(v -> showEditProfileDialog());
 
-        // --- OBSŁUGA JĘZYKA ---
+        // --- TWOJA LOGIKA JĘZYKA (NIENARUSZONA) ---
         View languageTile = view.findViewById(R.id.language_settings_tile);
         TextView textPl = view.findViewById(R.id.textPl);
         TextView textEn = view.findViewById(R.id.textEn);
@@ -136,7 +133,7 @@ public class ProfileFragment extends Fragment {
             changeLanguage(nextLang);
         });
 
-        // --- OBSŁUGA MOTYWU ---
+        // --- TWOJA LOGIKA MOTYWU (NIENARUSZONA) ---
         View themeTile = view.findViewById(R.id.theme_settings_tile);
         TextView textThemeLight = view.findViewById(R.id.textThemeLight);
         TextView textThemeDark = view.findViewById(R.id.textThemeDark);
@@ -153,9 +150,8 @@ public class ProfileFragment extends Fragment {
         textThemeDark.setOnClickListener(v -> toggleTheme(true));
         themeTile.setOnClickListener(v -> toggleTheme(!ThemeHelper.isDarkMode(requireContext())));
 
-        // --- OBSŁUGA WYLOGOWANIA ---
+        // --- OBSŁUGA PROFILU ---
         View logoutTile = view.findViewById(R.id.logout_settings_tile);
-
         if (mAuth.getCurrentUser() != null) {
             logoutTile.setVisibility(View.VISIBLE);
             logoutTile.setOnClickListener(v -> performLogout());
@@ -170,7 +166,6 @@ public class ProfileFragment extends Fragment {
     private void showEditProfileDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle(R.string.profile_edit_title);
-
         final EditText input = new EditText(requireContext());
         input.setText(profileName.getText().toString());
         builder.setView(input);
@@ -182,7 +177,6 @@ public class ProfileFragment extends Fragment {
             }
         });
         builder.setNegativeButton(R.string.profile_cancel, (dialog, which) -> dialog.cancel());
-
         builder.show();
     }
 
@@ -196,35 +190,25 @@ public class ProfileFragment extends Fragment {
                     profileName.setText(newUsername);
                     Toast.makeText(getContext(), R.string.profile_updated, Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating username", e);
-                    Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show();
-                });
+                .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show());
     }
 
+    // --- POPRAWIONE WGRYWANIE (TYLKO JEDEN PLIK NA UŻYTKOWNIKA) ---
     private void uploadImageToFirebase(Uri imageUri) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser == null) return;
+        if (currentUser == null || storage == null) return;
 
-        if (storage == null) {
-            Toast.makeText(getContext(), "Storage not initialized correctly", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        String fileName = "avatars/" + currentUser.getUid() + "_" + UUID.randomUUID().toString();
+        // Stała nazwa pliku to UID - stare zdjęcie zostanie nadpisane w Storage
+        String fileName = "avatars/" + currentUser.getUid() + ".jpg";
         StorageReference ref = storage.getReference().child(fileName);
 
         Toast.makeText(getContext(), R.string.profile_uploading, Toast.LENGTH_SHORT).show();
 
         ref.putFile(imageUri)
                 .addOnSuccessListener(taskSnapshot -> ref.getDownloadUrl().addOnSuccessListener(uri -> {
-                    String downloadUrl = uri.toString();
-                    updateAvatarUrl(downloadUrl);
+                    updateAvatarUrl(uri.toString());
                 }))
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Upload failed. Bucket name: " + ref.getBucket(), e);
-                    Toast.makeText(getContext(), getString(R.string.profile_update_failed) + ": " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+                .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show());
     }
 
     private void updateAvatarUrl(String downloadUrl) {
@@ -234,16 +218,10 @@ public class ProfileFragment extends Fragment {
         db.collection("profiles").document(currentUser.getUid())
                 .update("avatar_url", downloadUrl)
                 .addOnSuccessListener(aVoid -> {
-                    Glide.with(this)
-                            .load(downloadUrl)
-                            .circleCrop()
-                            .into(profileAvatar);
+                    Glide.with(this).load(downloadUrl).circleCrop().into(profileAvatar);
                     Toast.makeText(getContext(), R.string.profile_avatar_updated, Toast.LENGTH_SHORT).show();
                 })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating avatar URL", e);
-                    Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show();
-                });
+                .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show());
     }
 
     private void loadUserProfile() {
@@ -254,7 +232,11 @@ public class ProfileFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        updateUI(documentSnapshot);
+                        // MAPOWANIE: Zamieniamy dokument na obiekt klasy User
+                        User user = documentSnapshot.toObject(User.class);
+                        if (user != null) {
+                            updateUI(user); // Przekazujemy obiekt User zamiast dokumentu
+                        }
                     } else {
                         Log.d(TAG, "No such document");
                     }
@@ -265,17 +247,15 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
-    private void updateUI(DocumentSnapshot document) {
-        String username = document.getString("username");
-        String avatarUrl = document.getString("avatar_url");
-        String email = document.getString("email");
+    // Zmieniamy sygnaturę metody: teraz przyjmuje obiekt User
+    private void updateUI(User user) {
+        // Korzystamy z modelu User zamiast document.getString(...)
+        profileName.setText(user.getUsername() != null ? user.getUsername() : "User");
+        profileUsername.setText(user.getEmail() != null ? user.getEmail() : "No email");
 
-        profileName.setText(username != null ? username : "User");
-        profileUsername.setText(email != null ? email : "No email");
-
-        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+        if (user.getAvatar_url() != null && !user.getAvatar_url().isEmpty()) {
             Glide.with(this)
-                    .load(avatarUrl)
+                    .load(user.getAvatar_url())
                     .placeholder(R.drawable.ic_person)
                     .circleCrop()
                     .into(profileAvatar);
@@ -283,20 +263,16 @@ public class ProfileFragment extends Fragment {
             profileAvatar.setImageResource(R.drawable.ic_person);
         }
 
-        Map<String, Object> stats = (Map<String, Object>) document.get("stats");
-        if (stats != null) {
-            long moviesWatched = stats.get("moviesWatched") != null ? (long) stats.get("moviesWatched") : 0;
-            long points = stats.get("points") != null ? (long) stats.get("points") : 0;
+        // Korzystamy z wewnętrznej klasy UserStats z Twojego modelu
+        if (user.getStats() != null) {
+            statMoviesCount.setText(String.valueOf(user.getStats().getMoviesWatched()));
+            statPoints.setText(String.valueOf(user.getStats().getPoints()));
 
-            statMoviesCount.setText(String.valueOf(moviesWatched));
-            statPoints.setText(String.valueOf(points));
-
-            updateRankInfo(points);
+            updateRankInfo(user.getStats().getPoints());
         }
     }
 
     private void updateRankInfo(long points) {
-        // Tymczasowe rangi
         if (points < 100) {
             rankTitle.setText(R.string.profile_rank_newcomer);
             rankSubtitle.setText(String.format(Locale.getDefault(), getString(R.string.profile_xp_to_next_rank), points, 100));
@@ -327,19 +303,11 @@ public class ProfileFragment extends Fragment {
     }
 
     private void performLogout() {
-        // 1. Wylogowanie z Firebase
         mAuth.signOut();
-
-        // 2. Wylogowanie z Google (czyści zapamiętane konto)
         mGoogleSignInClient.signOut().addOnCompleteListener(requireActivity(), task -> {
-            Toast.makeText(requireContext(), R.string.settings_logout, Toast.LENGTH_SHORT).show();
-
-            // 3. Przejście do LoginActivity z wyczyszczeniem stosu aktywności
             Intent intent = new Intent(requireContext(), LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-
-            // Zamykamy MainActivity
             requireActivity().finish();
         });
     }
