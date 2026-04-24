@@ -38,6 +38,32 @@
     <string name="nav_profile">Profil</string>
     <string name="nav_search">Wyszukiwarka</string>
 
+    <string name="friends_tab_my_friends">Moi znajomi</string>
+    <string name="friends_tab_groups">Grupy</string>
+    <string name="friends_add_section_title">DODAJ NOWEGO ZNAJOMEGO</string>
+    <string name="friends_scan_qr">Skanuj kod QR</string>
+    <string name="friends_my_qr">Mój kod QR</string>
+    <string name="friends_scan_qr_soon">Skanowanie kodu QR będzie dostępne wkrótce.</string>
+    <string name="friends_my_qr_soon">Generowanie Twojego kodu QR będzie dostępne wkrótce.</string>
+    <string name="friends_bluetooth_title">W pobliżu przez Bluetooth</string>
+    <string name="friends_bluetooth_subtitle">Wyszukaj znajomych w kinie obok Ciebie</string>
+    <string name="friends_bluetooth_soon">Wyszukiwanie przez Bluetooth będzie dostępne wkrótce.</string>
+    <string name="friends_invites_title">ZAPROSZENIA (1)</string>
+    <string name="friends_active_count">Aktywni znajomi</string>
+    <string name="friends_active_count_dynamic">Aktywni znajomi (%1$d)</string>
+    <string name="friends_groups_placeholder">Sekcja grup jest w przygotowaniu. Wkrotce dodamy wspolne glosowania i pokoje filmowe.</string>
+    <string name="friends_search_fab">Wyszukaj znajomych</string>
+    <string name="friends_search_dialog_title">Wyszukaj znajomych</string>
+    <string name="friends_search_hint">Wpisz nazwe uzytkownika</string>
+    <string name="friends_search_subtitle">Podpowiedzi aktualizuja sie podczas wpisywania</string>
+    <string name="friends_search_empty">Brak pasujacych uzytkownikow</string>
+    <string name="friends_remove_title">Usunac znajomego?</string>
+    <string name="friends_remove_message">Czy na pewno chcesz usunac uzytkownika %1$s ze swojej listy znajomych?</string>
+    <string name="friends_remove_confirm">Usun</string>
+    <string name="friends_removed_toast">Usunieto znajomego</string>
+    <string name="friends_added_toast">Dodano %1$s do znajomych</string>
+    <string name="friends_already_added">%1$s jest juz na Twojej liscie</string>
+
     <string name="action_notifications">Powiadomienia</string>
     <string name="action_filters">Filtry</string>
     <string name="action_clear_search">Wyczyść wyszukiwanie</string>

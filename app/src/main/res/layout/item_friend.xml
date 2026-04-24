@@ -5,12 +5,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
     android:layout_marginBottom="8dp"
     app:cardBackgroundColor="?attr/colorSurfaceVariant"
     app:cardCornerRadius="12dp"
-    app:cardElevation="0dp"
-    app:strokeWidth="0dp">
+    app:cardElevation="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -29,58 +27,44 @@
             app:layout_constraintBottom_toBottomOf="parent"
             tools:srcCompat="@tools:sample/avatars" />
 
+        <View
+            android:id="@+id/vOnlineStatusDot"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:background="@drawable/bg_status_online"
+            app:layout_constraintBottom_toBottomOf="@id/ivFriendAvatar"
+            app:layout_constraintEnd_toEndOf="@id/ivFriendAvatar" />
+
         <TextView
             android:id="@+id/tvFriendName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="8dp"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
             app:layout_constraintStart_toEndOf="@id/ivFriendAvatar"
             app:layout_constraintTop_toTopOf="@id/ivFriendAvatar"
-            app:layout_constraintEnd_toStartOf="@id/btnChatAction"
+            app:layout_constraintEnd_toStartOf="@id/btnRemoveFriend"
             tools:text="Alex_Cinema" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvFriendStatus"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
             app:layout_constraintStart_toStartOf="@id/tvFriendName"
             app:layout_constraintTop_toBottomOf="@id/tvFriendName"
-            app:layout_constraintEnd_toStartOf="@id/btnChatAction">
-
-            <TextView
-                android:id="@+id/tvDateLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dodano:"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorPrimary"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp"
-                android:background="@drawable/bg_pill_primary" />
-
-            <TextView
-                android:id="@+id/tvFriendDateAdded"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:textSize="10sp"
-                android:textColor="?android:attr/textColorSecondary"
-                tools:text="12 Paź 2023" />
-        </LinearLayout>
+            tools:text="Aktywny teraz" />
 
         <ImageButton
-            android:id="@+id/btnChatAction"
+            android:id="@+id/btnRemoveFriend"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_mail"
+            android:src="@drawable/ic_close"
             app:tint="?android:attr/textColorSecondary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"

@@ -38,6 +38,32 @@
     <string name="nav_profile">Profile</string>
     <string name="nav_search">Search</string>
 
+    <string name="friends_tab_my_friends">My friends</string>
+    <string name="friends_tab_groups">Groups</string>
+    <string name="friends_add_section_title">ADD NEW FRIEND</string>
+    <string name="friends_scan_qr">Scan QR code</string>
+    <string name="friends_my_qr">My QR code</string>
+    <string name="friends_scan_qr_soon">QR code scanning will be available soon.</string>
+    <string name="friends_my_qr_soon">Generating your QR code will be available soon.</string>
+    <string name="friends_bluetooth_title">Nearby via Bluetooth</string>
+    <string name="friends_bluetooth_subtitle">Find friends in a cinema near you</string>
+    <string name="friends_bluetooth_soon">Bluetooth discovery will be available soon.</string>
+    <string name="friends_invites_title">INVITATIONS (1)</string>
+    <string name="friends_active_count">Active friends</string>
+    <string name="friends_active_count_dynamic">Active friends (%1$d)</string>
+    <string name="friends_groups_placeholder">Groups section is in progress. Shared voting and movie rooms are coming soon.</string>
+    <string name="friends_search_fab">Search friends</string>
+    <string name="friends_search_dialog_title">Search friends</string>
+    <string name="friends_search_hint">Enter username</string>
+    <string name="friends_search_subtitle">Suggestions update while you type</string>
+    <string name="friends_search_empty">No matching users</string>
+    <string name="friends_remove_title">Remove friend?</string>
+    <string name="friends_remove_message">Are you sure you want to remove %1$s from your friends list?</string>
+    <string name="friends_remove_confirm">Remove</string>
+    <string name="friends_removed_toast">Friend removed</string>
+    <string name="friends_added_toast">Added %1$s to friends</string>
+    <string name="friends_already_added">%1$s is already in your list</string>
+
     <string name="action_notifications">Notifications</string>
     <string name="action_filters">Filters</string>
     <string name="action_clear_search">Clear search</string>
