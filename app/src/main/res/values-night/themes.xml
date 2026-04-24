@@ -30,4 +30,8 @@
 
     <style name="Theme.CinematUZ" parent="Base.Theme.CinematUZ" />
 
+    <style name="CircleImageStyle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>
