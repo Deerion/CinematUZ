@@ -70,8 +70,8 @@
                         android:textStyle="bold"
                         app:backgroundTint="@color/friends_tab_bg"
                         app:cornerRadius="12dp"
-                        app:insetTop="0dp"
-                        app:insetBottom="0dp" />
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTabGroups"
@@ -85,8 +85,8 @@
                         android:textStyle="bold"
                         app:backgroundTint="@color/friends_tab_bg"
                         app:cornerRadius="12dp"
-                        app:insetTop="0dp"
-                        app:insetBottom="0dp" />
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
                 </com.google.android.material.button.MaterialButtonToggleGroup>
             </com.google.android.material.card.MaterialCardView>
 

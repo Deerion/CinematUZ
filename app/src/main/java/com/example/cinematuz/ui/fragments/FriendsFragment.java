@@ -1,12 +1,14 @@
 package com.example.cinematuz.ui.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -134,10 +137,15 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
     }
 
     private void showSearchFriendsDialog() {
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_search_friends, null);
-        EditText etSearch = dialogView.findViewById(R.id.etFriendSearch);
-        RecyclerView rvSuggestions = dialogView.findViewById(R.id.rvFriendSuggestions);
-        TextView tvNoResults = dialogView.findViewById(R.id.tvNoResults);
+        // Tworzenie Bottom Sheet container
+        BottomSheetDialog bottomSheet = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
+
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_search_friends, null);
+        bottomSheet.setContentView(sheetView);
+
+        EditText etSearch = sheetView.findViewById(R.id.etFriendSearch);
+        RecyclerView rvSuggestions = sheetView.findViewById(R.id.rvFriendSuggestions);
+        LinearLayout layoutNoResults = sheetView.findViewById(R.id.layoutNoResults);
 
         List<String> filtered = new ArrayList<>(searchableUsers);
         SuggestionAdapter suggestionAdapter = new SuggestionAdapter(filtered, username -> {
@@ -153,12 +161,18 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
             }
             updateFriendsCount();
             Toast.makeText(getContext(), getString(R.string.friends_added_toast, username), Toast.LENGTH_SHORT).show();
+            bottomSheet.dismiss();
         });
 
         rvSuggestions.setLayoutManager(new LinearLayoutManager(getContext()));
         rvSuggestions.setAdapter(suggestionAdapter);
 
-        tvNoResults.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+        layoutNoResults.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+
+        // Debounce text input dla lepszej wydajności
+        final Handler handler = new Handler();
+        final long delayMillis = 300;
+        final Runnable[] runnable = {null};
 
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -168,9 +182,15 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                List<String> suggestions = filterUsers(s == null ? "" : s.toString());
-                suggestionAdapter.submitList(suggestions);
-                tvNoResults.setVisibility(suggestions.isEmpty() ? View.VISIBLE : View.GONE);
+                if (runnable[0] != null) {
+                    handler.removeCallbacks(runnable[0]);
+                }
+                runnable[0] = () -> {
+                    List<String> suggestions = filterUsers(s == null ? "" : s.toString());
+                    suggestionAdapter.submitList(suggestions);
+                    layoutNoResults.setVisibility(suggestions.isEmpty() && s.length() > 0 ? View.VISIBLE : View.GONE);
+                };
+                handler.postDelayed(runnable[0], delayMillis);
             }
 
             @Override
@@ -179,11 +199,18 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
             }
         });
 
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.friends_search_dialog_title)
-                .setView(dialogView)
-                .setNegativeButton(R.string.profile_cancel, (dialog, which) -> dialog.dismiss())
-                .show();
+        // Auto-focus input
+        bottomSheet.setOnShowListener(dialog -> {
+            if (etSearch != null) {
+                etSearch.requestFocus();
+                android.view.inputmethod.InputMethodManager imm =
+                    (android.view.inputmethod.InputMethodManager) requireContext()
+                        .getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+
+        bottomSheet.show();
     }
 
     private boolean isAlreadyFriend(String username) {
