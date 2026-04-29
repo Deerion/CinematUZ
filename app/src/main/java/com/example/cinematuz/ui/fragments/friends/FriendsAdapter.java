@@ -1,26 +1,29 @@
-package com.example.cinematuz.ui.fragments;
+package com.example.cinematuz.ui.fragments.friends;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
-import com.google.android.material.imageview.ShapeableImageView;
+
 import java.util.List;
 
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendViewHolder> {
 
-    private List<Friend> friendsList;
-    private OnFriendActionListener listener;
-
     public interface OnFriendActionListener {
         void onRemoveFriend(Friend friend, int position);
     }
+
+    private final List<Friend> friendsList;
+    private final OnFriendActionListener listener;
 
     public FriendsAdapter(List<Friend> friendsList, OnFriendActionListener listener) {
         this.friendsList = friendsList;
@@ -39,35 +42,61 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         Friend friend = friendsList.get(position);
         holder.tvFriendName.setText(friend.getName());
 
-        if (friend.isOnline()) {
+        // --- DODANA LOGIKA ŁADOWANIA AWATARA Z FIREBASE ---
+        String avatarUrl = friend.getAvatarUrl();
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(avatarUrl)
+                    .circleCrop()
+                    .into(holder.ivFriendAvatar);
+        } else {
+            // Jeśli ktoś nie ma avatara, wstawiamy Twoją ikonkę ic_person
+            Glide.with(holder.itemView.getContext())
+                    .load(R.drawable.ic_person)
+                    .circleCrop()
+                    .into(holder.ivFriendAvatar);
+        }
+        // ----------------------------------------------------
+
+        // LOGIKA STATUSÓW
+        if ("pending".equals(friend.getStatus())) {
+            holder.tvFriendStatus.setText("Oczekuje na akceptację...");
+            holder.tvFriendStatus.setTextColor(Color.parseColor("#F59E0B")); // Pomarańczowy
+            if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
+        } else if (friend.isOnline()) {
             holder.tvFriendStatus.setText("Aktywny teraz");
-            holder.tvFriendStatus.setTextColor(Color.parseColor("#22C55E"));
-            holder.vOnlineStatusDot.setVisibility(View.VISIBLE);
+            holder.tvFriendStatus.setTextColor(Color.parseColor("#22C55E")); // Zielony
+            if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.VISIBLE);
         } else {
             holder.tvFriendStatus.setText("Offline");
             holder.tvFriendStatus.setTextColor(Color.GRAY);
-            holder.vOnlineStatusDot.setVisibility(View.GONE);
+            if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
         }
 
-        holder.btnRemoveFriend.setOnClickListener(v -> listener.onRemoveFriend(friend, position));
+        if (holder.btnRemoveFriend != null) {
+            holder.btnRemoveFriend.setOnClickListener(v -> listener.onRemoveFriend(friend, position));
+        }
     }
 
     @Override
-    public int getItemCount() { return friendsList.size(); }
+    public int getItemCount() {
+        return friendsList.size();
+    }
 
     static class FriendViewHolder extends RecyclerView.ViewHolder {
-        ShapeableImageView ivFriendAvatar;
+        TextView tvFriendName;
+        TextView tvFriendStatus;
+        ImageView ivFriendAvatar;
+        View btnRemoveFriend;
         View vOnlineStatusDot;
-        TextView tvFriendName, tvFriendStatus;
-        ImageButton btnRemoveFriend;
 
-        public FriendViewHolder(@NonNull View itemView) {
+        FriendViewHolder(View itemView) {
             super(itemView);
-            ivFriendAvatar = itemView.findViewById(R.id.ivFriendAvatar);
-            vOnlineStatusDot = itemView.findViewById(R.id.vOnlineStatusDot);
             tvFriendName = itemView.findViewById(R.id.tvFriendName);
             tvFriendStatus = itemView.findViewById(R.id.tvFriendStatus);
+            ivFriendAvatar = itemView.findViewById(R.id.ivFriendAvatar);
             btnRemoveFriend = itemView.findViewById(R.id.btnRemoveFriend);
+            vOnlineStatusDot = itemView.findViewById(R.id.vOnlineStatusDot);
         }
     }
 }

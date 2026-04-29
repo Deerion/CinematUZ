@@ -43,5 +43,8 @@
             android:exported="false"
             android:theme="@style/Theme.CinematUZ" />
 
+        <service
+            android:name=".utils.AppKillDetectionService"
+            android:stopWithTask="false" />
     </application>
 </manifest>

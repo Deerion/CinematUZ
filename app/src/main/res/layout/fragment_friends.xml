@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
-    tools:context=".ui.fragments.FriendsFragment">
+    tools:context=".ui.fragments.friends.FriendsFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -271,9 +271,12 @@
                 android:layout_marginBottom="8dp"
                 android:text="@string/friends_invites_title"/>
 
-            <include
-                android:id="@+id/layoutFriendRequest"
-                layout="@layout/item_friend_request" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvFriendRequests"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:nestedScrollingEnabled="false" />
 
             <TextView
                 android:id="@+id/tvFriendsCount"
