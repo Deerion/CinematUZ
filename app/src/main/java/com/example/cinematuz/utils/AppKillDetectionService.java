@@ -1,4 +1,3 @@
-// Lokalizacja: java/com/example/cinematuz/utils/AppKillDetectionService.java
 package com.example.cinematuz.utils;
 
 import android.app.Service;
@@ -15,12 +14,11 @@ public class AppKillDetectionService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null; // Bindowanie nie jest nam potrzebne
+        return null;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Serwis ma działać cicho w tle i nie odradzać się sam
         return START_NOT_STICKY;
     }
 
@@ -28,16 +26,23 @@ public class AppKillDetectionService extends Service {
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
 
-        // TEN KOD WYKONUJE SIĘ W MOMENCIE "UBICIA" APLIKACJI
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {
             String myUid = auth.getCurrentUser().getUid();
-            // Zmieniamy status w Firebase na offline
+
+            // Zmieniamy status na offline
             FirebaseFirestore.getInstance().collection("profiles").document(myUid)
                     .update("isOnline", false);
+
+            // --- NOWE: Dajemy Firebase pół sekundy na wysłanie danych do bazy ---
+            // Zanim Android brutalnie zabije proces, wymuszamy krótką przerwę.
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
-        // Zabijamy serwis, aby nie obciążał telefonu
         stopSelf();
     }
 }

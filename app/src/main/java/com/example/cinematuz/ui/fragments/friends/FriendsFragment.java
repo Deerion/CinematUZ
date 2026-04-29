@@ -113,31 +113,60 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         db.collection("profiles").document(myUid).collection("friends")
                 .addSnapshotListener((value, error) -> {
-                    if (error != null) return;
+                    // Zabezpieczenie przed crashem, gdy wyjdziemy z zakładki
+                    if (error != null || !isAdded()) return;
+
                     if (value != null) {
+                        List<String> currentFriendIds = new ArrayList<>();
                         friendsList.clear();
+
                         for (QueryDocumentSnapshot doc : value) {
                             Friend friend = doc.toObject(Friend.class);
                             friend.setId(doc.getId());
                             friendsList.add(friend);
+                            currentFriendIds.add(friend.getId()); // Zapisujemy, kto aktualnie jest znajomym
 
-                            // Nasłuchiwanie statusu online i awatara każdego znajomego na żywo
+                            // Nasłuchiwanie statusu online
                             if (!profileListeners.containsKey(friend.getId())) {
-                                ListenerRegistration reg = db.collection("profiles").document(friend.getId())
+                                String targetId = friend.getId();
+                                ListenerRegistration reg = db.collection("profiles").document(targetId)
                                         .addSnapshotListener((profDoc, profErr) -> {
-                                            if (profDoc != null && profDoc.exists()) {
+                                            if (profDoc != null && profDoc.exists() && isAdded()) {
                                                 Boolean isOnline = profDoc.getBoolean("isOnline");
                                                 String avatarUrl = profDoc.getString("avatar_url");
 
-                                                friend.setOnline(isOnline != null ? isOnline : false);
-                                                if (avatarUrl != null) friend.setAvatarUrl(avatarUrl);
+                                                // Szukamy znajomego na bieżącej liście, żeby nie edytować "duchów"
+                                                for (int i = 0; i < friendsList.size(); i++) {
+                                                    if (friendsList.get(i).getId().equals(targetId)) {
+                                                        friendsList.get(i).setOnline(isOnline != null ? isOnline : false);
+                                                        if (avatarUrl != null) friendsList.get(i).setAvatarUrl(avatarUrl);
 
-                                                friendsAdapter.notifyDataSetChanged();
+                                                        // Aktualizujemy tylko tego jednego znajomego, zamiast całej listy
+                                                        friendsAdapter.notifyItemChanged(i);
+                                                        break;
+                                                    }
+                                                }
                                             }
                                         });
-                                profileListeners.put(friend.getId(), reg);
+                                profileListeners.put(targetId, reg);
                             }
                         }
+
+                        // --- NOWE: USUWANIE ŚMIECI (TO NAPRAWIA CRASH) ---
+                        // Sprawdzamy, czy w naszych wtyczkach jest ktoś, kogo nie ma już na liście znajomych
+                        List<String> keysToRemove = new ArrayList<>();
+                        for (String id : profileListeners.keySet()) {
+                            if (!currentFriendIds.contains(id)) {
+                                profileListeners.get(id).remove(); // Odłączamy nasłuchiwanie!
+                                keysToRemove.add(id);
+                            }
+                        }
+                        // Usuwamy nieaktywne wtyczki z pamięci
+                        for (String id : keysToRemove) {
+                            profileListeners.remove(id);
+                        }
+                        // ---------------------------------------------------
+
                         friendsAdapter.notifyDataSetChanged();
                         if (tvFriendsCount != null) {
                             tvFriendsCount.setText(getString(R.string.friends_active_count_dynamic, friendsList.size()));
@@ -152,7 +181,9 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         db.collection("profiles").document(myUid).collection("friend_requests")
                 .addSnapshotListener((value, error) -> {
-                    if (error != null) return;
+                    // Dodane zabezpieczenie isAdded()
+                    if (error != null || !isAdded()) return;
+
                     if (value != null) {
                         pendingRequests.clear();
                         for (QueryDocumentSnapshot doc : value) {
