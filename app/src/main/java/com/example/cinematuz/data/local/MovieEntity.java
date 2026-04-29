@@ -6,7 +6,6 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "movies_table")
 public class MovieEntity {
 
-    // ID z bazy TMDB
     @PrimaryKey
     private int id;
 
@@ -14,12 +13,14 @@ public class MovieEntity {
     private String posterPath;
     private String overview;
     private double voteAverage;
-    private String mediaType; // "movie" lub "tv"
+    private String mediaType;
 
-    // false = "Do obejrzenia", true = "Obejrzane"
+    // Statusy w bibliotece
     private boolean isWatched;
+    private boolean isFavorite;
 
-    public MovieEntity(int id, String title, String posterPath, String overview, double voteAverage, String mediaType, boolean isWatched) {
+    // Konstruktor
+    public MovieEntity(int id, String title, String posterPath, String overview, double voteAverage, String mediaType, boolean isWatched, boolean isFavorite) {
         this.id = id;
         this.title = title;
         this.posterPath = posterPath;
@@ -27,8 +28,10 @@ public class MovieEntity {
         this.voteAverage = voteAverage;
         this.mediaType = mediaType;
         this.isWatched = isWatched;
+        this.isFavorite = isFavorite;
     }
 
+    // Gettery i Settery
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -48,5 +51,8 @@ public class MovieEntity {
     public void setMediaType(String mediaType) { this.mediaType = mediaType; }
 
     public boolean isWatched() { return isWatched; }
-    public void setWatched(boolean watched) { isWatched = watched; }
+    public void setWatched(boolean watched) { this.isWatched = watched; }
+
+    public boolean isFavorite() { return isFavorite; }
+    public void setFavorite(boolean favorite) { this.isFavorite = favorite; }
 }

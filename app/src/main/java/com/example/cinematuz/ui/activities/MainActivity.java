@@ -10,6 +10,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.NavController;
+import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
@@ -20,7 +21,6 @@ import com.example.cinematuz.utils.ThemeHelper;
 
 public class MainActivity extends AppCompatActivity {
 
-    // ViewBinding dla głównego kontenera aplikacji.
     private ActivityMainBinding binding;
 
     // ---------------- Lifecycle ----------------
@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
     // ---------------- Konfiguracja UI ----------------
 
     private void setupWindow() {
-        // Edge-to-edge: sami kontrolujemy odsunięcia przez WindowInsets.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
     }
 
@@ -72,7 +71,30 @@ public class MainActivity extends AppCompatActivity {
         if (navHostFragment == null) return;
 
         NavController navController = navHostFragment.getNavController();
+
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+        binding.navView.setOnItemSelectedListener(item -> {
+            int destinationId = item.getItemId();
+
+            if (destinationId == R.id.nav_library) {
+                // Konfiguracja dla Biblioteki
+                NavOptions options = new NavOptions.Builder()
+                        .setLaunchSingleTop(true)
+                        .setRestoreState(false) // <-- Wyłącza pamięć historii dla tej zakładki
+                        .setPopUpTo(
+                                navController.getGraph().getStartDestinationId(),
+                                false,
+                                true
+                        )
+                        .build();
+
+                navController.navigate(destinationId, null, options);
+                return true;
+            }
+            return NavigationUI.onNavDestinationSelected(item, navController);
+        });
+
         binding.navView.setVisibility(View.VISIBLE);
     }
 }

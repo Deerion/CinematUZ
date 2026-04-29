@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -47,18 +48,42 @@ public class DetailsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(DetailsViewModel.class);
+
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(DetailsViewModel.class);
 
         setupObservers();
+        setupListeners();
 
         if (mediaItem != null) {
             bindBasicInfo(mediaItem);
             String lang = getResources().getConfiguration().locale.getLanguage().equals("pl") ? "pl-PL" : "en-US";
             viewModel.loadData(mediaItem.getId(), mediaItem.getMediaType(), lang);
-        }
 
+            // Sprawdzenie statusu zapisania filmu zaraz po załadowaniu ekranu
+            viewModel.checkLocalMovieState(mediaItem.getId());
+        }
+    }
+
+    private void setupListeners() {
         binding.btnBackCustom.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
         binding.fabPlay.setOnClickListener(v -> viewModel.fetchTrailer(mediaItem.getId(), mediaItem.getMediaType()));
+
+        // Logika Biblioteki
+        binding.cardWatchlist.setOnClickListener(v -> {
+            if (mediaItem != null) {
+                viewModel.toggleLibraryStatus(mediaItem, false); // false = Do obejrzenia
+            }
+        });
+
+        binding.cardWatched.setOnClickListener(v -> {
+            if (mediaItem != null) {
+                viewModel.toggleLibraryStatus(mediaItem, true); // true = Obejrzane
+            }
+        });
+
+        binding.cardFavorite.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Ulubione: do wdrożenia w kolejnym kroku", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void setupObservers() {
@@ -77,12 +102,33 @@ public class DetailsFragment extends Fragment {
 
         viewModel.fullDetails.observe(getViewLifecycleOwner(), details -> {
             if (details == null) return;
-
             bindBasicInfo(details);
             bindGenres(details.getGenres());
         });
 
         viewModel.trailerKey.observe(getViewLifecycleOwner(), this::openYoutube);
+
+        // Obserwowanie zmiany statusu (Lokalna Baza)
+        viewModel.localMovieState.observe(getViewLifecycleOwner(), savedMovie -> {
+            int colorSurfaceVariant = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSurfaceVariant, 0);
+            int colorPrimaryContainer = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimaryContainer, 0);
+
+            if (savedMovie == null) {
+                // Usunięto z bazy (lub jeszcze nie dodano) -> oba szare
+                binding.cardWatchlist.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
+                binding.cardWatched.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
+            } else {
+                if (savedMovie.isWatched()) {
+                    // Jest Obejrzany -> karta "Obejrzane" podświetlona
+                    binding.cardWatched.setCardBackgroundColor(ColorStateList.valueOf(colorPrimaryContainer));
+                    binding.cardWatchlist.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
+                } else {
+                    // Jest Do obejrzenia -> karta "Do obejrzenia" podświetlona
+                    binding.cardWatchlist.setCardBackgroundColor(ColorStateList.valueOf(colorPrimaryContainer));
+                    binding.cardWatched.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
+                }
+            }
+        });
     }
 
     private void bindBasicInfo(MediaItem item) {

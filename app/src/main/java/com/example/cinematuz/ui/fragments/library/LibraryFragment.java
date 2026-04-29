@@ -7,26 +7,38 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.PopupMenu;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
+import com.example.cinematuz.data.local.MovieEntity;
+import com.example.cinematuz.data.models.MediaItem;
 import com.example.cinematuz.databinding.FragmentLibraryBinding;
 import com.example.cinematuz.ui.fragments.home.MovieGridAdapter;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.tabs.TabLayout;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LibraryFragment extends Fragment {
 
     private FragmentLibraryBinding binding;
     private MovieGridAdapter adapter;
     private View rootView;
+    private LibraryViewModel viewModel;
+
+    // Przechowujemy listy pobrane z bazy
+    private List<MovieEntity> toWatchList = new ArrayList<>();
+    private List<MovieEntity> watchedList = new ArrayList<>();
 
     private String currentStatus = "to_watch";
     private String currentType = "all";
@@ -46,8 +58,61 @@ public class LibraryFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Inicjalizacja ViewModelu
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(LibraryViewModel.class);
+
         updateTypeButtonsUi();
-        loadDataFromDatabase();
+        setupObservers(); // Zamiast wywoływać ręcznie bazę, nasłuchujemy jej!
+    }
+
+    private void setupObservers() {
+        // Nasłuchiwanie na filmy "Do obejrzenia"
+        viewModel.getMoviesToWatch().observe(getViewLifecycleOwner(), movies -> {
+            toWatchList = movies;
+            if ("to_watch".equals(currentStatus)) {
+                refreshLibraryList();
+            }
+        });
+
+        // Nasłuchiwanie na filmy "Obejrzane"
+        viewModel.getWatchedMovies().observe(getViewLifecycleOwner(), movies -> {
+            watchedList = movies;
+            if ("watched".equals(currentStatus)) {
+                refreshLibraryList();
+            }
+        });
+    }
+
+    // Ta metoda przefiltrowuje dane i wysyła je do adaptera
+    private void refreshLibraryList() {
+        List<MovieEntity> sourceList = "to_watch".equals(currentStatus) ? toWatchList : watchedList;
+        List<MediaItem> filteredList = new ArrayList<>();
+
+        // Filtrowanie "all", "movie" lub "tv"
+        for (MovieEntity entity : sourceList) {
+            if ("all".equals(currentType) || currentType.equals(entity.getMediaType())) {
+                filteredList.add(viewModel.convertToMediaItem(entity));
+            }
+        }
+
+        // Wysłanie danych do adaptera
+        adapter.submitList(filteredList);
+
+        // Obsługa widoczności (Pusty ekran vs Lista)
+        if (filteredList.isEmpty()) {
+            binding.rvLibrary.setVisibility(View.GONE);
+            binding.layoutEmptyLibrary.setVisibility(View.VISIBLE);
+
+            if ("watched".equals(currentStatus)) {
+                binding.tvEmptyLibraryText.setText(getString(R.string.empty_library_watched));
+            } else {
+                binding.tvEmptyLibraryText.setText(getString(R.string.empty_library_to_watch));
+            }
+        } else {
+            binding.rvLibrary.setVisibility(View.VISIBLE);
+            binding.layoutEmptyLibrary.setVisibility(View.GONE);
+        }
     }
 
     private void setupRecyclerView() {
@@ -55,6 +120,22 @@ public class LibraryFragment extends Fragment {
             Bundle bundle = new Bundle();
             bundle.putSerializable("MEDIA_ITEM", item);
             Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
+        });
+
+        // --- OBSŁUGA DŁUGIEGO KLIKNIĘCIA DO USUWANIA ---
+        adapter.setOnItemLongClickListener((item, anchorView) -> {
+            PopupMenu popup = new PopupMenu(requireContext(), anchorView);
+            popup.getMenu().add("Usuń z biblioteki");
+            // popup.getMenu().add("Dodaj do ulubionych"); // Miejsce na krok 3.
+
+            popup.setOnMenuItemClickListener(menuItem -> {
+                if (menuItem.getTitle().equals("Usuń z biblioteki")) {
+                    viewModel.removeFromLibrary(item.getId());
+                    return true;
+                }
+                return false;
+            });
+            popup.show();
         });
 
         adapter.setStateRestorationPolicy(RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY);
@@ -68,7 +149,7 @@ public class LibraryFragment extends Fragment {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 currentStatus = (tab.getPosition() == 0) ? "to_watch" : "watched";
-                loadDataFromDatabase();
+                refreshLibraryList();
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
@@ -92,7 +173,7 @@ public class LibraryFragment extends Fragment {
         if (currentType.equals(type)) return;
         currentType = type;
         updateTypeButtonsUi();
-        loadDataFromDatabase();
+        refreshLibraryList();
     }
 
     private void updateTypeButtonsUi() {
@@ -111,26 +192,6 @@ public class LibraryFragment extends Fragment {
             button.setTextColor(MaterialColors.getColor(button, com.google.android.material.R.attr.colorOnSurfaceVariant));
             button.setStrokeColor(ColorStateList.valueOf(MaterialColors.getColor(button, com.google.android.material.R.attr.colorOutline)));
             button.setStrokeWidth(Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics())));
-        }
-    }
-
-    private void loadDataFromDatabase() {
-        // TODO: Pobierz listę z bazy
-        boolean isEmpty = true; // Dla testu pustego stanu
-
-        if (isEmpty) {
-            binding.rvLibrary.setVisibility(View.GONE);
-            binding.layoutEmptyLibrary.setVisibility(View.VISIBLE);
-
-            if ("watched".equals(currentStatus)) {
-                binding.tvEmptyLibraryText.setText(getString(R.string.empty_library_watched));
-            } else {
-                binding.tvEmptyLibraryText.setText(getString(R.string.empty_library_to_watch));
-            }
-
-        } else {
-            binding.rvLibrary.setVisibility(View.VISIBLE);
-            binding.layoutEmptyLibrary.setVisibility(View.GONE);
         }
     }
 

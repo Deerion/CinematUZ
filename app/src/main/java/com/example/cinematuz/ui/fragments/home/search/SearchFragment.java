@@ -63,8 +63,7 @@ public class SearchFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(SearchViewModel.class);
-
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(SearchViewModel.class);
         initViews(view);
         setupRecyclerView();
         setupListeners();
@@ -272,12 +271,10 @@ public class SearchFragment extends Fragment {
         viewModel.searchResults.observe(getViewLifecycleOwner(), results -> {
             adapter.submitList(results);
 
-            // Logika wyświetlania "pustego stanu"
             boolean isQueryEmpty = etSearch.getText() == null || etSearch.getText().toString().trim().isEmpty();
 
             if (results == null || results.isEmpty()) {
                 if (isQueryEmpty) {
-                    // Tutaj możemy być po filtrowaniu (Discover), więc jeśli są wyniki = null, pokazujemy info
                     tvSearchEmpty.setText(R.string.empty_search_results);
                 } else {
                     tvSearchEmpty.setText(R.string.empty_search_results);

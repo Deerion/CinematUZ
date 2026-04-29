@@ -1,12 +1,15 @@
 package com.example.cinematuz.ui.fragments.home;
 
+import android.app.Application;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
-import com.example.cinematuz.data.repositories.MovieRepository; // Używamy repozytorium
 import com.example.cinematuz.data.models.ApiResponse;
 import com.example.cinematuz.data.models.MediaItem;
+import com.example.cinematuz.data.repositories.MovieRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +18,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class HomeViewModel extends ViewModel {
+public class HomeViewModel extends AndroidViewModel {
 
-    private final MovieRepository repository = new MovieRepository();
+    private final MovieRepository repository;
 
     private final MutableLiveData<List<MediaItem>> _trendingList = new MutableLiveData<>();
     public LiveData<List<MediaItem>> trendingList = _trendingList;
@@ -28,18 +31,24 @@ public class HomeViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
     public LiveData<Boolean> isLoading = _isLoading;
 
-    private List<MediaItem> allItemsBuffer = new ArrayList<>();
+    private List<MediaItem> allItems = new ArrayList<>();
+    private String currentFilter = "all";
+
+    public HomeViewModel(@NonNull Application application) {
+        super(application);
+        repository = new MovieRepository(application);
+    }
 
     public void fetchTrending(String lang) {
-        if (allItemsBuffer.isEmpty()) _isLoading.setValue(true);
+        _isLoading.setValue(true);
 
         repository.getTrending(lang, new Callback<ApiResponse<MediaItem>>() {
             @Override
             public void onResponse(Call<ApiResponse<MediaItem>> call, Response<ApiResponse<MediaItem>> response) {
                 _isLoading.setValue(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    allItemsBuffer = response.body().getResults();
-                    applyFilter("all");
+                    allItems = response.body().getResults();
+                    applyFilter(currentFilter);
                 }
             }
 
@@ -50,24 +59,26 @@ public class HomeViewModel extends ViewModel {
         });
     }
 
-    public void applyFilter(String type) {
-        if (allItemsBuffer.isEmpty()) {
-            _heroItem.setValue(null);
-            _trendingList.setValue(new ArrayList<>());
-            return;
-        }
+    public void applyFilter(String filterType) {
+        currentFilter = filterType;
+        if (allItems.isEmpty()) return;
 
-        List<MediaItem> filtered = new ArrayList<>();
-        MediaItem firstMatch = null;
+        List<MediaItem> filteredList = new ArrayList<>();
+        MediaItem newHero = null;
 
-        for (MediaItem item : allItemsBuffer) {
-            if (type.equals("all") || type.equals(item.getMediaType())) {
-                if (firstMatch == null) firstMatch = item;
-                else filtered.add(item);
+        for (MediaItem item : allItems) {
+            boolean matches = "all".equals(filterType) || item.getMediaType().equals(filterType);
+
+            if (matches) {
+                if (newHero == null) {
+                    newHero = item;
+                } else {
+                    filteredList.add(item);
+                }
             }
         }
 
-        _heroItem.setValue(firstMatch);
-        _trendingList.setValue(filtered);
+        _heroItem.setValue(newHero);
+        _trendingList.setValue(filteredList);
     }
 }

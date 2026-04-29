@@ -48,8 +48,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
-
+        viewModel = new ViewModelProvider(requireActivity(), ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(HomeViewModel.class);
         setupObservers();
         applyFilter(currentFilter, false);
 
@@ -195,7 +194,6 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateButtonStyle(MaterialButton button, boolean isSelected) {
-        // Używamy samego buttona do określenia kontekstu - to super bezpieczne i chroni przed crashami!
         if (isSelected) {
             button.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.getColor(button, com.google.android.material.R.attr.colorPrimary)));
             button.setTextColor(MaterialColors.getColor(button, com.google.android.material.R.attr.colorOnPrimary));
