@@ -86,7 +86,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:background="@android:color/transparent"
-                android:text="Loading..."
+                tools:text="Niezalogowany"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -98,6 +98,15 @@
                 android:text="\@username"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_login_guest"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/action_sign_in_short"
+                android:visibility="gone"
+                app:cornerRadius="20dp" />
         </LinearLayout>
 
         <LinearLayout
