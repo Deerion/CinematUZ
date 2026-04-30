@@ -109,10 +109,11 @@ public class ProfileFragment extends Fragment {
         btnEditAvatar = view.findViewById(R.id.btn_edit_avatar);
         editProfileTile = view.findViewById(R.id.edit_profile_tile);
 
+        View btnLoginGuest = view.findViewById(R.id.btn_login_guest);
+
         btnEditAvatar.setOnClickListener(v -> mGetContent.launch("image/*"));
         editProfileTile.setOnClickListener(v -> showEditProfileDialog());
 
-        // --- TWOJA LOGIKA JĘZYKA (NIENARUSZONA) ---
         View languageTile = view.findViewById(R.id.language_settings_tile);
         TextView textPl = view.findViewById(R.id.textPl);
         TextView textEn = view.findViewById(R.id.textEn);
@@ -133,7 +134,6 @@ public class ProfileFragment extends Fragment {
             changeLanguage(nextLang);
         });
 
-        // --- TWOJA LOGIKA MOTYWU (NIENARUSZONA) ---
         View themeTile = view.findViewById(R.id.theme_settings_tile);
         TextView textThemeLight = view.findViewById(R.id.textThemeLight);
         TextView textThemeDark = view.findViewById(R.id.textThemeDark);
@@ -150,14 +150,42 @@ public class ProfileFragment extends Fragment {
         textThemeDark.setOnClickListener(v -> toggleTheme(true));
         themeTile.setOnClickListener(v -> toggleTheme(!ThemeHelper.isDarkMode(requireContext())));
 
-        // --- OBSŁUGA PROFILU ---
         View logoutTile = view.findViewById(R.id.logout_settings_tile);
+
         if (mAuth.getCurrentUser() != null) {
+            // STAN: ZALOGOWANY
             logoutTile.setVisibility(View.VISIBLE);
+            editProfileTile.setVisibility(View.VISIBLE);
+            btnEditAvatar.setVisibility(View.VISIBLE);
+            profileUsername.setVisibility(View.VISIBLE);
+            btnLoginGuest.setVisibility(View.GONE);
+
             logoutTile.setOnClickListener(v -> performLogout());
             loadUserProfile();
         } else {
+            // STAN: GOŚĆ
             logoutTile.setVisibility(View.GONE);
+            editProfileTile.setVisibility(View.GONE);
+            btnEditAvatar.setVisibility(View.GONE);
+            profileUsername.setVisibility(View.GONE);
+
+            profileName.setText(R.string.profile_not_logged_in);
+            profileAvatar.setImageResource(R.drawable.ic_person);
+
+            btnLoginGuest.setVisibility(View.VISIBLE);
+
+            // Przejście z powrotem do ekranu logowania
+            btnLoginGuest.setOnClickListener(v -> {
+                Intent intent = new Intent(requireContext(), LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                requireActivity().finish();
+            });
+
+            // Domyślne wartości dla gościa
+            statMoviesCount.setText("0");
+            statPoints.setText("0");
+            updateRankInfo(0);
         }
 
         return view;

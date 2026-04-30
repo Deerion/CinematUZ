@@ -73,7 +73,9 @@
     <string name="theme_light">Jasny</string>
     <string name="theme_dark">Ciemny</string>
     <string name="skip_login">Tryb gościa</string>
+    <string name="action_sign_in_short">Zaloguj się</string>
     <string name="settings_logout">Wyloguj się</string>
+    <string name="profile_not_logged_in">Gość</string>
 
     <string name="media_type_movie">FILM</string>
     <string name="media_type_tv">SERIAL</string>
