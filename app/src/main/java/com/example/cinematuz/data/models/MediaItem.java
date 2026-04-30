@@ -48,17 +48,23 @@ public class MediaItem implements Serializable {
         public String getName() { return name; }
     }
 
-    // Gettery - upewnij się, że masz te wszystkie metody
     public int getId() { return id; }
     public String getTitle() { return title; }
     public String getOverview() { return overview; }
-    public String getPosterPath() { return posterPath; } // Dodano
+    public String getPosterPath() { return posterPath; }
     public String getBackdropPath() { return backdropPath; }
     public String getReleaseDate() { return releaseDate; }
     public double getVoteAverage() { return voteAverage; }
     public String getMediaType() { return mediaType; }
     public void setMediaType(String mediaType) { this.mediaType = mediaType; }
     public Integer getRuntime() { return runtime; }
-    public List<Integer> getGenreIds() { return genreIds; } // Dodano
+    public List<Integer> getGenreIds() { return genreIds; }
     public List<Genre> getGenres() { return genres; }
+
+
+    public void setId(int id) { this.id = id; }
+    public void setTitle(String title) { this.title = title; }
+    public void setOverview(String overview) { this.overview = overview; }
+    public void setPosterPath(String posterPath) { this.posterPath = posterPath; }
+    public void setVoteAverage(double voteAverage) { this.voteAverage = voteAverage; }
 }

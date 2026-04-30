@@ -12,23 +12,20 @@ import java.util.List;
 @Dao
 public interface MovieDao {
 
-    // Dodaje film lub aktualizuje, jeśli już taki istnieje
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertMovie(MovieEntity movie);
 
-    // Usuwa konkretny film z biblioteki
     @Delete
     void deleteMovie(MovieEntity movie);
 
-    // Pobiera filmy w zależności od zakładki
     @Query("SELECT * FROM movies_table WHERE isWatched = :isWatched")
     LiveData<List<MovieEntity>> getMoviesByWatchStatus(boolean isWatched);
 
-    // Pobieranie bezpośrednie do sprawdzenia w tle
+    // Szybkie usunięcie po ID
+    @Query("DELETE FROM movies_table WHERE id = :movieId")
+    void deleteMovieById(int movieId);
+
+    // Sprawdza, czy film jest w bazie (zwraca null, jeśli nie ma)
     @Query("SELECT * FROM movies_table WHERE id = :id LIMIT 1")
     MovieEntity getMovieById(int id);
-
-    // Pobiera wszystkie zapisane pozycje
-    @Query("SELECT * FROM movies_table")
-    LiveData<List<MovieEntity>> getAllMovies();
 }

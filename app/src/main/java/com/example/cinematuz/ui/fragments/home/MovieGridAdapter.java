@@ -1,6 +1,7 @@
 package com.example.cinematuz.ui.fragments.home;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -17,12 +18,16 @@ import java.util.Locale;
 public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.MovieViewHolder> {
     private List<MediaItem> mediaItems = new ArrayList<>();
     private final OnItemClickListener listener;
+    private OnItemLongClickListener longClickListener;
 
     public interface OnItemClickListener { void onItemClick(MediaItem item); }
+    public interface OnItemLongClickListener { void onItemLongClick(MediaItem item, View anchorView); }
     public MovieGridAdapter(OnItemClickListener listener) { this.listener = listener; }
+    public void setOnItemLongClickListener(OnItemLongClickListener longClickListener) {
+        this.longClickListener = longClickListener;
+    }
 
     public void submitList(List<MediaItem> newList) {
-        // Unikamy submitowania tej samej listy, co oszczędza procesor
         if (newList == mediaItems) return;
 
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new DiffUtil.Callback() {
@@ -67,7 +72,17 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
                     .placeholder(R.drawable.hero_cinema)
                     .into(binding.imagePoster);
 
+            // Zwykłe kliknięcie
             itemView.setOnClickListener(v -> listener.onItemClick(item));
+
+            // Reakcja na przytrzymanie palcem
+            itemView.setOnLongClickListener(v -> {
+                if (longClickListener != null) {
+                    longClickListener.onItemLongClick(item, itemView);
+                    return true;
+                }
+                return false;
+            });
         }
     }
 }

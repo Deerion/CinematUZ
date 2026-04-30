@@ -1,9 +1,13 @@
 package com.example.cinematuz.ui.fragments.home.details;
 
+import android.app.Application;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
+import com.example.cinematuz.data.local.MovieEntity;
 import com.example.cinematuz.data.repositories.MovieRepository;
 import com.example.cinematuz.data.models.ApiResponse;
 import com.example.cinematuz.data.models.Cast;
@@ -17,9 +21,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class DetailsViewModel extends ViewModel {
+public class DetailsViewModel extends AndroidViewModel {
 
-    private final MovieRepository repository = new MovieRepository();
+    private final MovieRepository repository;
 
     private final MutableLiveData<MediaItem> _fullDetails = new MutableLiveData<>();
     public LiveData<MediaItem> fullDetails = _fullDetails;
@@ -29,6 +33,13 @@ public class DetailsViewModel extends ViewModel {
 
     private final MutableLiveData<String> _trailerKey = new MutableLiveData<>();
     public LiveData<String> trailerKey = _trailerKey;
+    private final MutableLiveData<MovieEntity> _localMovieState = new MutableLiveData<>();
+    public LiveData<MovieEntity> localMovieState = _localMovieState;
+
+    public DetailsViewModel(@NonNull Application application) {
+        super(application);
+        repository = new MovieRepository(application);
+    }
 
     public void loadData(int id, String type, String lang) {
         repository.getDetails(id, type, lang, new Callback<MediaItem>() {
@@ -66,5 +77,37 @@ public class DetailsViewModel extends ViewModel {
             @Override
             public void onFailure(Call<ApiResponse<Video>> call, Throwable t) {}
         });
+    }
+
+    public void checkLocalMovieState(int movieId) {
+        repository.getMovieById(movieId, movie -> {
+            _localMovieState.postValue(movie);
+        });
+    }
+
+    public void toggleLibraryStatus(MediaItem item, boolean setAsWatched) {
+        MovieEntity currentEntity = _localMovieState.getValue();
+
+        if (currentEntity != null && currentEntity.isWatched() == setAsWatched) {
+            repository.deleteMovieById(item.getId());
+            _localMovieState.postValue(null);
+            return;
+        }
+
+        boolean isFavorite = currentEntity != null && currentEntity.isFavorite();
+
+        // Zapis do bazy z użyciem getTitle()
+        MovieEntity newEntity = new MovieEntity(
+                item.getId(),
+                item.getTitle(),
+                item.getPosterPath(),
+                item.getOverview(),
+                item.getVoteAverage(),
+                item.getMediaType(),
+                setAsWatched,
+                isFavorite
+        );
+        repository.insertMovie(newEntity);
+        _localMovieState.postValue(newEntity);
     }
 }

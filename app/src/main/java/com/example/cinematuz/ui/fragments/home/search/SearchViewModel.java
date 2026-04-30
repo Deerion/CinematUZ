@@ -26,10 +26,15 @@ import retrofit2.Response;
 import android.text.TextUtils;
 import com.example.cinematuz.data.models.FilterCriteria;
 
-public class SearchViewModel extends ViewModel {
-
-    private final MovieRepository repository = new MovieRepository();
-
+import android.app.Application;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+public class SearchViewModel extends AndroidViewModel {
+    private final MovieRepository repository;
+    public SearchViewModel(@NonNull Application application) {
+        super(application);
+        repository = new MovieRepository(application);
+    }
     private final MutableLiveData<List<MediaItem>> _searchResults = new MutableLiveData<>();
     public LiveData<List<MediaItem>> searchResults = _searchResults;
 
