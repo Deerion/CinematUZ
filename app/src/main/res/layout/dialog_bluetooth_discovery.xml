@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Pasek do przesuwania (Drag handle) -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:alpha="0.2"
+        android:background="@drawable/bg_drag_handle"
+        android:layout_marginBottom="32dp" />
+
+    <!-- Ikona Bluetooth w czerwonym kręgu -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        app:cardBackgroundColor="@color/primary"
+        app:cardCornerRadius="36dp"
+        app:cardElevation="8dp"
+        app:strokeColor="#4DE60A15"
+        app:strokeWidth="4dp">
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_bluetooth"
+            app:tint="@android:color/white" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Szukanie osób w pobliżu..."
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Upewnij się, że inni też mają włączone\nCinematUZ"
+        android:textColor="#B3FFFFFF"
+        android:textSize="13sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="12dp"
+        android:letterSpacing="0.1"
+        android:text="ZNALEZIONE URZĄDZENIA"
+        android:textColor="@color/primary"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <!-- Lista urządzeń -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvBluetoothDevices"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never" />
+
+    <!-- Przycisk Anuluj -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnCancelDiscovery"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:text="Anuluj"
+        android:textColor="#80FFFFFF"
+        android:textStyle="bold" />
+</LinearLayout>
