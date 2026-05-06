@@ -1,8 +1,14 @@
 package com.example.cinematuz.ui.fragments.friends;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothDevice;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,6 +28,7 @@ import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.FriendRequest;
 import com.example.cinematuz.data.models.SearchResultUser;
+import com.example.cinematuz.utils.BluetoothHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -39,6 +47,9 @@ import java.util.Map;
 
 public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriendActionListener {
 
+    private static final String TAG = "FriendsFragment";
+    private static final int PERMISSION_REQUEST_CODE = 101;
+
     private RecyclerView recyclerViewFriends;
     private RecyclerView rvFriendRequests;
     private FriendsAdapter friendsAdapter;
@@ -50,6 +61,11 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+
+    // Bluetooth
+    private BluetoothHelper bluetoothHelper;
+    private List<BluetoothDevice> discoveredDevices = new ArrayList<>();
+    private BluetoothDeviceAdapter btAdapter;
 
     private List<Friend> friendsList = new ArrayList<>();
     private List<FriendRequest> pendingRequests = new ArrayList<>();
@@ -72,10 +88,15 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         FloatingActionButton fab = view.findViewById(R.id.fabAddFriend);
         MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroupFriends);
+        View bluetoothCard = view.findViewById(R.id.layoutBluetoothNearby);
 
         if (tvInvitationsTitle != null) tvInvitationsTitle.setVisibility(View.GONE);
 
         if (fab != null) fab.setOnClickListener(v -> showSearchFriendsDialog());
+
+        if (bluetoothCard != null) {
+            bluetoothCard.setOnClickListener(v -> checkPermissionsAndStartBluetooth());
+        }
 
         if (toggleGroup != null) {
             toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
@@ -107,13 +128,90 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
         return view;
     }
 
+    // --- LOGIKA BLUETOOTH ---
+
+    private void checkPermissionsAndStartBluetooth() {
+        List<String> permissions = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        } else {
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+
+        List<String> missingPermissions = new ArrayList<>();
+        for (String p : permissions) {
+            if (ContextCompat.checkSelfPermission(requireContext(), p) != PackageManager.PERMISSION_GRANTED) {
+                missingPermissions.add(p);
+            }
+        }
+
+        if (missingPermissions.isEmpty()) {
+            startBluetoothSearch();
+        } else {
+            requestPermissions(missingPermissions.toArray(new String[0]), PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startBluetoothSearch() {
+        discoveredDevices.clear();
+        bluetoothHelper = new BluetoothHelper(requireContext(), new BluetoothHelper.BluetoothDiscoveryListener() {
+            @Override
+            public void onDeviceFound(BluetoothDevice device) {
+                if (!discoveredDevices.contains(device)) {
+                    discoveredDevices.add(device);
+                    if (btAdapter != null) {
+                        btAdapter.notifyDataSetChanged();
+                    }
+                    Log.d(TAG, "Bluetooth znaleziono: " + device.getName());
+                }
+            }
+
+            @Override
+            public void onDiscoveryFinished() {
+                Log.d(TAG, "Bluetooth: Skanowanie zakończone");
+            }
+        });
+
+        if (bluetoothHelper.isBluetoothEnabled()) {
+            showBluetoothDiscoveryDialog();
+            bluetoothHelper.startDiscovery();
+        } else {
+            Toast.makeText(getContext(), "Włącz Bluetooth w ustawieniach!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showBluetoothDiscoveryDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_bluetooth_discovery, null);
+        dialog.setContentView(sheetView);
+
+        RecyclerView rv = sheetView.findViewById(R.id.rvBluetoothDevices);
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+        btAdapter = new BluetoothDeviceAdapter(discoveredDevices);
+        rv.setAdapter(btAdapter);
+
+        sheetView.findViewById(R.id.btnCancelDiscovery).setOnClickListener(v -> {
+            if (bluetoothHelper != null) bluetoothHelper.stopDiscovery();
+            dialog.dismiss();
+        });
+
+        dialog.setOnDismissListener(d -> {
+            if (bluetoothHelper != null) bluetoothHelper.stopDiscovery();
+        });
+
+        dialog.show();
+    }
+
+    // --- LOGIKA FIREBASE (ZNAJOMI) ---
+
     private void listenForFriends() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
 
         db.collection("profiles").document(myUid).collection("friends")
                 .addSnapshotListener((value, error) -> {
-                    // Zabezpieczenie przed crashem, gdy wyjdziemy z zakładki
                     if (error != null || !isAdded()) return;
 
                     if (value != null) {
@@ -124,9 +222,8 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
                             Friend friend = doc.toObject(Friend.class);
                             friend.setId(doc.getId());
                             friendsList.add(friend);
-                            currentFriendIds.add(friend.getId()); // Zapisujemy, kto aktualnie jest znajomym
+                            currentFriendIds.add(friend.getId());
 
-                            // Nasłuchiwanie statusu online
                             if (!profileListeners.containsKey(friend.getId())) {
                                 String targetId = friend.getId();
                                 ListenerRegistration reg = db.collection("profiles").document(targetId)
@@ -135,13 +232,10 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
                                                 Boolean isOnline = profDoc.getBoolean("isOnline");
                                                 String avatarUrl = profDoc.getString("avatar_url");
 
-                                                // Szukamy znajomego na bieżącej liście, żeby nie edytować "duchów"
                                                 for (int i = 0; i < friendsList.size(); i++) {
                                                     if (friendsList.get(i).getId().equals(targetId)) {
                                                         friendsList.get(i).setOnline(isOnline != null ? isOnline : false);
                                                         if (avatarUrl != null) friendsList.get(i).setAvatarUrl(avatarUrl);
-
-                                                        // Aktualizujemy tylko tego jednego znajomego, zamiast całej listy
                                                         friendsAdapter.notifyItemChanged(i);
                                                         break;
                                                     }
@@ -152,20 +246,16 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
                             }
                         }
 
-                        // --- NOWE: USUWANIE ŚMIECI (TO NAPRAWIA CRASH) ---
-                        // Sprawdzamy, czy w naszych wtyczkach jest ktoś, kogo nie ma już na liście znajomych
                         List<String> keysToRemove = new ArrayList<>();
                         for (String id : profileListeners.keySet()) {
                             if (!currentFriendIds.contains(id)) {
-                                profileListeners.get(id).remove(); // Odłączamy nasłuchiwanie!
+                                profileListeners.get(id).remove();
                                 keysToRemove.add(id);
                             }
                         }
-                        // Usuwamy nieaktywne wtyczki z pamięci
                         for (String id : keysToRemove) {
                             profileListeners.remove(id);
                         }
-                        // ---------------------------------------------------
 
                         friendsAdapter.notifyDataSetChanged();
                         if (tvFriendsCount != null) {
@@ -181,7 +271,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         db.collection("profiles").document(myUid).collection("friend_requests")
                 .addSnapshotListener((value, error) -> {
-                    // Dodane zabezpieczenie isAdded()
                     if (error != null || !isAdded()) return;
 
                     if (value != null) {
@@ -231,7 +320,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
             if (mAuth.getCurrentUser() == null) return;
             String myUid = mAuth.getCurrentUser().getUid();
 
-            // Blokada wysyłania do osób, które już są na liście (znajomi lub pending)
             for (Friend f : friendsList) {
                 if (f.getId().equals(clickedUser.getUid())) {
                     Toast.makeText(getContext(), "Użytkownik jest już na Twojej liście!", Toast.LENGTH_SHORT).show();
@@ -244,7 +332,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
                 String myAvatarUrl = documentSnapshot.getString("avatar_url");
 
                 WriteBatch batch = db.batch();
-
                 Map<String, Object> requestData = new HashMap<>();
                 requestData.put("username", myUsername != null ? myUsername : "Użytkownik");
                 requestData.put("avatarUrl", myAvatarUrl != null ? myAvatarUrl : "");
@@ -286,9 +373,9 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
                         .limit(10).get()
                         .addOnSuccessListener(snapshots -> {
                             List<SearchResultUser> results = new ArrayList<>();
-                            String myUid = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "";
+                            String mUid = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "";
                             for (QueryDocumentSnapshot doc : snapshots) {
-                                if (!doc.getId().equals(myUid)) {
+                                if (!doc.getId().equals(mUid)) {
                                     results.add(new SearchResultUser(doc.getId(), doc.getString("username"), doc.getString("avatar_url")));
                                 }
                             }
@@ -308,7 +395,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         db.collection("profiles").document(myUid).get().addOnSuccessListener(documentSnapshot -> {
             WriteBatch batch = db.batch();
-
             Friend friendForMe = new Friend(request.getUid(), request.getUsername(), request.getAvatarUrl(), true);
             friendForMe.setStatus("accepted");
             batch.set(db.collection("profiles").document(myUid).collection("friends").document(request.getUid()), friendForMe);
@@ -318,7 +404,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
             batch.set(db.collection("profiles").document(request.getUid()).collection("friends").document(myUid), friendForSender);
 
             batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()));
-
             batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Zaakceptowano!", Toast.LENGTH_SHORT).show());
         });
     }
@@ -362,9 +447,20 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int res : grantResults) if (res != PackageManager.PERMISSION_GRANTED) allGranted = false;
+            if (allGranted) startBluetoothSearch();
+            else Toast.makeText(getContext(), "Wymagane uprawnienia Bluetooth!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         for (ListenerRegistration reg : profileListeners.values()) reg.remove();
         profileListeners.clear();
+        if (bluetoothHelper != null) bluetoothHelper.stopDiscovery();
     }
 }

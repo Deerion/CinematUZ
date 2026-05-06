@@ -1,10 +1,11 @@
-// Lokalizacja: java/com/example/cinematuz/data/models/SearchResultUser.java
 package com.example.cinematuz.data.models;
 
 public class SearchResultUser {
     private String uid;
     private String username;
     private String avatarUrl;
+
+    public SearchResultUser() {}
 
     public SearchResultUser(String uid, String username, String avatarUrl) {
         this.uid = uid;

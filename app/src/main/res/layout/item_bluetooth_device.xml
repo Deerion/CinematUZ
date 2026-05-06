@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="#1AFFFFFF"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/ivDeviceAvatarContainer"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:cardBackgroundColor="#26E60A15"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_person"
+                app:tint="@color/primary" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Nazwa urządzenia: ograniczona do 1 linii z wielokropkiem na końcu -->
+        <TextView
+            android:id="@+id/tvDeviceName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Urządzenie..."
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/btnInviteDevice"
+            app:layout_constraintStart_toEndOf="@id/ivDeviceAvatarContainer"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <!-- Zasięg: teraz przypięty do dołu nazwy (layout_constraintTop_toBottomOf) -->
+        <TextView
+            android:id="@+id/tvDeviceRange"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Zasięg: W zasięgu"
+            android:textColor="#80FFFFFF"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/tvDeviceName"
+            app:layout_constraintStart_toStartOf="@id/tvDeviceName"
+            app:layout_constraintTop_toBottomOf="@id/tvDeviceName" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnInviteDevice"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:backgroundTint="#26E60A15"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="ZAPROŚ"
+            android:textColor="@color/primary"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            app:cornerRadius="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

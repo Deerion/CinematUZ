@@ -11,6 +11,7 @@ public class FriendRequest {
         this.username = username;
         this.avatarUrl = avatarUrl;
     }
+    public FriendRequest() {} // Wymagany przez Firebase
 
     public String getUid() { return uid; }
     public String getUsername() { return username; }
