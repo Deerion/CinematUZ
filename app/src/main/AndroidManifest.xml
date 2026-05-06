@@ -5,6 +5,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <!-- Plik: main/AndroidManifest.xml -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -12,9 +17,6 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-
-    <!-- Lokalizacja jest wymagana do skanowania w starszych wersjach Androida -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:name=".CinematUZApplication"
@@ -27,11 +29,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CinematUZ">
 
-
-
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
+
         <activity
             android:name=".ui.activities.LoginActivity"
             android:exported="true"
@@ -52,6 +53,13 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="false"
             android:theme="@style/Theme.CinematUZ" />
+
+        <!-- CaptureActivity is needed for ZXing -->
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="fullSensor"
+            tools:replace="android:screenOrientation"
+            android:stateNotNeeded="true" />
 
         <service
             android:name=".utils.AppKillDetectionService"

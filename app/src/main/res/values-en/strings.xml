@@ -183,4 +183,21 @@
     <string name="profile_avatar_updated">Avatar updated</string>
     <string name="profile_title">Profile</string>
 
+    <!-- QR Code Dialog -->
+    <string name="qr_dialog_title">Your CinematUZ Code</string>
+    <string name="qr_dialog_subtitle">Show it to a friend to add them</string>
+    <string name="qr_dialog_nickname_label">NICKNAME</string>
+    <string name="qr_dialog_download_btn">Download QR</string>
+    <string name="qr_dialog_info_title">Quick addition</string>
+    <string name="qr_dialog_info_text">By scanning a friend\'s code, you\'ll automatically add them to your list and be able to see their favorite premieres.</string>
+    <string name="qr_save_success">QR code saved to gallery!</string>
+    <string name="qr_save_error">Error saving image</string>
+    <string name="qr_generate_error">Error: Code not generated</string>
+    <string name="qr_scan_cancel">Scanning cancelled</string>
+    <string name="qr_scan_self_error">You cannot add yourself!</string>
+    <string name="qr_scan_already_friend">This user is already in your list!</string>
+    <string name="qr_scan_invalid">Invalid QR code</string>
+    <string name="qr_scan_fetch_error">Error fetching user data</string>
+    <string name="qr_scan_prompt">Scan a friend\'s QR code</string>
+    <string name="qr_saving_toast">Saving QR code...</string>
 </resources>
