@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.databinding.FragmentMapBinding;
+import com.example.cinematuz.utils.ThemeHelper;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -104,7 +105,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         this.googleMap = map;
-        applyDarkStyle();
+
+        ThemeHelper.applyMapStyle(requireContext(), this.googleMap);
+
         observeCinemas();
         checkPermissions();
 
