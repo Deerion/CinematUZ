@@ -96,4 +96,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation("androidx.lifecycle:lifecycle-process:2.6.2")
 
+    // QR Code
+    implementation(libs.zxing.android.embedded)
+    implementation(libs.zxing.core)
+
 }

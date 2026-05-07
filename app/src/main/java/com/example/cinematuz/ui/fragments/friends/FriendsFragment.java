@@ -3,9 +3,15 @@ package com.example.cinematuz.ui.fragments.friends;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
+import android.content.ContentValues;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -13,10 +19,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -39,7 +47,13 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
+import com.google.zxing.BarcodeFormat;
+import com.journeyapps.barcodescanner.BarcodeEncoder;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +86,15 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
     private Map<String, ListenerRegistration> profileListeners = new HashMap<>();
     private boolean isFriendsTabActive = true;
 
+    private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(),
+            result -> {
+                if(result.getContents() == null) {
+                    Toast.makeText(getContext(), "Anulowano skanowanie", Toast.LENGTH_LONG).show();
+                } else {
+                    processScannedUid(result.getContents());
+                }
+            });
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -89,6 +112,8 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
         FloatingActionButton fab = view.findViewById(R.id.fabAddFriend);
         MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroupFriends);
         View bluetoothCard = view.findViewById(R.id.layoutBluetoothNearby);
+        View btnScanQr = view.findViewById(R.id.btnScanQr);
+        View btnMyQr = view.findViewById(R.id.btnMyQr);
 
         if (tvInvitationsTitle != null) tvInvitationsTitle.setVisibility(View.GONE);
 
@@ -96,6 +121,14 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         if (bluetoothCard != null) {
             bluetoothCard.setOnClickListener(v -> checkPermissionsAndStartBluetooth());
+        }
+
+        if (btnScanQr != null) {
+            btnScanQr.setOnClickListener(v -> startQrScanner());
+        }
+
+        if (btnMyQr != null) {
+            btnMyQr.setOnClickListener(v -> showMyQrDialog());
         }
 
         if (toggleGroup != null) {
@@ -126,6 +159,159 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
         listenForFriendRequests();
 
         return view;
+    }
+
+
+    private void startQrScanner() {
+        ScanOptions options = new ScanOptions();
+        options.setPrompt("Zeskanuj kod QR znajomego");
+        options.setBeepEnabled(true);
+        options.setOrientationLocked(false);
+        options.setCaptureActivity(com.journeyapps.barcodescanner.CaptureActivity.class);
+        barcodeLauncher.launch(options);
+    }
+
+    private void processScannedUid(String uid) {
+        if (mAuth.getCurrentUser() == null) return;
+        String myUid = mAuth.getCurrentUser().getUid();
+
+        if (uid.equals(myUid)) {
+            Toast.makeText(getContext(), "Nie możesz dodać samego siebie!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        for (Friend f : friendsList) {
+            if (f.getId().equals(uid)) {
+                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        db.collection("profiles").document(uid).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                SearchResultUser scannedUser = new SearchResultUser(
+                        uid,
+                        documentSnapshot.getString("username"),
+                        documentSnapshot.getString("avatar_url")
+                );
+                sendFriendRequest(scannedUser);
+            } else {
+                Toast.makeText(getContext(), "Nieprawidłowy kod QR", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnFailureListener(e -> {
+            Toast.makeText(getContext(), "Błąd podczas pobierania danych użytkownika", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void showMyQrDialog() {
+        if (mAuth.getCurrentUser() == null) return;
+        String myUid = mAuth.getCurrentUser().getUid();
+
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.TransparentBottomSheetDialog);
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_my_qr, null);
+        dialog.setContentView(sheetView);
+
+        ImageView ivQrCode = sheetView.findViewById(R.id.ivQrCode);
+        TextView tvUsername = sheetView.findViewById(R.id.tvUsername);
+
+        db.collection("profiles").document(myUid).get().addOnSuccessListener(doc -> {
+            if (doc.exists()) {
+                tvUsername.setText(doc.getString("username"));
+            }
+        });
+
+        Bitmap qrBitmap = null;
+        try {
+            BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+            qrBitmap = barcodeEncoder.encodeBitmap(myUid, BarcodeFormat.QR_CODE, 512, 512);
+            ivQrCode.setImageBitmap(qrBitmap);
+        } catch (Exception e) {
+            Log.e(TAG, "Błąd generowania QR", e);
+        }
+
+        final Bitmap finalQrBitmap = qrBitmap;
+
+        sheetView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+        sheetView.findViewById(R.id.btnDownloadQr).setOnClickListener(v -> {
+            if (finalQrBitmap != null) {
+                saveBitmapToGallery(finalQrBitmap);
+            } else {
+                Toast.makeText(getContext(), "Błąd: Nie wygenerowano kodu", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void saveBitmapToGallery(Bitmap bitmap) {
+        String filename = "CinematUZ_QR_" + System.currentTimeMillis() + ".png";
+        OutputStream fos = null;
+        Uri imageUri = null;
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/CinematUZ");
+
+                imageUri = requireContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                if (imageUri != null) {
+                    fos = requireContext().getContentResolver().openOutputStream(imageUri);
+                }
+            } else {
+                String imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString() + "/CinematUZ";
+                java.io.File fileDir = new java.io.File(imagesDir);
+                if (!fileDir.exists()) fileDir.mkdirs();
+                java.io.File image = new java.io.File(imagesDir, filename);
+                fos = new java.io.FileOutputStream(image);
+                android.media.MediaScannerConnection.scanFile(getContext(), new String[]{image.getAbsolutePath()}, null, null);
+            }
+
+            if (fos != null) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                Toast.makeText(getContext(), "Zapisano kod QR w galerii!", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Błąd zapisu obrazu", e);
+            Toast.makeText(getContext(), "Błąd zapisu obrazu", Toast.LENGTH_SHORT).show();
+        } finally {
+            try {
+                if (fos != null) fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendFriendRequest(SearchResultUser targetUser) {
+        if (mAuth.getCurrentUser() == null) return;
+        String myUid = mAuth.getCurrentUser().getUid();
+
+        db.collection("profiles").document(myUid).get().addOnSuccessListener(documentSnapshot -> {
+            String myUsername = documentSnapshot.getString("username");
+            String myAvatarUrl = documentSnapshot.getString("avatar_url");
+
+            WriteBatch batch = db.batch();
+            Map<String, Object> requestData = new HashMap<>();
+            requestData.put("username", myUsername != null ? myUsername : "Użytkownik");
+            requestData.put("avatarUrl", myAvatarUrl != null ? myAvatarUrl : "");
+            requestData.put("status", "pending");
+
+            DocumentReference requestRef = db.collection("profiles").document(targetUser.getUid())
+                    .collection("friend_requests").document(myUid);
+            batch.set(requestRef, requestData);
+
+            DocumentReference myPendingRef = db.collection("profiles").document(myUid)
+                    .collection("friends").document(targetUser.getUid());
+            Friend pendingFriend = new Friend(targetUser.getUid(), targetUser.getUsername(), targetUser.getAvatarUrl(), false);
+            pendingFriend.setStatus("pending");
+            batch.set(myPendingRef, pendingFriend);
+
+            batch.commit().addOnSuccessListener(aVoid -> {
+                Toast.makeText(getContext(), "Wysłano zaproszenie do " + targetUser.getUsername() + "!", Toast.LENGTH_SHORT).show();
+            });
+        });
     }
 
     // --- LOGIKA BLUETOOTH ---
@@ -316,43 +502,7 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
         RecyclerView rvSuggestions = sheetView.findViewById(R.id.rvFriendSuggestions);
         LinearLayout layoutNoResults = sheetView.findViewById(R.id.layoutNoResults);
 
-        SuggestionAdapter suggestionAdapter = new SuggestionAdapter(new ArrayList<>(), clickedUser -> {
-            if (mAuth.getCurrentUser() == null) return;
-            String myUid = mAuth.getCurrentUser().getUid();
-
-            for (Friend f : friendsList) {
-                if (f.getId().equals(clickedUser.getUid())) {
-                    Toast.makeText(getContext(), "Użytkownik jest już na Twojej liście!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
-            db.collection("profiles").document(myUid).get().addOnSuccessListener(documentSnapshot -> {
-                String myUsername = documentSnapshot.getString("username");
-                String myAvatarUrl = documentSnapshot.getString("avatar_url");
-
-                WriteBatch batch = db.batch();
-                Map<String, Object> requestData = new HashMap<>();
-                requestData.put("username", myUsername != null ? myUsername : "Użytkownik");
-                requestData.put("avatarUrl", myAvatarUrl != null ? myAvatarUrl : "");
-                requestData.put("status", "pending");
-
-                DocumentReference requestRef = db.collection("profiles").document(clickedUser.getUid())
-                        .collection("friend_requests").document(myUid);
-                batch.set(requestRef, requestData);
-
-                DocumentReference myPendingRef = db.collection("profiles").document(myUid)
-                        .collection("friends").document(clickedUser.getUid());
-                Friend pendingFriend = new Friend(clickedUser.getUid(), clickedUser.getUsername(), clickedUser.getAvatarUrl(), false);
-                pendingFriend.setStatus("pending");
-                batch.set(myPendingRef, pendingFriend);
-
-                batch.commit().addOnSuccessListener(aVoid -> {
-                    Toast.makeText(getContext(), "Wysłano zaproszenie!", Toast.LENGTH_SHORT).show();
-                    bottomSheet.dismiss();
-                });
-            });
-        });
+        SuggestionAdapter suggestionAdapter = new SuggestionAdapter(new ArrayList<>(), this::sendFriendRequest);
 
         rvSuggestions.setLayoutManager(new LinearLayoutManager(getContext()));
         rvSuggestions.setAdapter(suggestionAdapter);
