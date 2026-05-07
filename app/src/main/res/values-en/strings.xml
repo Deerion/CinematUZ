@@ -94,6 +94,7 @@
     <string name="filter_movies">Movies</string>
     <string name="filter_tv">TV Shows</string>
     <string name="trending_header">Trending</string>
+    <string name="map_search_bar">Search for cinemas or cities...</string>
 
     <string name="to_watch">To watch</string>
     <string name="watched">Watched</string>

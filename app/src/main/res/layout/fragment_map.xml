@@ -41,7 +41,7 @@
             android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:background="@android:color/transparent"
-            android:hint="Szukaj kin lub miast..."
+            android:hint="@string/map_search_bar"
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:maxLines="1"
