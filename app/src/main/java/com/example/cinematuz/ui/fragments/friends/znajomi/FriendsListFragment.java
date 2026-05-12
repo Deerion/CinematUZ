@@ -35,6 +35,7 @@ import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.FriendRequest;
 import com.example.cinematuz.data.models.SearchResultUser;
+import com.example.cinematuz.ui.fragments.friends.RequestAdapter;
 import com.example.cinematuz.utils.BluetoothHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;

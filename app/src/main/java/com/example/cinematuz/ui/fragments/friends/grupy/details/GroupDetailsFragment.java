@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,6 +41,10 @@ public class GroupDetailsFragment extends Fragment {
     private FriendsAdapter membersAdapter;
     private List<Friend> membersList = new ArrayList<>();
 
+    // Zmienne UI zarządzania
+    private MaterialButton btnDeleteGroup;
+    private LinearLayout layoutManagement;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,17 +63,20 @@ public class GroupDetailsFragment extends Fragment {
         tvMemberCount = view.findViewById(R.id.tvDetailsMemberCount);
         rvMembers = view.findViewById(R.id.rvGroupMembers);
 
+        btnDeleteGroup = view.findViewById(R.id.btnDeleteGroup);
+        layoutManagement = view.findViewById(R.id.layoutManagement);
+
         MaterialButton btnAddMember = view.findViewById(R.id.btnDetailsAddMember);
         MaterialButton btnBluetooth = view.findViewById(R.id.btnDetailsBluetooth);
         MaterialButton btnAddMovies = view.findViewById(R.id.btnDetailsAddMovies);
 
         rvMembers.setLayoutManager(new LinearLayoutManager(getContext()));
         membersAdapter = new FriendsAdapter(membersList, (friend, position) -> {
-            // Tu możesz dodać logikę usuwania z grupy
+            // Logika usuwania członka (opcjonalnie)
         });
         rvMembers.setAdapter(membersAdapter);
 
-        setupClickListeners(btnAddMember, btnBluetooth, btnAddMovies);
+        setupClickListeners(btnAddMember, btnBluetooth, btnAddMovies, btnDeleteGroup);
         listenToGroupChanges();
 
         return view;
@@ -87,9 +95,17 @@ public class GroupDetailsFragment extends Fragment {
                         List<String> memberUids = group.getMembers();
                         tvMemberCount.setText(memberUids.size() + " członków");
 
-                        // Przekazanie ID właściciela do adaptera
-                        membersAdapter.setOwnerId(group.getOwnerId());
+                        // Sprawdzenie uprawnień admina do wyświetlenia narzędzi
+                        String myUid = FirebaseAuth.getInstance().getUid();
+                        if (myUid != null && myUid.equals(group.getOwnerId())) {
+                            btnDeleteGroup.setVisibility(View.VISIBLE);
+                            layoutManagement.setVisibility(View.VISIBLE);
+                        } else {
+                            btnDeleteGroup.setVisibility(View.GONE);
+                            layoutManagement.setVisibility(View.GONE);
+                        }
 
+                        membersAdapter.setOwnerId(group.getOwnerId());
                         fetchMemberProfiles(memberUids);
                     }
                 });
@@ -100,7 +116,6 @@ public class GroupDetailsFragment extends Fragment {
         for (String uid : uids) {
             db.collection("profiles").document(uid).get().addOnSuccessListener(doc -> {
                 if (doc.exists() && isAdded()) {
-                    // Wykorzystanie konstruktora Friend(id, name, avatarUrl, isOnline)
                     Friend member = new Friend(
                             doc.getId(),
                             doc.getString("username"),
@@ -114,16 +129,38 @@ public class GroupDetailsFragment extends Fragment {
         }
     }
 
-    private void setupClickListeners(View add, View bt, View movies) {
+    private void setupClickListeners(View add, View bt, View movies, View delete) {
         add.setOnClickListener(v -> showInviteFriendDialog());
         bt.setOnClickListener(v -> Toast.makeText(getContext(), "Szukanie urządzeń...", Toast.LENGTH_SHORT).show());
         movies.setOnClickListener(v -> Toast.makeText(getContext(), "Przejdź do bazy filmów", Toast.LENGTH_SHORT).show());
+
+        delete.setOnClickListener(v -> {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Usuń grupę")
+                    .setMessage("Czy na pewno chcesz usunąć tę grupę? Ta operacja jest nieodwracalna.")
+                    .setPositiveButton("Usuń", (dialog, which) -> deleteGroup())
+                    .setNegativeButton("Anuluj", null)
+                    .show();
+        });
+    }
+
+    private void deleteGroup() {
+        if (groupId == null) return;
+
+        db.collection("groups").document(groupId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Grupa została usunięta", Toast.LENGTH_SHORT).show();
+                    if (getActivity() != null) {
+                        getActivity().onBackPressed();
+                    }
+                })
+                .addOnFailureListener(e -> Toast.makeText(getContext(), "Błąd podczas usuwania", Toast.LENGTH_SHORT).show());
     }
 
     private void showInviteFriendDialog() {
         String myUid = FirebaseAuth.getInstance().getUid();
 
-        // Pobieramy Twoich znajomych z bazy
         db.collection("profiles").document(myUid).collection("friends")
                 .whereEqualTo("status", "accepted")
                 .get()
@@ -142,7 +179,6 @@ public class GroupDetailsFragment extends Fragment {
                         return;
                     }
 
-                    // Prosty Alert Dialog z możliwością wyboru znajomego
                     new MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Zaproś znajomego")
                             .setItems(names.toArray(new String[0]), (dialog, which) -> {
@@ -154,12 +190,10 @@ public class GroupDetailsFragment extends Fragment {
     }
 
     private void sendGroupInvite(String friendUid) {
-        // Przygotowujemy powiadomienie
         Map<String, Object> invite = new HashMap<>();
         invite.put("groupName", tvGroupName.getText().toString());
         invite.put("type", "group");
 
-        // Wrzucamy zaproszenie do nowej kolekcji "group_invites" zapraszanego użytkownika
         db.collection("profiles").document(friendUid).collection("group_invites")
                 .document(groupId)
                 .set(invite)

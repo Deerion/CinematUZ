@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
+// DODANY IMPORT DLA FIREBASE AUTH
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
@@ -48,13 +50,33 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         Friend friend = friendsList.get(position);
         holder.tvFriendName.setText(friend.getName());
 
-        // POPRAWIONA LOGIKA GWIAZDKI (getId zamiast getUid)
-        if (ownerId != null && ownerId.equals(friend.getId())) {
+        // Weryfikacja czy aktualny wpis (znajomy) to właściciel grupy
+        boolean isCurrentItemOwner = (ownerId != null && ownerId.equals(friend.getId()));
+
+        if (isCurrentItemOwner) {
             holder.ivOwnerStar.setVisibility(View.VISIBLE);
         } else {
             holder.ivOwnerStar.setVisibility(View.GONE);
         }
 
+        // LOGIKA PRZYCISKU USUWANIA (X)
+        if (ownerId != null) {
+            // Jesteśmy w trybie GRUPY (bo ownerId zostało przekazane)
+            String myUid = FirebaseAuth.getInstance().getUid();
+            boolean amIOwner = (myUid != null && myUid.equals(ownerId));
+
+            // Pokazuj 'X' TYLKO jeśli ja jestem właścicielem ORAZ osoba na liście nie jest mną (właścicielem)
+            if (amIOwner && !isCurrentItemOwner) {
+                holder.btnRemoveFriend.setVisibility(View.VISIBLE);
+            } else {
+                holder.btnRemoveFriend.setVisibility(View.GONE);
+            }
+        } else {
+            // Jesteśmy w zwykłej liście znajomych (ownerId jest null), pokazujemy 'X' wszystkim
+            holder.btnRemoveFriend.setVisibility(View.VISIBLE);
+        }
+
+        // Awatar
         String avatarUrl = friend.getAvatarUrl();
         if (avatarUrl != null && !avatarUrl.isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -68,6 +90,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
                     .into(holder.ivFriendAvatar);
         }
 
+        // Status
         if ("pending".equals(friend.getStatus())) {
             holder.tvFriendStatus.setText("Oczekuje na akceptację...");
             holder.tvFriendStatus.setTextColor(Color.parseColor("#F59E0B"));
@@ -82,6 +105,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
         }
 
+        // Kliknięcie usunięcia
         if (holder.btnRemoveFriend != null) {
             holder.btnRemoveFriend.setOnClickListener(v -> listener.onRemoveFriend(friend, position));
         }

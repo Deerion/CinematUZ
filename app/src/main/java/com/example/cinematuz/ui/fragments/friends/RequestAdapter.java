@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments.friends.znajomi;
+package com.example.cinematuz.ui.fragments.friends;
 
 import android.view.LayoutInflater;
 import android.view.View;

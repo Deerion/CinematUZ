@@ -20,7 +20,6 @@ import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.FriendRequest;
 import com.example.cinematuz.ui.fragments.friends.grupy.GroupsListFragment;
 import com.example.cinematuz.ui.fragments.friends.znajomi.FriendsListFragment;
-import com.example.cinematuz.ui.fragments.friends.znajomi.RequestAdapter;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
