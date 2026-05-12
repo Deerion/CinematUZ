@@ -24,10 +24,16 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
     private final List<Friend> friendsList;
     private final OnFriendActionListener listener;
+    private String ownerId;
 
     public FriendsAdapter(List<Friend> friendsList, OnFriendActionListener listener) {
         this.friendsList = friendsList;
         this.listener = listener;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -42,7 +48,13 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         Friend friend = friendsList.get(position);
         holder.tvFriendName.setText(friend.getName());
 
-        // --- DODANA LOGIKA ŁADOWANIA AWATARA Z FIREBASE ---
+        // POPRAWIONA LOGIKA GWIAZDKI (getId zamiast getUid)
+        if (ownerId != null && ownerId.equals(friend.getId())) {
+            holder.ivOwnerStar.setVisibility(View.VISIBLE);
+        } else {
+            holder.ivOwnerStar.setVisibility(View.GONE);
+        }
+
         String avatarUrl = friend.getAvatarUrl();
         if (avatarUrl != null && !avatarUrl.isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -50,22 +62,19 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
                     .circleCrop()
                     .into(holder.ivFriendAvatar);
         } else {
-            // Jeśli ktoś nie ma avatara, wstawiamy Twoją ikonkę ic_person
             Glide.with(holder.itemView.getContext())
                     .load(R.drawable.ic_person)
                     .circleCrop()
                     .into(holder.ivFriendAvatar);
         }
-        // ----------------------------------------------------
 
-        // LOGIKA STATUSÓW
         if ("pending".equals(friend.getStatus())) {
             holder.tvFriendStatus.setText("Oczekuje na akceptację...");
-            holder.tvFriendStatus.setTextColor(Color.parseColor("#F59E0B")); // Pomarańczowy
+            holder.tvFriendStatus.setTextColor(Color.parseColor("#F59E0B"));
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
         } else if (friend.isOnline()) {
             holder.tvFriendStatus.setText("Aktywny teraz");
-            holder.tvFriendStatus.setTextColor(Color.parseColor("#22C55E")); // Zielony
+            holder.tvFriendStatus.setTextColor(Color.parseColor("#22C55E"));
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.VISIBLE);
         } else {
             holder.tvFriendStatus.setText("Offline");
@@ -87,6 +96,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         TextView tvFriendName;
         TextView tvFriendStatus;
         ImageView ivFriendAvatar;
+        ImageView ivOwnerStar;
         View btnRemoveFriend;
         View vOnlineStatusDot;
 
@@ -95,6 +105,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
             tvFriendName = itemView.findViewById(R.id.tvFriendName);
             tvFriendStatus = itemView.findViewById(R.id.tvFriendStatus);
             ivFriendAvatar = itemView.findViewById(R.id.ivFriendAvatar);
+            ivOwnerStar = itemView.findViewById(R.id.ivOwnerStar);
             btnRemoveFriend = itemView.findViewById(R.id.btnRemoveFriend);
             vOnlineStatusDot = itemView.findViewById(R.id.vOnlineStatusDot);
         }

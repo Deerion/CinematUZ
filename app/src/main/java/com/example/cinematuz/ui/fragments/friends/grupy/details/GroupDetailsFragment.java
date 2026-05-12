@@ -18,7 +18,6 @@ import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.Group;
 import com.example.cinematuz.ui.fragments.friends.znajomi.FriendsAdapter;
 import com.google.android.material.button.MaterialButton;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -50,7 +49,6 @@ public class GroupDetailsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_group_details, container, false);
 
-        // Inicjalizacja widoków - TERAZ ID SĄ ZGODNE Z XML
         tvGroupName = view.findViewById(R.id.tvDetailsGroupName);
         tvMemberCount = view.findViewById(R.id.tvDetailsMemberCount);
         rvMembers = view.findViewById(R.id.rvGroupMembers);
@@ -59,10 +57,9 @@ public class GroupDetailsFragment extends Fragment {
         MaterialButton btnBluetooth = view.findViewById(R.id.btnDetailsBluetooth);
         MaterialButton btnAddMovies = view.findViewById(R.id.btnDetailsAddMovies);
 
-        // Ustawienie listy członków (używamy Twojego FriendsAdapter)
         rvMembers.setLayoutManager(new LinearLayoutManager(getContext()));
         membersAdapter = new FriendsAdapter(membersList, (friend, position) -> {
-            // Logika usuwania kogoś z grupy (opcjonalnie)
+            // Tu możesz dodać logikę usuwania z grupy
         });
         rvMembers.setAdapter(membersAdapter);
 
@@ -85,6 +82,9 @@ public class GroupDetailsFragment extends Fragment {
                         List<String> memberUids = group.getMembers();
                         tvMemberCount.setText(memberUids.size() + " członków");
 
+                        // Przekazanie ID właściciela do adaptera
+                        membersAdapter.setOwnerId(group.getOwnerId());
+
                         fetchMemberProfiles(memberUids);
                     }
                 });
@@ -95,6 +95,7 @@ public class GroupDetailsFragment extends Fragment {
         for (String uid : uids) {
             db.collection("profiles").document(uid).get().addOnSuccessListener(doc -> {
                 if (doc.exists() && isAdded()) {
+                    // Wykorzystanie konstruktora Friend(id, name, avatarUrl, isOnline)
                     Friend member = new Friend(
                             doc.getId(),
                             doc.getString("username"),
