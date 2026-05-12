@@ -27,9 +27,9 @@
 
     <fragment
         android:id="@+id/nav_friends"
-        android:name="com.example.cinematuz.ui.fragments.friends.FriendsFragment"
+        android:name="com.example.cinematuz.ui.fragments.friends.FriendsContainerFragment"
         android:label="@string/nav_friends"
-        tools:layout="@layout/fragment_friends" />
+        tools:layout="@layout/fragment_friends_container" />
 
     <fragment
         android:id="@+id/nav_map"

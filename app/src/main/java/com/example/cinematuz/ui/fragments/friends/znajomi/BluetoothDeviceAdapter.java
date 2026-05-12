@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments.friends;
+package com.example.cinematuz.ui.fragments.friends.znajomi;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
