@@ -58,5 +58,20 @@
         android:name="com.example.cinematuz.ui.fragments.library.LibraryFragment"
         android:label="Biblioteka"
         tools:layout="@layout/fragment_library" />
+    <fragment
+        android:id="@+id/groupDetailsFragment"
+        android:name="com.example.cinematuz.ui.fragments.friends.grupy.details.GroupDetailsFragment"
+        android:label="Szczegóły grupy"
+        tools:layout="@layout/fragment_group_details">
+        <argument
+            android:name="GROUP_ID"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_groups_list"
+        android:name="com.example.cinematuz.ui.fragments.friends.grupy.GroupsListFragment"
+        android:label="Grupy"
+        tools:layout="@layout/fragment_groups" />
 
 </navigation>

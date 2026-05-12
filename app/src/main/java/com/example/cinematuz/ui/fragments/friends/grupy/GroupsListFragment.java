@@ -12,7 +12,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation; // Dodano import
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
@@ -26,7 +26,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupFragment extends Fragment {
+public class GroupsListFragment extends Fragment {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -43,20 +43,17 @@ public class GroupFragment extends Fragment {
 
         RecyclerView rvGroups = view.findViewById(R.id.rvGroups);
 
-        // POPRAWKA: Przekazujemy groupsList ORAZ listener kliknięcia
+        // Przekazujemy kliknięcie do nawigacji
         adapter = new GroupsAdapter(groupsList, group -> {
             Bundle args = new Bundle();
             args.putString("GROUP_ID", group.getId());
-            // Nawigacja do fragmentu szczegółów
             Navigation.findNavController(view).navigate(R.id.groupDetailsFragment, args);
         });
 
         rvGroups.setAdapter(adapter);
 
         FloatingActionButton btnCreateGroup = view.findViewById(R.id.btnCreateGroup);
-        if (btnCreateGroup != null) {
-            btnCreateGroup.setOnClickListener(v -> showCreateGroupDialog());
-        }
+        btnCreateGroup.setOnClickListener(v -> showCreateGroupDialog());
 
         listenForGroups();
 
@@ -71,7 +68,6 @@ public class GroupFragment extends Fragment {
                 .whereArrayContains("members", myUid)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) return;
-
                     if (value != null) {
                         groupsList.clear();
                         for (QueryDocumentSnapshot doc : value) {
@@ -105,24 +101,11 @@ public class GroupFragment extends Fragment {
     }
 
     private void createGroupInFirebase(String groupName) {
-        if (mAuth.getCurrentUser() == null) return;
-
         String myUid = mAuth.getCurrentUser().getUid();
         List<String> members = new ArrayList<>();
         members.add(myUid);
 
         Group newGroup = new Group(groupName, myUid, members);
-
-        db.collection("groups").add(newGroup)
-                .addOnSuccessListener(ref -> {
-                    if (isAdded()) {
-                        Toast.makeText(getContext(), "Stworzono grupę!", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    if (isAdded()) {
-                        Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+        db.collection("groups").add(newGroup);
     }
 }

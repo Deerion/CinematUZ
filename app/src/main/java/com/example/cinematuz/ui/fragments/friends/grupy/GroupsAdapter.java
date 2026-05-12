@@ -12,10 +12,18 @@ import java.util.List;
 
 public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewHolder> {
 
-    private final List<Group> groups;
+    // 1. Definiujemy interfejs dla kliknięć
+    public interface OnGroupClickListener {
+        void onGroupClick(Group group);
+    }
 
-    public GroupsAdapter(List<Group> groups) {
+    private final List<Group> groups;
+    private final OnGroupClickListener listener;
+
+    // 2. Aktualizujemy konstruktor, aby przyjmował listener
+    public GroupsAdapter(List<Group> groups, OnGroupClickListener listener) {
         this.groups = groups;
+        this.listener = listener;
     }
 
     @NonNull
@@ -32,6 +40,13 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
 
         int membersSize = group.getMembers() != null ? group.getMembers().size() : 0;
         holder.tvCount.setText(membersSize + " członków");
+
+        // 3. Obsługujemy kliknięcie w cały element listy
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onGroupClick(group);
+            }
+        });
     }
 
     @Override
