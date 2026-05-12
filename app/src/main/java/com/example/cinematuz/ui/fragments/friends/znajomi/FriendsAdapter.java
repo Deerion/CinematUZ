@@ -50,8 +50,13 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         Friend friend = friendsList.get(position);
         holder.tvFriendName.setText(friend.getName());
 
-        // Weryfikacja czy aktualny wpis (znajomy) to właściciel grupy
+        String myUid = FirebaseAuth.getInstance().getUid();
+
+        // Weryfikacja czy aktualny wpis to właściciel grupy (aby pokazać gwiazdkę)
         boolean isCurrentItemOwner = (ownerId != null && ownerId.equals(friend.getId()));
+
+        // Weryfikacja czy aktualny wpis to JA (zalogowany użytkownik)
+        boolean isMe = (myUid != null && myUid.equals(friend.getId()));
 
         if (isCurrentItemOwner) {
             holder.ivOwnerStar.setVisibility(View.VISIBLE);
@@ -61,19 +66,22 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
         // LOGIKA PRZYCISKU USUWANIA (X)
         if (ownerId != null) {
-            // Jesteśmy w trybie GRUPY (bo ownerId zostało przekazane)
-            String myUid = FirebaseAuth.getInstance().getUid();
+            // Jesteśmy w trybie GRUPY
             boolean amIOwner = (myUid != null && myUid.equals(ownerId));
 
-            // Pokazuj 'X' TYLKO jeśli ja jestem właścicielem ORAZ osoba na liście nie jest mną (właścicielem)
-            if (amIOwner && !isCurrentItemOwner) {
+            // Pokazuj 'X' TYLKO jeśli ja jestem właścicielem i ta pozycja na liście TO NIE JESTEM JA
+            if (amIOwner && !isMe) {
                 holder.btnRemoveFriend.setVisibility(View.VISIBLE);
             } else {
                 holder.btnRemoveFriend.setVisibility(View.GONE);
             }
         } else {
-            // Jesteśmy w zwykłej liście znajomych (ownerId jest null), pokazujemy 'X' wszystkim
-            holder.btnRemoveFriend.setVisibility(View.VISIBLE);
+            // Jesteśmy w zwykłej liście znajomych (ownerId jest null), pokazujemy 'X' wszystkim oprócz siebie (na wszelki wypadek)
+            if (!isMe) {
+                holder.btnRemoveFriend.setVisibility(View.VISIBLE);
+            } else {
+                holder.btnRemoveFriend.setVisibility(View.GONE);
+            }
         }
 
         // Awatar

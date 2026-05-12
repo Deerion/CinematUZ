@@ -61,6 +61,17 @@
                     app:iconTint="@android:color/holo_red_dark"
                     android:visibility="gone"
                     tools:visibility="visible" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLeaveGroup"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentTop="true"
+                    android:text="Opuść"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:visibility="gone" />
             </RelativeLayout>
 
             <LinearLayout
