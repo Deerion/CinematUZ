@@ -18,11 +18,16 @@ import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.Group;
 import com.example.cinematuz.ui.fragments.friends.znajomi.FriendsAdapter;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GroupDetailsFragment extends Fragment {
 
@@ -110,9 +115,55 @@ public class GroupDetailsFragment extends Fragment {
     }
 
     private void setupClickListeners(View add, View bt, View movies) {
-        add.setOnClickListener(v -> Toast.makeText(getContext(), "Wybierz znajomych do dodania", Toast.LENGTH_SHORT).show());
+        add.setOnClickListener(v -> showInviteFriendDialog());
         bt.setOnClickListener(v -> Toast.makeText(getContext(), "Szukanie urządzeń...", Toast.LENGTH_SHORT).show());
         movies.setOnClickListener(v -> Toast.makeText(getContext(), "Przejdź do bazy filmów", Toast.LENGTH_SHORT).show());
+    }
+
+    private void showInviteFriendDialog() {
+        String myUid = FirebaseAuth.getInstance().getUid();
+
+        // Pobieramy Twoich znajomych z bazy
+        db.collection("profiles").document(myUid).collection("friends")
+                .whereEqualTo("status", "accepted")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Friend> friends = new ArrayList<>();
+                    List<String> names = new ArrayList<>();
+
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        Friend f = new Friend(doc.getId(), doc.getString("name"), doc.getString("avatarUrl"), true);
+                        friends.add(f);
+                        names.add(f.getName());
+                    }
+
+                    if (friends.isEmpty()) {
+                        Toast.makeText(getContext(), "Nie masz jeszcze znajomych do zaproszenia", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Prosty Alert Dialog z możliwością wyboru znajomego
+                    new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Zaproś znajomego")
+                            .setItems(names.toArray(new String[0]), (dialog, which) -> {
+                                Friend selectedFriend = friends.get(which);
+                                sendGroupInvite(selectedFriend.getId());
+                            })
+                            .show();
+                });
+    }
+
+    private void sendGroupInvite(String friendUid) {
+        // Przygotowujemy powiadomienie
+        Map<String, Object> invite = new HashMap<>();
+        invite.put("groupName", tvGroupName.getText().toString());
+        invite.put("type", "group");
+
+        // Wrzucamy zaproszenie do nowej kolekcji "group_invites" zapraszanego użytkownika
+        db.collection("profiles").document(friendUid).collection("group_invites")
+                .document(groupId)
+                .set(invite)
+                .addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Zaproszenie zostało wysłane!", Toast.LENGTH_SHORT).show());
     }
 
     @Override

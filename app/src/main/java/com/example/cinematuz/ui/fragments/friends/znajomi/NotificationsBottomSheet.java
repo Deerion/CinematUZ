@@ -48,7 +48,8 @@ public class NotificationsBottomSheet extends BottomSheetDialogFragment {
                     if (value != null) {
                         requests.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            requests.add(new FriendRequest(doc.getId(), doc.getString("username"), doc.getString("avatarUrl")));
+                            // TUTAJ RÓWNIEŻ NAPRAWIONO BŁĄD (dodano "friend")
+                            requests.add(new FriendRequest(doc.getId(), doc.getString("username"), doc.getString("avatarUrl"), "friend"));
                         }
                         adapter.notifyDataSetChanged();
                         tvEmpty.setVisibility(requests.isEmpty() ? View.VISIBLE : View.GONE);

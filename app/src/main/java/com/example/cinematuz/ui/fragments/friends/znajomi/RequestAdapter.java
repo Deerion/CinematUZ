@@ -1,4 +1,3 @@
-// Lokalizacja: java/com/example/cinematuz/ui/fragments/friends/RequestAdapter.java
 package com.example.cinematuz.ui.fragments.friends.znajomi;
 
 import android.view.LayoutInflater;
@@ -41,18 +40,26 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
     @Override
     public void onBindViewHolder(@NonNull RequestViewHolder holder, int position) {
         FriendRequest req = items.get(position);
-        holder.tvName.setText(req.getUsername());
 
-        if (req.getAvatarUrl() != null && !req.getAvatarUrl().isEmpty()) {
+        if ("group".equals(req.getType())) {
+            holder.tvName.setText("Zaproszenie do grupy: " + req.getUsername());
             Glide.with(holder.itemView.getContext())
-                    .load(req.getAvatarUrl())
+                    .load(R.drawable.ic_group_add)
                     .centerCrop()
                     .into(holder.ivAvatar);
         } else {
-            Glide.with(holder.itemView.getContext())
-                    .load(R.drawable.ic_person)
-                    .centerCrop()
-                    .into(holder.ivAvatar);
+            holder.tvName.setText(req.getUsername());
+            if (req.getAvatarUrl() != null && !req.getAvatarUrl().isEmpty()) {
+                Glide.with(holder.itemView.getContext())
+                        .load(req.getAvatarUrl())
+                        .centerCrop()
+                        .into(holder.ivAvatar);
+            } else {
+                Glide.with(holder.itemView.getContext())
+                        .load(R.drawable.ic_person)
+                        .centerCrop()
+                        .into(holder.ivAvatar);
+            }
         }
 
         holder.btnAccept.setOnClickListener(v -> listener.onAccept(req));

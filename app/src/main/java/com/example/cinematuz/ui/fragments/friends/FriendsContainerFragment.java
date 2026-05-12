@@ -20,11 +20,11 @@ import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.FriendRequest;
 import com.example.cinematuz.ui.fragments.friends.grupy.GroupsListFragment;
 import com.example.cinematuz.ui.fragments.friends.znajomi.FriendsListFragment;
-import com.example.cinematuz.ui.fragments.friends.znajomi.NotificationsBottomSheet;
 import com.example.cinematuz.ui.fragments.friends.znajomi.RequestAdapter;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.WriteBatch;
@@ -39,7 +39,10 @@ public class FriendsContainerFragment extends Fragment {
     private MaterialCardView notificationPanel;
     private RecyclerView rvNotifications;
     private RequestAdapter requestAdapter;
+
     private List<FriendRequest> requestList = new ArrayList<>();
+    private List<FriendRequest> friendReqs = new ArrayList<>();
+    private List<FriendRequest> groupReqs = new ArrayList<>();
 
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
@@ -94,62 +97,95 @@ public class FriendsContainerFragment extends Fragment {
 
     private void listenForFriendRequests() {
         if (mAuth.getCurrentUser() == null) return;
+        String myUid = mAuth.getUid();
 
-        db.collection("profiles").document(mAuth.getUid()).collection("friend_requests")
+        // 1. Nasłuchujemy zaproszeń do znajomych
+        db.collection("profiles").document(myUid).collection("friend_requests")
                 .addSnapshotListener((value, error) -> {
                     if (value != null && isAdded()) {
-                        requestList.clear();
+                        friendReqs.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            requestList.add(new FriendRequest(doc.getId(), doc.getString("username"), doc.getString("avatarUrl")));
+                            friendReqs.add(new FriendRequest(doc.getId(), doc.getString("username"), doc.getString("avatarUrl"), "friend"));
                         }
-                        requestAdapter.notifyDataSetChanged();
+                        updateCombinedNotifications();
+                    }
+                });
 
-                        int count = requestList.size();
-
-                        if (count > 0) {
-                            if (notificationBadgeText != null) {
-                                // Ustawiamy tekst i upewniamy się, że kolor jest biały
-                                notificationBadgeText.setText(String.valueOf(count));
-                                notificationBadgeText.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
-                                notificationBadgeText.setVisibility(View.VISIBLE);
-                            }
-                            btnHomeNotifications.setColorFilter(ContextCompat.getColor(requireContext(), R.color.primary));
-                        } else {
-                            if (notificationBadgeText != null) {
-                                notificationBadgeText.setVisibility(View.GONE);
-                            }
-                            btnHomeNotifications.clearColorFilter();
-                            notificationPanel.setVisibility(View.GONE);
+        // 2. Nasłuchujemy zaproszeń do grupy
+        db.collection("profiles").document(myUid).collection("group_invites")
+                .addSnapshotListener((value, error) -> {
+                    if (value != null && isAdded()) {
+                        groupReqs.clear();
+                        for (QueryDocumentSnapshot doc : value) {
+                            groupReqs.add(new FriendRequest(doc.getId(), doc.getString("groupName"), null, "group"));
                         }
+                        updateCombinedNotifications();
                     }
                 });
     }
 
+    private void updateCombinedNotifications() {
+        requestList.clear();
+        requestList.addAll(friendReqs);
+        requestList.addAll(groupReqs);
+        requestAdapter.notifyDataSetChanged();
+
+        int count = requestList.size();
+        if (count > 0) {
+            if (notificationBadgeText != null) {
+                notificationBadgeText.setText(String.valueOf(count));
+                notificationBadgeText.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white));
+                notificationBadgeText.setVisibility(View.VISIBLE);
+            }
+            btnHomeNotifications.setColorFilter(ContextCompat.getColor(requireContext(), R.color.primary));
+        } else {
+            if (notificationBadgeText != null) {
+                notificationBadgeText.setVisibility(View.GONE);
+            }
+            btnHomeNotifications.clearColorFilter();
+            notificationPanel.setVisibility(View.GONE);
+        }
+    }
+
     private void acceptRequest(FriendRequest request) {
         String myUid = mAuth.getUid();
-        db.collection("profiles").document(myUid).get().addOnSuccessListener(doc -> {
-            WriteBatch batch = db.batch();
 
-            Friend me = new Friend(myUid, doc.getString("username"), doc.getString("avatar_url"), true);
-            me.setStatus("accepted");
+        if ("group".equals(request.getType())) {
+            db.collection("groups").document(request.getUid())
+                    .update("members", FieldValue.arrayUnion(myUid))
+                    .addOnSuccessListener(aVoid -> {
+                        db.collection("profiles").document(myUid).collection("group_invites").document(request.getUid()).delete();
+                        if (isAdded()) Toast.makeText(getContext(), "Dołączyłeś do grupy!", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            db.collection("profiles").document(myUid).get().addOnSuccessListener(doc -> {
+                WriteBatch batch = db.batch();
 
-            Friend them = new Friend(request.getUid(), request.getUsername(), request.getAvatarUrl(), true);
-            them.setStatus("accepted");
+                Friend me = new Friend(myUid, doc.getString("username"), doc.getString("avatar_url"), true);
+                me.setStatus("accepted");
 
-            batch.set(db.collection("profiles").document(myUid).collection("friends").document(request.getUid()), them);
-            batch.set(db.collection("profiles").document(request.getUid()).collection("friends").document(myUid), me);
-            batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()));
+                Friend them = new Friend(request.getUid(), request.getUsername(), request.getAvatarUrl(), true);
+                them.setStatus("accepted");
 
-            batch.commit().addOnSuccessListener(aVoid -> {
-                if (isAdded()) Toast.makeText(getContext(), "Zaakceptowano!", Toast.LENGTH_SHORT).show();
+                batch.set(db.collection("profiles").document(myUid).collection("friends").document(request.getUid()), them);
+                batch.set(db.collection("profiles").document(request.getUid()).collection("friends").document(myUid), me);
+                batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()));
+
+                batch.commit().addOnSuccessListener(aVoid -> {
+                    if (isAdded()) Toast.makeText(getContext(), "Zaakceptowano!", Toast.LENGTH_SHORT).show();
+                });
             });
-        });
+        }
     }
 
     private void declineRequest(FriendRequest request) {
         if (mAuth.getCurrentUser() == null) return;
-        db.collection("profiles").document(mAuth.getUid()).collection("friend_requests").document(request.getUid())
-                .delete();
+
+        if ("group".equals(request.getType())) {
+            db.collection("profiles").document(mAuth.getUid()).collection("group_invites").document(request.getUid()).delete();
+        } else {
+            db.collection("profiles").document(mAuth.getUid()).collection("friend_requests").document(request.getUid()).delete();
+        }
     }
 
     private void setupToggleGroup(View view) {

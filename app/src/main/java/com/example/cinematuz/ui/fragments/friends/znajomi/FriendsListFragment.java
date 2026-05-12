@@ -94,7 +94,6 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Ładujemy nowy widok przypisany TYLKO do listy znajomych
         View view = inflater.inflate(R.layout.fragment_friends_list, container, false);
 
         mAuth = FirebaseAuth.getInstance();
@@ -448,7 +447,8 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                             String senderAvatar = doc.getString("avatarUrl");
 
                             if (senderUsername != null) {
-                                pendingRequests.add(new FriendRequest(senderUid, senderUsername, senderAvatar));
+                                // TUTAJ NAPRAWIONO BŁĄD (dodano "friend")
+                                pendingRequests.add(new FriendRequest(senderUid, senderUsername, senderAvatar, "friend"));
                             }
                         }
                         requestAdapter.notifyDataSetChanged();
