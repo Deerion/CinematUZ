@@ -53,8 +53,12 @@ public class MovieRepository {
         }
     }
 
-    public void getCredits(int id, String lang, Callback<CreditsResponse> callback) {
-        api.getMovieCredits(id, lang).enqueue(callback);
+    public void getCredits(int id, String type, String lang, Callback<CreditsResponse> callback) {
+        if ("tv".equals(type)) {
+            api.getTvCredits(id, lang).enqueue(callback);
+        } else {
+            api.getMovieCredits(id, lang).enqueue(callback);
+        }
     }
 
     public void getVideos(int id, String type, Callback<ApiResponse<Video>> callback) {

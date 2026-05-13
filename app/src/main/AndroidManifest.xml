@@ -72,5 +72,15 @@
         <service
             android:name=".utils.AppKillDetectionService"
             android:stopWithTask="false" />
+        <receiver
+            android:name=".utils.StatisticsWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/statistics_widget_info" />
+        </receiver>
     </application>
 </manifest>

@@ -54,8 +54,8 @@ public class ProfileFragment extends Fragment {
     private ImageView profileAvatar;
     private TextView profileName, profileUsername;
     private TextView statMoviesCount, statPoints;
-    private TextView rankTitle, rankSubtitle;
-    private ProgressBar rankProgress;
+
+
     private FloatingActionButton btnEditAvatar;
     private View editProfileTile;
 
@@ -103,9 +103,7 @@ public class ProfileFragment extends Fragment {
         profileUsername = view.findViewById(R.id.profile_username);
         statMoviesCount = view.findViewById(R.id.stat_movies_count);
         statPoints = view.findViewById(R.id.stat_points);
-        rankTitle = view.findViewById(R.id.rank_title);
-        rankSubtitle = view.findViewById(R.id.rank_subtitle);
-        rankProgress = view.findViewById(R.id.rank_progress);
+
         btnEditAvatar = view.findViewById(R.id.btn_edit_avatar);
         editProfileTile = view.findViewById(R.id.edit_profile_tile);
 
@@ -182,10 +180,6 @@ public class ProfileFragment extends Fragment {
                 requireActivity().finish();
             });
 
-            // Domyślne wartości dla gościa
-            statMoviesCount.setText("0");
-            statPoints.setText("0");
-            updateRankInfo(0);
         }
 
         return view;
@@ -291,31 +285,19 @@ public class ProfileFragment extends Fragment {
             profileAvatar.setImageResource(R.drawable.ic_person);
         }
 
-        // Korzystamy z wewnętrznej klasy UserStats z Twojego modelu
+        // Korzystamy z wewnętrznej klasy UserStats z Twojego zaktualizowanego modelu
         if (user.getStats() != null) {
-            statMoviesCount.setText(String.valueOf(user.getStats().getMoviesWatched()));
-            statPoints.setText(String.valueOf(user.getStats().getPoints()));
+            int movies = user.getStats().getMoviesWatched();
+            int tvShows = user.getStats().getTvShowsWatched();
 
-            updateRankInfo(user.getStats().getPoints());
+            // Wyświetlamy filmy
+            statMoviesCount.setText(String.valueOf(movies));
+
+            // Wyświetlamy seriale (używamy zmiennej statPoints, póki nie zmienisz jej nazwy w pliku XML)
+            statPoints.setText(String.valueOf(tvShows));
+
         }
     }
-
-    private void updateRankInfo(long points) {
-        if (points < 100) {
-            rankTitle.setText(R.string.profile_rank_newcomer);
-            rankSubtitle.setText(String.format(Locale.getDefault(), getString(R.string.profile_xp_to_next_rank), points, 100));
-            rankProgress.setProgress((int) points);
-        } else if (points < 500) {
-            rankTitle.setText(R.string.profile_rank_cinephile);
-            rankSubtitle.setText(String.format(Locale.getDefault(), getString(R.string.profile_xp_to_next_rank), points, 500));
-            rankProgress.setProgress((int) (points / 5));
-        } else {
-            rankTitle.setText(R.string.profile_rank_cinephile_elite);
-            rankSubtitle.setText(R.string.profile_max_rank);
-            rankProgress.setProgress(100);
-        }
-    }
-
     private void changeLanguage(String langCode) {
         if (!langCode.equals(LocaleHelper.getLanguage(requireContext()))) {
             LocaleHelper.setLocale(requireContext(), langCode);

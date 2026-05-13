@@ -33,6 +33,8 @@ public interface TmdbApi {
             @Query("language") String language,
             @Query("page") int page
     );
+    @GET("tv/{tv_id}/credits")
+    Call<CreditsResponse> getTvCredits(@Path("tv_id") int tvId, @Query("language") String language);
 
     // --- 3. DETALE ---
     // Detale filmu
