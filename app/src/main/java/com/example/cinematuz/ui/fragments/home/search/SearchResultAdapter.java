@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,14 +26,27 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
     private final List<MediaItem> allItems = new ArrayList<>();
     private final List<MediaItem> visibleItems = new ArrayList<>();
     private final OnItemClickListener listener;
+    private final OnAddClickListener addListener; // Nowy listener do dodawania
     private FilterType currentFilter = FilterType.ALL;
+    private boolean selectionMode = false; // Tryb wyboru dla grupy
 
     public interface OnItemClickListener {
         void onItemClick(MediaItem item);
     }
 
-    public SearchResultAdapter(OnItemClickListener listener) {
+    // Interfejs do obsługi przycisku "Dodaj"
+    public interface OnAddClickListener {
+        void onAddClick(MediaItem item);
+    }
+
+    public SearchResultAdapter(OnItemClickListener listener, OnAddClickListener addListener) {
         this.listener = listener;
+        this.addListener = addListener;
+    }
+
+    public void setSelectionMode(boolean selectionMode) {
+        this.selectionMode = selectionMode;
+        notifyDataSetChanged();
     }
 
     public void submitList(List<MediaItem> newItems) {
@@ -78,7 +90,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(visibleItems.get(position), listener);
+        holder.bind(visibleItems.get(position), listener, addListener, selectionMode);
     }
 
     @Override
@@ -101,7 +113,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
             btnAdd = itemView.findViewById(R.id.btnAdd);
         }
 
-        void bind(MediaItem item, OnItemClickListener listener) {
+        void bind(MediaItem item, OnItemClickListener listener, OnAddClickListener addListener, boolean selectionMode) {
             tvTitle.setText(item.getTitle() != null ? item.getTitle() : "Brak tytułu");
             tvRating.setText(String.format("%.1f", item.getVoteAverage()));
 
@@ -112,7 +124,6 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
                 tvYear.setText("N/A");
             }
 
-            // Typ i jeden gatunek
             Context context = itemView.getContext();
             String mediaTypeStr = "tv".equals(item.getMediaType()) ? context.getString(R.string.filter_tv) : context.getString(R.string.filter_movies);
             String firstGenre = getFirstGenreName(item.getGenreIds(), context);
@@ -130,15 +141,18 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
 
             itemView.setOnClickListener(v -> listener.onItemClick(item));
 
+            // Logika przycisku dodawania
+            btnAdd.setVisibility(selectionMode ? View.VISIBLE : View.GONE);
             btnAdd.setOnClickListener(v -> {
-                Toast.makeText(itemView.getContext(), "Dodano do listy!", Toast.LENGTH_SHORT).show();
+                if (addListener != null) {
+                    addListener.onAddClick(item);
+                }
             });
         }
 
-        // Zwraca tylko pierwszy gatunek z listy
         private String getFirstGenreName(List<Integer> genreIds, Context context) {
             if (genreIds == null || genreIds.isEmpty()) return "";
-            int id = genreIds.get(0); // Bierzemy tylko główny
+            int id = genreIds.get(0);
             switch (id) {
                 case 28: return context.getString(R.string.genre_action);
                 case 12: return context.getString(R.string.genre_adventure);

@@ -1,6 +1,5 @@
-package com.example.cinematuz.ui.fragments.friends.grupy;
+package com.example.cinematuz.ui.fragments.friends.grupy.details;
 
-import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,9 +19,10 @@ import java.util.Map;
 public class GroupMoviesAdapter extends RecyclerView.Adapter<GroupMoviesAdapter.ViewHolder> {
 
     private List<MediaItem> movies = new ArrayList<>();
-    private Map<Integer, List<String>> votesMap; // Mapa: ID filmu -> lista UID głosujących
+    private Map<Integer, List<String>> votesMap;
     private final OnMovieClickListener listener;
     private final OnVoteClickListener voteListener;
+    private final OnMovieLongClickListener longClickListener; // Nowy słuchacz
 
     public interface OnMovieClickListener {
         void onMovieClick(MediaItem item);
@@ -32,9 +32,17 @@ public class GroupMoviesAdapter extends RecyclerView.Adapter<GroupMoviesAdapter.
         void onVoteClick(MediaItem item, boolean isVoted);
     }
 
-    public GroupMoviesAdapter(OnMovieClickListener listener, OnVoteClickListener voteListener) {
+    // Interfejs dla długiego kliknięcia
+    public interface OnMovieLongClickListener {
+        void onMovieLongClick(MediaItem item);
+    }
+
+    public GroupMoviesAdapter(OnMovieClickListener listener,
+                              OnVoteClickListener voteListener,
+                              OnMovieLongClickListener longClickListener) {
         this.listener = listener;
         this.voteListener = voteListener;
+        this.longClickListener = longClickListener;
     }
 
     public void submitList(List<MediaItem> newList, Map<Integer, List<String>> votes) {
@@ -55,7 +63,6 @@ public class GroupMoviesAdapter extends RecyclerView.Adapter<GroupMoviesAdapter.
         MediaItem item = movies.get(position);
         holder.tvTitle.setText(item.getTitle());
 
-        // Obsługa głosów
         String myUid = FirebaseAuth.getInstance().getUid();
         List<String> voters = (votesMap != null) ? votesMap.get(item.getId()) : new ArrayList<>();
         int count = (voters != null) ? voters.size() : 0;
@@ -63,11 +70,10 @@ public class GroupMoviesAdapter extends RecyclerView.Adapter<GroupMoviesAdapter.
 
         holder.tvVoteCount.setText(String.valueOf(count));
 
-        // Zmiana ikony w zależności od tego, czy użytkownik zagłosował
         if (amIVoting) {
-            holder.ivVote.setImageResource(R.drawable.ic_favorite); // pełne serce
+            holder.ivVote.setImageResource(R.drawable.ic_favorite);
         } else {
-            holder.ivVote.setImageResource(R.drawable.ic_favorite_outline); // puste serce
+            holder.ivVote.setImageResource(R.drawable.ic_favorite_outline);
         }
 
         Glide.with(holder.itemView.getContext())
@@ -76,6 +82,15 @@ public class GroupMoviesAdapter extends RecyclerView.Adapter<GroupMoviesAdapter.
                 .into(holder.ivPoster);
 
         holder.itemView.setOnClickListener(v -> listener.onMovieClick(item));
+
+        // Obsługa długiego kliknięcia
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onMovieLongClick(item);
+                return true;
+            }
+            return false;
+        });
 
         holder.ivVote.setOnClickListener(v -> {
             if (voteListener != null) {

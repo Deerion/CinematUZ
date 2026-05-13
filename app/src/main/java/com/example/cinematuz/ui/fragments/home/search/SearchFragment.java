@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,14 +26,21 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.FilterCriteria;
+import com.example.cinematuz.data.models.MediaItem;
 import com.example.cinematuz.ui.fragments.home.FilterBottomSheetFragment;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import android.widget.ImageView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SearchFragment extends Fragment {
 
@@ -53,6 +61,7 @@ public class SearchFragment extends Fragment {
     private FilterCriteria lastAppliedCriteria;
     private boolean updatingFilterFromModal;
 
+    private String targetGroupId; // ID grupy, do której dodajemy film
     private static final String STATE_LAST_FILTER = "state_last_filter";
 
     @Override
@@ -64,6 +73,12 @@ public class SearchFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(SearchViewModel.class);
+
+        // Sprawdzenie czy przyszliśmy z konkretnej grupy
+        if (getArguments() != null) {
+            targetGroupId = getArguments().getString("TARGET_GROUP_ID");
+        }
+
         initViews(view);
         setupRecyclerView();
         setupListeners();
@@ -75,17 +90,12 @@ public class SearchFragment extends Fragment {
         }
 
         updateFilterBadge();
-
         setFilter(currentFilter);
         showInitialEmptyState();
         etSearch.requestFocus();
 
-        // --- NOWY KOD: Sprawdzamy czy przyszliśmy tutaj z ikonki filtra na ekranie głównym ---
         if (getArguments() != null && getArguments().getBoolean("open_filters", false)) {
-            // Czyścimy flagę, aby przy ewentualnym obrocie ekranu modal nie wyskakiwał w kółko
             getArguments().putBoolean("open_filters", false);
-
-            // Otwieramy modal z filtrami
             openFilterBottomSheet();
         }
     }
@@ -103,36 +113,64 @@ public class SearchFragment extends Fragment {
         btnClearSearch = view.findViewById(R.id.btnClearSearch);
         btnSearchBack = view.findViewById(R.id.btnSearchBack);
         tvSearchEmpty = view.findViewById(R.id.tvSearchEmpty);
-
-        // ID przycisku filtrów w Twoim fragment_search.xml
         btnOpenFilters = view.findViewById(R.id.btn_filter);
         tvFilterBadge = view.findViewById(R.id.tv_filter_badge);
-
         btnFilterAll = view.findViewById(R.id.btnFilterAll);
         btnFilterMovies = view.findViewById(R.id.btnFilterMovies);
         btnFilterTv = view.findViewById(R.id.btnFilterTv);
     }
 
     private void setupRecyclerView() {
-        adapter = new SearchResultAdapter(item -> {
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("MEDIA_ITEM", item);
-            Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
-        });
+        adapter = new SearchResultAdapter(
+                item -> {
+                    // Normalne kliknięcie: Detale
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("MEDIA_ITEM", item);
+                    Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
+                },
+                item -> {
+                    // Kliknięcie "Dodaj": Dodaj do grupy
+                    if (targetGroupId != null) {
+                        addMovieToGroup(targetGroupId, item);
+                    }
+                }
+        );
 
+        adapter.setSelectionMode(targetGroupId != null);
         rvSearchResults.setLayoutManager(new LinearLayoutManager(getContext()));
         rvSearchResults.setAdapter(adapter);
     }
 
+    private void addMovieToGroup(String groupId, MediaItem movie) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        Map<String, Object> movieData = new HashMap<>();
+        movieData.put("tmdbId", movie.getId());
+        movieData.put("title", movie.getTitle());
+        movieData.put("posterPath", movie.getPosterPath());
+        movieData.put("mediaType", movie.getMediaType());
+        movieData.put("voteAverage", movie.getVoteAverage());
+        movieData.put("addedBy", FirebaseAuth.getInstance().getUid());
+        movieData.put("timestamp", FieldValue.serverTimestamp());
+
+        db.collection("groups").document(groupId)
+                .collection("movies").document(String.valueOf(movie.getId()))
+                .set(movieData)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Dodano: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Błąd dodawania filmu", Toast.LENGTH_SHORT).show();
+                });
+    }
+
     private void setupListeners() {
         btnSearchBack.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
-
         btnClearSearch.setOnClickListener(v -> {
             etSearch.setText("");
             showInitialEmptyState();
         });
 
-        // Otwieranie BottomSheet z filtrami
         if (btnOpenFilters != null) {
             btnOpenFilters.setOnClickListener(v -> openFilterBottomSheet());
         }
@@ -140,11 +178,9 @@ public class SearchFragment extends Fragment {
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-
                 if (s.toString().trim().isEmpty()) {
                     adapter.submitList(null);
                     showInitialEmptyState();
@@ -152,7 +188,6 @@ public class SearchFragment extends Fragment {
                     viewModel.onSearchTextChanged(s.toString());
                 }
             }
-
             @Override
             public void afterTextChanged(Editable s) {}
         });
@@ -162,9 +197,6 @@ public class SearchFragment extends Fragment {
         btnFilterTv.setOnClickListener(v -> onTopFilterSelected(SearchResultAdapter.FilterType.TV));
     }
 
-    /**
-     * Kluczowa funkcja odbierająca dane z modalu filtrów
-     */
     private void setupFilterResultListener() {
         getChildFragmentManager().setFragmentResultListener("filter_request", getViewLifecycleOwner(), (requestKey, bundle) -> {
             FilterCriteria criteria = (FilterCriteria) bundle.getSerializable("filter_data");
@@ -173,11 +205,7 @@ public class SearchFragment extends Fragment {
                 updateFilterBadge();
                 String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
                 String currentQuery = etSearch.getText() == null ? "" : etSearch.getText().toString().trim();
-
-                // Wywołujemy zaawansowane filtrowanie w ViewModelu
                 viewModel.applyAdvancedFilters(criteria, currentQuery, lang);
-
-                // Górne chipy odzwierciedlają aktualny typ z modala.
                 updatingFilterFromModal = true;
                 setFilter(mapContentTypeToTopFilter(criteria.contentType));
                 updatingFilterFromModal = false;
@@ -197,16 +225,11 @@ public class SearchFragment extends Fragment {
 
     private void onTopFilterSelected(SearchResultAdapter.FilterType filterType) {
         setFilter(filterType);
-
-        if (updatingFilterFromModal || lastAppliedCriteria == null) {
-            return;
-        }
-
+        if (updatingFilterFromModal || lastAppliedCriteria == null) return;
         FilterCriteria updated = copyCriteria(lastAppliedCriteria);
         updated.contentType = mapTopFilterToContentType(filterType);
         lastAppliedCriteria = updated;
         updateFilterBadge();
-
         String lang = LocaleHelper.getLanguage(requireContext()).equals("pl") ? "pl-PL" : "en-US";
         String currentQuery = etSearch.getText() == null ? "" : etSearch.getText().toString().trim();
         viewModel.applyAdvancedFilters(updated, currentQuery, lang);
@@ -233,16 +256,13 @@ public class SearchFragment extends Fragment {
         copy.yearFrom = source.yearFrom;
         copy.yearTo = source.yearTo;
         copy.minRating = source.minRating;
-        if (TextUtils.isEmpty(copy.contentType)) {
-            copy.contentType = "all";
-        }
+        if (TextUtils.isEmpty(copy.contentType)) copy.contentType = "all";
         return copy;
     }
 
     private void setFilter(SearchResultAdapter.FilterType filterType) {
         currentFilter = filterType;
         adapter.setFilter(filterType);
-
         updateButtonStyle(btnFilterAll, filterType == SearchResultAdapter.FilterType.ALL);
         updateButtonStyle(btnFilterMovies, filterType == SearchResultAdapter.FilterType.MOVIE);
         updateButtonStyle(btnFilterTv, filterType == SearchResultAdapter.FilterType.TV);
@@ -263,22 +283,13 @@ public class SearchFragment extends Fragment {
 
     private void setupObservers() {
         viewModel.isLoading.observe(getViewLifecycleOwner(), loading -> {
-            if (progressBar != null) {
-                progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
-            }
+            if (progressBar != null) progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         });
-
         viewModel.searchResults.observe(getViewLifecycleOwner(), results -> {
             adapter.submitList(results);
-
             boolean isQueryEmpty = etSearch.getText() == null || etSearch.getText().toString().trim().isEmpty();
-
             if (results == null || results.isEmpty()) {
-                if (isQueryEmpty) {
-                    tvSearchEmpty.setText(R.string.empty_search_results);
-                } else {
-                    tvSearchEmpty.setText(R.string.empty_search_results);
-                }
+                tvSearchEmpty.setText(R.string.empty_search_results);
                 tvSearchEmpty.setVisibility(View.VISIBLE);
             } else {
                 tvSearchEmpty.setVisibility(View.GONE);
@@ -293,28 +304,23 @@ public class SearchFragment extends Fragment {
 
     private void updateFilterBadge() {
         if (tvFilterBadge == null) return;
-
         int activeCount = getActiveFilterCount(lastAppliedCriteria);
         tvFilterBadge.setVisibility(activeCount > 0 ? View.VISIBLE : View.GONE);
     }
 
     private int getActiveFilterCount(@Nullable FilterCriteria criteria) {
         if (criteria == null) return 0;
-
         int active = 0;
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-
         String contentType = TextUtils.isEmpty(criteria.contentType) ? "all" : criteria.contentType;
         String sortBy = TextUtils.isEmpty(criteria.sortBy) ? "popularity.desc" : criteria.sortBy;
         int yearFrom = criteria.yearFrom > 0 ? criteria.yearFrom : 1950;
         int yearTo = criteria.yearTo > 0 ? criteria.yearTo : currentYear;
-
         if (!"all".equals(contentType)) active++;
         if (!"popularity.desc".equals(sortBy)) active++;
         if (yearFrom != 1950 || yearTo != currentYear) active++;
         if (criteria.minRating > 0f) active++;
         if (criteria.genreIds != null && !criteria.genreIds.isEmpty()) active++;
-
         return active;
     }
 }
