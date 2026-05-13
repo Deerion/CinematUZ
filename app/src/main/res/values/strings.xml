@@ -93,6 +93,7 @@
     <string name="filter_movies">Filmy</string>
     <string name="filter_tv">Seriale</string>
     <string name="trending_header">Popularne</string>
+    <string name="map_search_bar">Szukaj kin lub miast...</string>
 
     <string name="to_watch">Do obejrzenia</string>
     <string name="watched">Obejrzane</string>
