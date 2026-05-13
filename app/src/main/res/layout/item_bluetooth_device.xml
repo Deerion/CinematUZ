@@ -26,14 +26,13 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_person"
-                app:tint="@color/primary" />
+                android:id="@+id/ivDeviceAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_person" />
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Nazwa urządzenia: ograniczona do 1 linii z wielokropkiem na końcu -->
         <TextView
             android:id="@+id/tvDeviceName"
             android:layout_width="0dp"
@@ -42,7 +41,7 @@
             android:layout_marginEnd="8dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Urządzenie..."
+            android:text="Użytkownik..."
             android:textColor="@android:color/white"
             android:textSize="14sp"
             android:textStyle="bold"
@@ -51,12 +50,11 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_chainStyle="packed" />
 
-        <!-- Zasięg: teraz przypięty do dołu nazwy (layout_constraintTop_toBottomOf) -->
         <TextView
             android:id="@+id/tvDeviceRange"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Zasięg: W zasięgu"
+            android:text="Zasięg: W pobliżu"
             android:textColor="#80FFFFFF"
             android:textSize="11sp"
             app:layout_constraintBottom_toBottomOf="parent"

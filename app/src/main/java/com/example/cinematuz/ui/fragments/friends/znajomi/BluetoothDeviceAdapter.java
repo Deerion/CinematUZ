@@ -1,21 +1,29 @@
 package com.example.cinematuz.ui.fragments.friends.znajomi;
 
-import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothDevice;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
+import com.example.cinematuz.data.models.SearchResultUser;
+import com.google.android.material.button.MaterialButton;
 import java.util.List;
 
 public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDeviceAdapter.ViewHolder> {
-    private final List<BluetoothDevice> devices;
+    private final List<SearchResultUser> users;
+    private final OnInviteClickListener listener;
 
-    public BluetoothDeviceAdapter(List<BluetoothDevice> devices) {
-        this.devices = devices;
+    public interface OnInviteClickListener {
+        void onInvite(SearchResultUser user);
+    }
+
+    public BluetoothDeviceAdapter(List<SearchResultUser> users, OnInviteClickListener listener) {
+        this.users = users;
+        this.listener = listener;
     }
 
     @NonNull
@@ -24,24 +32,38 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
         return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_bluetooth_device, parent, false));
     }
 
-    @SuppressLint("MissingPermission")
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        BluetoothDevice device = devices.get(position);
-        String name = device.getName();
-        holder.tvName.setText(name != null ? name : "Nieznane urządzenie");
-        holder.tvRange.setText("Zasięg: W zasięgu");
+        SearchResultUser user = users.get(position);
+        holder.tvName.setText(user.getUsername());
+
+        // Ładowanie awatara z Firebase
+        Glide.with(holder.itemView.getContext())
+                .load(user.getAvatarUrl())
+                .placeholder(R.drawable.ic_person)
+                .into(holder.ivAvatar);
+
+        holder.btnInvite.setOnClickListener(v -> {
+            listener.onInvite(user);
+            holder.btnInvite.setText("WYSŁANO");
+            holder.btnInvite.setEnabled(false);
+        });
     }
 
     @Override
-    public int getItemCount() { return devices.size(); }
+    public int getItemCount() { return users.size(); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvRange;
+        TextView tvName;
+        ImageView ivAvatar;
+        MaterialButton btnInvite;
+
         ViewHolder(View v) {
             super(v);
             tvName = v.findViewById(R.id.tvDeviceName);
-            tvRange = v.findViewById(R.id.tvDeviceRange);
+            // Pamiętaj, aby w swoim pliku item_bluetooth_device.xml nadać id dla ImageView awatara! (np. ivDeviceAvatar)
+            ivAvatar = v.findViewById(R.id.ivDeviceAvatarContainer).findViewById(R.id.ivDeviceAvatar); // Dopasuj ID z XML
+            btnInvite = v.findViewById(R.id.btnInviteDevice);
         }
     }
 }
