@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments.friends;
+package com.example.cinematuz.ui.fragments.friends.znajomi;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
+// DODANY IMPORT DLA FIREBASE AUTH
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
@@ -24,10 +26,16 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
     private final List<Friend> friendsList;
     private final OnFriendActionListener listener;
+    private String ownerId;
 
     public FriendsAdapter(List<Friend> friendsList, OnFriendActionListener listener) {
         this.friendsList = friendsList;
         this.listener = listener;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -42,7 +50,41 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         Friend friend = friendsList.get(position);
         holder.tvFriendName.setText(friend.getName());
 
-        // --- DODANA LOGIKA ŁADOWANIA AWATARA Z FIREBASE ---
+        String myUid = FirebaseAuth.getInstance().getUid();
+
+        // Weryfikacja czy aktualny wpis to właściciel grupy (aby pokazać gwiazdkę)
+        boolean isCurrentItemOwner = (ownerId != null && ownerId.equals(friend.getId()));
+
+        // Weryfikacja czy aktualny wpis to JA (zalogowany użytkownik)
+        boolean isMe = (myUid != null && myUid.equals(friend.getId()));
+
+        if (isCurrentItemOwner) {
+            holder.ivOwnerStar.setVisibility(View.VISIBLE);
+        } else {
+            holder.ivOwnerStar.setVisibility(View.GONE);
+        }
+
+        // LOGIKA PRZYCISKU USUWANIA (X)
+        if (ownerId != null) {
+            // Jesteśmy w trybie GRUPY
+            boolean amIOwner = (myUid != null && myUid.equals(ownerId));
+
+            // Pokazuj 'X' TYLKO jeśli ja jestem właścicielem i ta pozycja na liście TO NIE JESTEM JA
+            if (amIOwner && !isMe) {
+                holder.btnRemoveFriend.setVisibility(View.VISIBLE);
+            } else {
+                holder.btnRemoveFriend.setVisibility(View.GONE);
+            }
+        } else {
+            // Jesteśmy w zwykłej liście znajomych (ownerId jest null), pokazujemy 'X' wszystkim oprócz siebie (na wszelki wypadek)
+            if (!isMe) {
+                holder.btnRemoveFriend.setVisibility(View.VISIBLE);
+            } else {
+                holder.btnRemoveFriend.setVisibility(View.GONE);
+            }
+        }
+
+        // Awatar
         String avatarUrl = friend.getAvatarUrl();
         if (avatarUrl != null && !avatarUrl.isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -50,22 +92,20 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
                     .circleCrop()
                     .into(holder.ivFriendAvatar);
         } else {
-            // Jeśli ktoś nie ma avatara, wstawiamy Twoją ikonkę ic_person
             Glide.with(holder.itemView.getContext())
                     .load(R.drawable.ic_person)
                     .circleCrop()
                     .into(holder.ivFriendAvatar);
         }
-        // ----------------------------------------------------
 
-        // LOGIKA STATUSÓW
+        // Status
         if ("pending".equals(friend.getStatus())) {
             holder.tvFriendStatus.setText("Oczekuje na akceptację...");
-            holder.tvFriendStatus.setTextColor(Color.parseColor("#F59E0B")); // Pomarańczowy
+            holder.tvFriendStatus.setTextColor(Color.parseColor("#F59E0B"));
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
         } else if (friend.isOnline()) {
             holder.tvFriendStatus.setText("Aktywny teraz");
-            holder.tvFriendStatus.setTextColor(Color.parseColor("#22C55E")); // Zielony
+            holder.tvFriendStatus.setTextColor(Color.parseColor("#22C55E"));
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.VISIBLE);
         } else {
             holder.tvFriendStatus.setText("Offline");
@@ -73,6 +113,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
         }
 
+        // Kliknięcie usunięcia
         if (holder.btnRemoveFriend != null) {
             holder.btnRemoveFriend.setOnClickListener(v -> listener.onRemoveFriend(friend, position));
         }
@@ -87,6 +128,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         TextView tvFriendName;
         TextView tvFriendStatus;
         ImageView ivFriendAvatar;
+        ImageView ivOwnerStar;
         View btnRemoveFriend;
         View vOnlineStatusDot;
 
@@ -95,6 +137,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
             tvFriendName = itemView.findViewById(R.id.tvFriendName);
             tvFriendStatus = itemView.findViewById(R.id.tvFriendStatus);
             ivFriendAvatar = itemView.findViewById(R.id.ivFriendAvatar);
+            ivOwnerStar = itemView.findViewById(R.id.ivOwnerStar);
             btnRemoveFriend = itemView.findViewById(R.id.btnRemoveFriend);
             vOnlineStatusDot = itemView.findViewById(R.id.vOnlineStatusDot);
         }

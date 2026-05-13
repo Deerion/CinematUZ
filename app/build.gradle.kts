@@ -99,5 +99,6 @@ dependencies {
     // QR Code
     implementation(libs.zxing.android.embedded)
     implementation(libs.zxing.core)
+    implementation("com.squareup:seismic:1.0.3")
 
 }

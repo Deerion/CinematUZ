@@ -1,4 +1,4 @@
-package com.example.cinematuz.ui.fragments.friends;
+package com.example.cinematuz.ui.fragments.friends.znajomi;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothDevice;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,9 +35,9 @@ import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.FriendRequest;
 import com.example.cinematuz.data.models.SearchResultUser;
+import com.example.cinematuz.ui.fragments.friends.RequestAdapter;
 import com.example.cinematuz.utils.BluetoothHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -59,9 +58,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriendActionListener {
+public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFriendActionListener {
 
-    private static final String TAG = "FriendsFragment";
+    private static final String TAG = "FriendsListFragment";
     private static final int PERMISSION_REQUEST_CODE = 101;
 
     private RecyclerView recyclerViewFriends;
@@ -71,7 +70,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
     private TextView tvFriendsCount;
     private TextView tvInvitationsTitle;
-    private TextView tvGroupsPlaceholder;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -84,7 +82,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
     private List<Friend> friendsList = new ArrayList<>();
     private List<FriendRequest> pendingRequests = new ArrayList<>();
     private Map<String, ListenerRegistration> profileListeners = new HashMap<>();
-    private boolean isFriendsTabActive = true;
 
     private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(),
             result -> {
@@ -98,7 +95,7 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_friends, container, false);
+        View view = inflater.inflate(R.layout.fragment_friends_list, container, false);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -107,10 +104,8 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
         rvFriendRequests = view.findViewById(R.id.rvFriendRequests);
         tvFriendsCount = view.findViewById(R.id.tvFriendsCount);
         tvInvitationsTitle = view.findViewById(R.id.tvInvitationsTitle);
-        tvGroupsPlaceholder = view.findViewById(R.id.tvGroupsPlaceholder);
 
         FloatingActionButton fab = view.findViewById(R.id.fabAddFriend);
-        MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroupFriends);
         View bluetoothCard = view.findViewById(R.id.layoutBluetoothNearby);
         View btnScanQr = view.findViewById(R.id.btnScanQr);
         View btnMyQr = view.findViewById(R.id.btnMyQr);
@@ -129,15 +124,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         if (btnMyQr != null) {
             btnMyQr.setOnClickListener(v -> showMyQrDialog());
-        }
-
-        if (toggleGroup != null) {
-            toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-                if (isChecked) {
-                    isFriendsTabActive = (checkedId == R.id.btnTabFriends);
-                    updateUIVisibility();
-                }
-            });
         }
 
         // Setup głównej listy znajomych
@@ -160,7 +146,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         return view;
     }
-
 
     private void startQrScanner() {
         ScanOptions options = new ScanOptions();
@@ -314,8 +299,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
         });
     }
 
-    // --- LOGIKA BLUETOOTH ---
-
     private void checkPermissionsAndStartBluetooth() {
         List<String> permissions = new ArrayList<>();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -389,8 +372,6 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
 
         dialog.show();
     }
-
-    // --- LOGIKA FIREBASE (ZNAJOMI) ---
 
     private void listenForFriends() {
         if (mAuth.getCurrentUser() == null) return;
@@ -467,7 +448,8 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
                             String senderAvatar = doc.getString("avatarUrl");
 
                             if (senderUsername != null) {
-                                pendingRequests.add(new FriendRequest(senderUid, senderUsername, senderAvatar));
+                                // TUTAJ NAPRAWIONO BŁĄD (dodano "friend")
+                                pendingRequests.add(new FriendRequest(senderUid, senderUsername, senderAvatar, "friend"));
                             }
                         }
                         requestAdapter.notifyDataSetChanged();
@@ -480,17 +462,13 @@ public class FriendsFragment extends Fragment implements FriendsAdapter.OnFriend
         boolean hasRequests = !pendingRequests.isEmpty();
 
         if (tvInvitationsTitle != null) {
-            tvInvitationsTitle.setVisibility(isFriendsTabActive && hasRequests ? View.VISIBLE : View.GONE);
+            tvInvitationsTitle.setVisibility(hasRequests ? View.VISIBLE : View.GONE);
             tvInvitationsTitle.setText("Zaproszenia (" + pendingRequests.size() + ")");
         }
 
         if (rvFriendRequests != null) {
-            rvFriendRequests.setVisibility(isFriendsTabActive && hasRequests ? View.VISIBLE : View.GONE);
+            rvFriendRequests.setVisibility(hasRequests ? View.VISIBLE : View.GONE);
         }
-
-        if (recyclerViewFriends != null) recyclerViewFriends.setVisibility(isFriendsTabActive ? View.VISIBLE : View.GONE);
-        if (tvFriendsCount != null) tvFriendsCount.setVisibility(isFriendsTabActive ? View.VISIBLE : View.GONE);
-        if (tvGroupsPlaceholder != null) tvGroupsPlaceholder.setVisibility(isFriendsTabActive ? View.GONE : View.VISIBLE);
     }
 
     private void showSearchFriendsDialog() {

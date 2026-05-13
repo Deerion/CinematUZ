@@ -37,7 +37,7 @@
 
         <TextView
             android:id="@+id/tvFriendName"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:textSize="14sp"
@@ -45,8 +45,20 @@
             android:textColor="?android:attr/textColorPrimary"
             app:layout_constraintStart_toEndOf="@id/ivFriendAvatar"
             app:layout_constraintTop_toTopOf="@id/ivFriendAvatar"
-            app:layout_constraintEnd_toStartOf="@id/btnRemoveFriend"
             tools:text="Alex_Cinema" />
+
+        <ImageView
+            android:id="@+id/ivOwnerStar"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_star"
+            android:visibility="gone"
+            app:tint="#F59E0B"
+            app:layout_constraintBottom_toBottomOf="@id/tvFriendName"
+            app:layout_constraintStart_toEndOf="@id/tvFriendName"
+            app:layout_constraintTop_toTopOf="@id/tvFriendName"
+            tools:visibility="visible" />
 
         <TextView
             android:id="@+id/tvFriendStatus"
