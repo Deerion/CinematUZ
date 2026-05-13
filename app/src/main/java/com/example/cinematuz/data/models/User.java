@@ -1,6 +1,7 @@
 package com.example.cinematuz.data.models;
 
 import com.google.firebase.firestore.IgnoreExtraProperties;
+import com.google.firebase.firestore.PropertyName;
 
 @IgnoreExtraProperties
 public class User {
@@ -31,23 +32,25 @@ public class User {
     public void setStats(UserStats stats) { this.stats = stats; }
 
     public static class UserStats {
+        @PropertyName("movies_watched")
         private int moviesWatched;
-        private int reviewsCount;
-        private int points;
+
+        @PropertyName("tv_shows_watched")
+        private int tvShowsWatched;
 
         public UserStats() {
             this.moviesWatched = 0;
-            this.reviewsCount = 0;
-            this.points = 0;
+            this.tvShowsWatched = 0;
         }
 
+        @PropertyName("movies_watched")
         public int getMoviesWatched() { return moviesWatched; }
+        @PropertyName("movies_watched")
         public void setMoviesWatched(int moviesWatched) { this.moviesWatched = moviesWatched; }
 
-        public int getReviewsCount() { return reviewsCount; }
-        public void setReviewsCount(int reviewsCount) { this.reviewsCount = reviewsCount; }
-
-        public int getPoints() { return points; }
-        public void setPoints(int points) { this.points = points; }
+        @PropertyName("tv_shows_watched")
+        public int getTvShowsWatched() { return tvShowsWatched; }
+        @PropertyName("tv_shows_watched")
+        public void setTvShowsWatched(int tvShowsWatched) { this.tvShowsWatched = tvShowsWatched; }
     }
 }

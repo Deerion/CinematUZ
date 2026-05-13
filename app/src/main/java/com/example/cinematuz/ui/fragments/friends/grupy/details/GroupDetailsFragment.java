@@ -1,10 +1,13 @@
 package com.example.cinematuz.ui.fragments.friends.grupy.details;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,7 +26,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.MediaItem;
+import com.example.cinematuz.data.models.SearchResultUser;
+import com.example.cinematuz.ui.fragments.friends.znajomi.BluetoothDeviceAdapter;
 import com.example.cinematuz.ui.fragments.friends.znajomi.FriendsAdapter;
+import com.example.cinematuz.utils.NearbyHelper;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
@@ -64,7 +72,10 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
     private static final float SHAKE_THRESHOLD_GRAVITY = 2.7F; // Siła potrząśnięcia
     private static final int SHAKE_SLOP_TIME_MS = 500;
     private long mShakeTimestamp;
-
+    private NearbyHelper nearbyHelper;
+    private List<SearchResultUser> nearbyUsers = new ArrayList<>();
+    private BluetoothDeviceAdapter btAdapter;
+    private static final int PERMISSION_REQUEST_CODE = 101;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -319,7 +330,7 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
     private void setupClickListeners(View add, View bt, View movies, View delete, View leave) {
         add.setOnClickListener(v -> showInviteFriendDialog());
-        bt.setOnClickListener(v -> Toast.makeText(getContext(), "Potrząśnij telefonem, aby wylosować film!", Toast.LENGTH_SHORT).show());
+        bt.setOnClickListener(v -> checkPermissionsAndStartBluetooth());
         movies.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
             bundle.putString("TARGET_GROUP_ID", groupId);
@@ -378,5 +389,91 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         super.onDestroyView();
         if (groupListener != null) groupListener.remove();
         if (moviesListener != null) moviesListener.remove();
+        if (nearbyHelper != null) nearbyHelper.stopSearching();
+    }
+    private void checkPermissionsAndStartBluetooth() {
+        List<String> permissions = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        } else {
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+
+        List<String> missingPermissions = new ArrayList<>();
+        for (String p : permissions) {
+            if (ContextCompat.checkSelfPermission(requireContext(), p) != PackageManager.PERMISSION_GRANTED) {
+                missingPermissions.add(p);
+            }
+        }
+
+        if (missingPermissions.isEmpty()) {
+            startBluetoothSearch();
+        } else {
+            requestPermissions(missingPermissions.toArray(new String[0]), PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    private void startBluetoothSearch() {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
+        String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        nearbyUsers.clear();
+        showBluetoothDiscoveryDialog(); // Odpalamy UI
+
+        nearbyHelper = new NearbyHelper(requireContext(), myUid, discoveredUid -> {
+            if (discoveredUid.equals(myUid)) return; // Ignoruj siebie
+
+            for (SearchResultUser user : nearbyUsers) {
+                if (user.getUid().equals(discoveredUid)) return;
+            }
+
+            db.collection("profiles").document(discoveredUid).get().addOnSuccessListener(doc -> {
+                if (doc.exists() && isAdded()) {
+                    SearchResultUser user = new SearchResultUser(
+                            doc.getId(),
+                            doc.getString("username"),
+                            doc.getString("avatar_url")
+                    );
+                    nearbyUsers.add(user);
+                    if (btAdapter != null) btAdapter.notifyDataSetChanged();
+                }
+            });
+        });
+
+        nearbyHelper.startSearching();
+    }
+
+    private void showBluetoothDiscoveryDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_bluetooth_discovery, null);
+        dialog.setContentView(sheetView);
+
+        RecyclerView rv = sheetView.findViewById(R.id.rvBluetoothDevices);
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // Magia dzieje się tutaj: Używamy tego samego adaptera ze zdjęciami,
+        // ale przekierowujemy kliknięcie na wysłanie zaproszenia DO GRUPY!
+        btAdapter = new BluetoothDeviceAdapter(nearbyUsers, user -> {
+            sendGroupInvite(user.getUid()); // Wywołanie Twojej metody
+            Toast.makeText(getContext(), "Wysłano zaproszenie do grupy!", Toast.LENGTH_SHORT).show();
+        });
+        rv.setAdapter(btAdapter);
+
+        sheetView.findViewById(R.id.btnCancelDiscovery).setOnClickListener(v -> {
+            if (nearbyHelper != null) nearbyHelper.stopSearching();
+            dialog.dismiss();
+        });
+
+        dialog.setOnDismissListener(d -> {
+            if (nearbyHelper != null) nearbyHelper.stopSearching();
+        });
+
+        dialog.show();
     }
 }

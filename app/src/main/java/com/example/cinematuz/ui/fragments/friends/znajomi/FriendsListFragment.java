@@ -2,7 +2,6 @@ package com.example.cinematuz.ui.fragments.friends.znajomi;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothDevice;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -36,7 +35,7 @@ import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.FriendRequest;
 import com.example.cinematuz.data.models.SearchResultUser;
 import com.example.cinematuz.ui.fragments.friends.RequestAdapter;
-import com.example.cinematuz.utils.BluetoothHelper;
+import com.example.cinematuz.utils.NearbyHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -74,9 +73,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // Bluetooth
-    private BluetoothHelper bluetoothHelper;
-    private List<BluetoothDevice> discoveredDevices = new ArrayList<>();
+    // Zmiana na Google Nearby Connections API
+    private NearbyHelper nearbyHelper;
+    private List<SearchResultUser> nearbyUsers = new ArrayList<>();
     private BluetoothDeviceAdapter btAdapter;
 
     private List<Friend> friendsList = new ArrayList<>();
@@ -126,12 +125,10 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             btnMyQr.setOnClickListener(v -> showMyQrDialog());
         }
 
-        // Setup głównej listy znajomych
         recyclerViewFriends.setLayoutManager(new LinearLayoutManager(getContext()));
         friendsAdapter = new FriendsAdapter(friendsList, this);
         recyclerViewFriends.setAdapter(friendsAdapter);
 
-        // Setup listy zaproszeń
         rvFriendRequests.setLayoutManager(new LinearLayoutManager(getContext()));
         requestAdapter = new RequestAdapter(pendingRequests, new RequestAdapter.OnRequestActionListener() {
             @Override
@@ -301,11 +298,21 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
     private void checkPermissionsAndStartBluetooth() {
         List<String> permissions = new ArrayList<>();
+
+        // Uprawnienia do Nearby Connections od Android 13
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES);
+        }
+
+        // Uprawnienia Bluetooth od Android 12
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+            permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
             permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
         } else {
+            // Wymagane dla starszych wersji systemu
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+            permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         }
 
         List<String> missingPermissions = new ArrayList<>();
@@ -322,33 +329,37 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         }
     }
 
-    @SuppressLint("MissingPermission")
     private void startBluetoothSearch() {
-        discoveredDevices.clear();
-        bluetoothHelper = new BluetoothHelper(requireContext(), new BluetoothHelper.BluetoothDiscoveryListener() {
-            @Override
-            public void onDeviceFound(BluetoothDevice device) {
-                if (!discoveredDevices.contains(device)) {
-                    discoveredDevices.add(device);
-                    if (btAdapter != null) {
-                        btAdapter.notifyDataSetChanged();
-                    }
-                    Log.d(TAG, "Bluetooth znaleziono: " + device.getName());
-                }
+        if (mAuth.getCurrentUser() == null) return;
+        String myUid = mAuth.getCurrentUser().getUid();
+
+        nearbyUsers.clear();
+        showBluetoothDiscoveryDialog(); // Wyświetlamy UI do szukania
+
+        nearbyHelper = new NearbyHelper(requireContext(), myUid, discoveredUid -> {
+            // Zabezpieczenie przed wykryciem samego siebie
+            if (discoveredUid.equals(myUid)) return;
+
+            // Zabezpieczenie przed powielaniem użytkownika na liście
+            for (SearchResultUser user : nearbyUsers) {
+                if (user.getUid().equals(discoveredUid)) return;
             }
 
-            @Override
-            public void onDiscoveryFinished() {
-                Log.d(TAG, "Bluetooth: Skanowanie zakończone");
-            }
+            // Znaleziono nową osobę - pobieramy jej profil z Firebase
+            db.collection("profiles").document(discoveredUid).get().addOnSuccessListener(doc -> {
+                if (doc.exists() && isAdded()) {
+                    SearchResultUser user = new SearchResultUser(
+                            doc.getId(),
+                            doc.getString("username"),
+                            doc.getString("avatar_url")
+                    );
+                    nearbyUsers.add(user);
+                    if (btAdapter != null) btAdapter.notifyDataSetChanged();
+                }
+            });
         });
 
-        if (bluetoothHelper.isBluetoothEnabled()) {
-            showBluetoothDiscoveryDialog();
-            bluetoothHelper.startDiscovery();
-        } else {
-            Toast.makeText(getContext(), "Włącz Bluetooth w ustawieniach!", Toast.LENGTH_SHORT).show();
-        }
+        nearbyHelper.startSearching();
     }
 
     private void showBluetoothDiscoveryDialog() {
@@ -358,16 +369,18 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         RecyclerView rv = sheetView.findViewById(R.id.rvBluetoothDevices);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
-        btAdapter = new BluetoothDeviceAdapter(discoveredDevices);
+
+        // Zaktualizowany Adapter obsługuje kliknięcie przycisku i przyjmuje NearbyUsers
+        btAdapter = new BluetoothDeviceAdapter(nearbyUsers, this::sendFriendRequest);
         rv.setAdapter(btAdapter);
 
         sheetView.findViewById(R.id.btnCancelDiscovery).setOnClickListener(v -> {
-            if (bluetoothHelper != null) bluetoothHelper.stopDiscovery();
+            if (nearbyHelper != null) nearbyHelper.stopSearching();
             dialog.dismiss();
         });
 
         dialog.setOnDismissListener(d -> {
-            if (bluetoothHelper != null) bluetoothHelper.stopDiscovery();
+            if (nearbyHelper != null) nearbyHelper.stopSearching();
         });
 
         dialog.show();
@@ -448,7 +461,6 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                             String senderAvatar = doc.getString("avatarUrl");
 
                             if (senderUsername != null) {
-                                // TUTAJ NAPRAWIONO BŁĄD (dodano "friend")
                                 pendingRequests.add(new FriendRequest(senderUid, senderUsername, senderAvatar, "friend"));
                             }
                         }
@@ -579,8 +591,12 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         if (requestCode == PERMISSION_REQUEST_CODE) {
             boolean allGranted = true;
             for (int res : grantResults) if (res != PackageManager.PERMISSION_GRANTED) allGranted = false;
-            if (allGranted) startBluetoothSearch();
-            else Toast.makeText(getContext(), "Wymagane uprawnienia Bluetooth!", Toast.LENGTH_SHORT).show();
+
+            if (allGranted) {
+                startBluetoothSearch();
+            } else {
+                Toast.makeText(getContext(), "Wymagane uprawnienia!", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -589,6 +605,8 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         super.onDestroyView();
         for (ListenerRegistration reg : profileListeners.values()) reg.remove();
         profileListeners.clear();
-        if (bluetoothHelper != null) bluetoothHelper.stopDiscovery();
+
+        // Zmiana na nową metodę
+        if (nearbyHelper != null) nearbyHelper.stopSearching();
     }
 }

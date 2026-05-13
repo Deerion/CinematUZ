@@ -273,23 +273,7 @@
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_group_vote"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginTop="12dp"
-                android:text="@string/add_to_group_vote"
-                android:letterSpacing="0.1"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                app:backgroundTint="?attr/colorPrimary"
-                app:cornerRadius="12dp"
-                app:icon="@drawable/ic_group_add"
-                app:iconGravity="textStart"
-                app:iconPadding="12dp"
-                app:iconTint="?attr/colorOnPrimary"
-                app:layout_constraintTop_toBottomOf="@id/ll_actions_top" />
+
 
             <LinearLayout
                 android:id="@+id/ll_cast_header"
@@ -299,21 +283,18 @@
                 android:layout_marginHorizontal="24dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                app:layout_constraintTop_toBottomOf="@id/btn_group_vote">
-
-                <TextView
-                    android:id="@+id/tv_cast_header"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/cast"
-                    android:textAllCaps="true"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.05" />
+                app:layout_constraintTop_toBottomOf="@+id/ll_actions_top"> <TextView
+                android:id="@+id/tv_cast_header"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/cast"
+                android:textAllCaps="true"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
             </LinearLayout>
-
             <TextView
                 android:id="@+id/tv_cast_empty"
                 android:layout_width="match_parent"
