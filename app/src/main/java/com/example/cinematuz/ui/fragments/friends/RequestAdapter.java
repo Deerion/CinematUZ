@@ -3,6 +3,7 @@ package com.example.cinematuz.ui.fragments.friends;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -41,24 +42,48 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
     public void onBindViewHolder(@NonNull RequestViewHolder holder, int position) {
         FriendRequest req = items.get(position);
 
+        holder.btnAccept.setVisibility(View.VISIBLE);
+        holder.tvInfo.setVisibility(View.VISIBLE);
+        if (holder.btnDecline instanceof ImageButton) {
+            ((ImageButton) holder.btnDecline).setImageResource(R.drawable.ic_close);
+        }
+
         if ("group".equals(req.getType())) {
-            holder.tvName.setText("Zaproszenie do grupy: " + req.getUsername());
+            holder.tvName.setText(req.getUsername());
+            holder.tvInfo.setText("Zaproszenie do grupy");
             Glide.with(holder.itemView.getContext())
                     .load(R.drawable.ic_group_add)
-                    .centerCrop()
+                    .placeholder(R.drawable.ic_people)
                     .into(holder.ivAvatar);
-        } else {
+        } else if ("accepted".equals(req.getType())) {
             holder.tvName.setText(req.getUsername());
+            holder.tvInfo.setText("Zaakceptował Twoje zaproszenie!");
+            holder.btnAccept.setVisibility(View.GONE);
             if (req.getAvatarUrl() != null && !req.getAvatarUrl().isEmpty()) {
                 Glide.with(holder.itemView.getContext())
                         .load(req.getAvatarUrl())
-                        .centerCrop()
+                        .circleCrop()
+                        .placeholder(R.drawable.ic_person)
                         .into(holder.ivAvatar);
             } else {
+                holder.ivAvatar.setImageResource(R.drawable.ic_person);
+            }
+        } else {
+            // Friend request
+            holder.tvName.setText(req.getUsername());
+            holder.tvInfo.setText("Chce dodać Cię do znajomych");
+            if (holder.btnAccept instanceof ImageButton) {
+                ((ImageButton) holder.btnAccept).setImageResource(R.drawable.ic_check_circle);
+            }
+            
+            if (req.getAvatarUrl() != null && !req.getAvatarUrl().isEmpty()) {
                 Glide.with(holder.itemView.getContext())
-                        .load(R.drawable.ic_person)
-                        .centerCrop()
+                        .load(req.getAvatarUrl())
+                        .circleCrop()
+                        .placeholder(R.drawable.ic_person)
                         .into(holder.ivAvatar);
+            } else {
+                holder.ivAvatar.setImageResource(R.drawable.ic_person);
             }
         }
 
@@ -72,13 +97,14 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
     }
 
     static class RequestViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName;
+        TextView tvName, tvInfo;
         ImageView ivAvatar;
         View btnAccept, btnDecline;
 
         RequestViewHolder(View v) {
             super(v);
             tvName = v.findViewById(R.id.tvRequestName);
+            tvInfo = v.findViewById(R.id.tvRequestInfo);
             ivAvatar = v.findViewById(R.id.ivRequestAvatar);
             btnAccept = v.findViewById(R.id.btnAccept);
             btnDecline = v.findViewById(R.id.btnDecline);

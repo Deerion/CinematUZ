@@ -20,8 +20,11 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.MediaItem;
 import com.example.cinematuz.databinding.FragmentHomeBinding;
+import com.example.cinematuz.ui.fragments.friends.NotificationsBottomSheet;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Locale;
 
@@ -31,6 +34,8 @@ public class HomeFragment extends Fragment {
     private MovieGridAdapter adapter;
     private View rootView;
     private String currentFilter = "all";
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -41,6 +46,7 @@ public class HomeFragment extends Fragment {
             setupRecyclerView();
             setupInitialState();
             setupListeners();
+            setupNotificationBadge();
         }
         return rootView;
     }
@@ -120,6 +126,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupListeners() {
+        binding.btnNotifications.setOnClickListener(v -> {
+            NotificationsBottomSheet bottomSheet = new NotificationsBottomSheet();
+            bottomSheet.show(getChildFragmentManager(), "notifications");
+        });
+
         binding.btnFilterAll.setOnClickListener(v -> applyFilter("all", true));
         binding.btnFilterMovies.setOnClickListener(v -> applyFilter("movie", true));
         binding.btnFilterTv.setOnClickListener(v -> applyFilter("tv", true));
@@ -139,6 +150,16 @@ public class HomeFragment extends Fragment {
         binding.tvSearchBar.setOnClickListener(v -> {
             Navigation.findNavController(v).navigate(R.id.searchFragment);
         });
+    }
+
+    private void setupNotificationBadge() {
+        if (mAuth.getUid() == null) return;
+        db.collection("profiles").document(mAuth.getUid()).collection("friend_requests")
+                .addSnapshotListener((value, e) -> {
+                    if (binding != null && value != null) {
+                        binding.notificationBadge.setVisibility(value.isEmpty() ? View.GONE : View.VISIBLE);
+                    }
+                });
     }
 
     private void updateHeroUi(MediaItem item) {
