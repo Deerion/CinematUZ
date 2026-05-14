@@ -18,7 +18,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.User;
 import com.example.cinematuz.ui.activities.LoginActivity;
+import com.example.cinematuz.ui.fragments.friends.NotificationsBottomSheet;
 import com.example.cinematuz.utils.LocaleHelper;
 import com.example.cinematuz.utils.ThemeHelper;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -34,13 +34,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.Locale;
-import java.util.Map;
 
 public class ProfileFragment extends Fragment {
 
@@ -54,6 +52,7 @@ public class ProfileFragment extends Fragment {
     private ImageView profileAvatar;
     private TextView profileName, profileUsername;
     private TextView statMoviesCount, statPoints;
+    private View notificationBadge;
 
 
     private FloatingActionButton btnEditAvatar;
@@ -103,6 +102,7 @@ public class ProfileFragment extends Fragment {
         profileUsername = view.findViewById(R.id.profile_username);
         statMoviesCount = view.findViewById(R.id.stat_movies_count);
         statPoints = view.findViewById(R.id.stat_points);
+        notificationBadge = view.findViewById(R.id.notification_badge);
 
         btnEditAvatar = view.findViewById(R.id.btn_edit_avatar);
         editProfileTile = view.findViewById(R.id.edit_profile_tile);
@@ -111,6 +111,12 @@ public class ProfileFragment extends Fragment {
 
         btnEditAvatar.setOnClickListener(v -> mGetContent.launch("image/*"));
         editProfileTile.setOnClickListener(v -> showEditProfileDialog());
+
+        View btnNotifications = view.findViewById(R.id.btn_notifications);
+        btnNotifications.setOnClickListener(v -> {
+            NotificationsBottomSheet bottomSheet = new NotificationsBottomSheet();
+            bottomSheet.show(getChildFragmentManager(), "notifications");
+        });
 
         View languageTile = view.findViewById(R.id.language_settings_tile);
         TextView textPl = view.findViewById(R.id.textPl);
@@ -160,6 +166,7 @@ public class ProfileFragment extends Fragment {
 
             logoutTile.setOnClickListener(v -> performLogout());
             loadUserProfile();
+            setupNotificationBadge();
         } else {
             // STAN: GOŚĆ
             logoutTile.setVisibility(View.GONE);
@@ -183,6 +190,16 @@ public class ProfileFragment extends Fragment {
         }
 
         return view;
+    }
+
+    private void setupNotificationBadge() {
+        if (mAuth.getUid() == null) return;
+        db.collection("profiles").document(mAuth.getUid()).collection("friend_requests")
+                .addSnapshotListener((value, e) -> {
+                    if (isAdded() && value != null) {
+                        notificationBadge.setVisibility(value.isEmpty() ? View.GONE : View.VISIBLE);
+                    }
+                });
     }
 
     private void showEditProfileDialog() {
@@ -215,12 +232,10 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show());
     }
 
-    // --- POPRAWIONE WGRYWANIE (TYLKO JEDEN PLIK NA UŻYTKOWNIKA) ---
     private void uploadImageToFirebase(Uri imageUri) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null || storage == null) return;
 
-        // Stała nazwa pliku to UID - stare zdjęcie zostanie nadpisane w Storage
         String fileName = "avatars/" + currentUser.getUid() + ".jpg";
         StorageReference ref = storage.getReference().child(fileName);
 
@@ -254,10 +269,9 @@ public class ProfileFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // MAPOWANIE: Zamieniamy dokument na obiekt klasy User
                         User user = documentSnapshot.toObject(User.class);
                         if (user != null) {
-                            updateUI(user); // Przekazujemy obiekt User zamiast dokumentu
+                            updateUI(user);
                         }
                     } else {
                         Log.d(TAG, "No such document");
@@ -269,9 +283,7 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
-    // Zmieniamy sygnaturę metody: teraz przyjmuje obiekt User
     private void updateUI(User user) {
-        // Korzystamy z modelu User zamiast document.getString(...)
         profileName.setText(user.getUsername() != null ? user.getUsername() : "User");
         profileUsername.setText(user.getEmail() != null ? user.getEmail() : "No email");
 
@@ -285,17 +297,11 @@ public class ProfileFragment extends Fragment {
             profileAvatar.setImageResource(R.drawable.ic_person);
         }
 
-        // Korzystamy z wewnętrznej klasy UserStats z Twojego zaktualizowanego modelu
         if (user.getStats() != null) {
             int movies = user.getStats().getMoviesWatched();
             int tvShows = user.getStats().getTvShowsWatched();
-
-            // Wyświetlamy filmy
             statMoviesCount.setText(String.valueOf(movies));
-
-            // Wyświetlamy seriale (używamy zmiennej statPoints, póki nie zmienisz jej nazwy w pliku XML)
             statPoints.setText(String.valueOf(tvShows));
-
         }
     }
     private void changeLanguage(String langCode) {
