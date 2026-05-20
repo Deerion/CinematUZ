@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Group;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -52,8 +51,11 @@ public class GroupsListFragment extends Fragment {
 
         rvGroups.setAdapter(adapter);
 
-        FloatingActionButton btnCreateGroup = view.findViewById(R.id.btnCreateGroup);
-        btnCreateGroup.setOnClickListener(v -> showCreateGroupDialog());
+        // POPRAWKA: Zmiana FloatingActionButton na View
+        View btnCreateGroup = view.findViewById(R.id.btnCreateGroup);
+        if (btnCreateGroup != null) {
+            btnCreateGroup.setOnClickListener(v -> showCreateGroupDialog());
+        }
 
         listenForGroups();
 

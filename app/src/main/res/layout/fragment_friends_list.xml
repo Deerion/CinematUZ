@@ -41,6 +41,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="10dp"
                         android:text="@string/friends_add_section_title"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.05"
                         android:textColor="?attr/colorPrimary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -171,7 +173,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/friends_bluetooth_title"
-                            android:textColor="?android:attr/textColorPrimary"
+                            android:textColor="?attr/colorOnSurface"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -180,15 +182,15 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="@string/friends_bluetooth_subtitle"
-                            android:textColor="?android:attr/textColorSecondary"
-                            android:textSize="11sp" />
+                            android:textColor="?attr/colorOnSurfaceVariant"
+                            android:textSize="12sp" />
                     </LinearLayout>
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="?android:attr/textColorSecondary" />
+                        app:tint="?attr/colorOnSurfaceVariant" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -196,12 +198,14 @@
                 android:id="@+id/tvInvitationsTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="?attr/colorPrimary"
-                android:layout_marginBottom="8dp"
-                android:text="@string/friends_invites_title"/>
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="12dp"
+                android:text="@string/friends_invites_title"
+                android:textAllCaps="true"
+                android:letterSpacing="0.05"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvFriendRequests"
@@ -214,12 +218,14 @@
                 android:id="@+id/tvFriendsCount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/friends_active_count"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:textColor="?android:attr/textColorPrimary"
                 android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"/>
+                android:layout_marginBottom="12dp"
+                android:text="@string/friends_active_count"
+                android:textAllCaps="true"
+                android:letterSpacing="0.05"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewFriends"
