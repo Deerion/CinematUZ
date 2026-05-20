@@ -18,19 +18,25 @@
         android:layout_height="wrap_content"
         android:padding="12dp">
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/ivGroupAvatar"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvGroupAvatarContainer"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:scaleType="centerCrop"
-            android:background="?attr/colorSurfaceVariant"
-            android:padding="2dp"
-            android:src="@drawable/ic_people"
-            app:tint="?attr/colorOnSurfaceVariant"
-            app:shapeAppearanceOverlay="@style/CircleImageStyle"
+            app:cardBackgroundColor="?attr/colorPrimaryVariant"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:id="@+id/ivGroupAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:src="@drawable/ic_people"
+                app:tint="?attr/colorOnPrimary" />
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/tvGroupName"
@@ -42,8 +48,8 @@
             android:textStyle="bold"
             android:ellipsize="end"
             android:maxLines="1"
-            app:layout_constraintStart_toEndOf="@id/ivGroupAvatar"
-            app:layout_constraintTop_toTopOf="@id/ivGroupAvatar"
+            app:layout_constraintStart_toEndOf="@id/cvGroupAvatarContainer"
+            app:layout_constraintTop_toTopOf="@id/cvGroupAvatarContainer"
             app:layout_constraintEnd_toStartOf="@id/layoutParticipantAvatars"
             tools:text="Wieczorni Kinomaniacy" />
 
@@ -57,13 +63,14 @@
             app:layout_constraintStart_toStartOf="@id/tvGroupName"
             app:layout_constraintTop_toBottomOf="@id/tvGroupName"
             app:layout_constraintEnd_toStartOf="@id/layoutParticipantAvatars"
-            tools:text="12 członków | Utworzono 2 dni temu" />
+            tools:text="12 członków" />
 
         <LinearLayout
             android:id="@+id/layoutParticipantAvatars"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:gravity="center_vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -103,16 +110,17 @@
                 app:shapeAppearanceOverlay="@style/CircleImageStyle"
                 tools:srcCompat="@tools:sample/avatars" />
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/ivParticipantEmpty"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:background="?attr/colorSurfaceVariant"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_add"
+            <TextView
+                android:id="@+id/tvExtraParticipants"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="+3"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="11sp"
+                android:textStyle="bold"
                 android:visibility="gone"
-                app:tint="?attr/colorOnSurfaceVariant"
-                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
+                tools:visibility="visible" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
