@@ -41,14 +41,19 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
     public void onBindViewHolder(@NonNull RequestViewHolder holder, int position) {
         FriendRequest req = items.get(position);
 
+        // SPRAWDZENIE CZY TO ZAPROSZENIE DO GRUPY
         if ("group".equals(req.getType())) {
-            holder.tvName.setText("Zaproszenie do grupy: " + req.getUsername());
-            Glide.with(holder.itemView.getContext())
-                    .load(R.drawable.ic_group_add)
-                    .centerCrop()
-                    .into(holder.ivAvatar);
-        } else {
+            // Ukrywamy awatar dla zaproszeń grupowych
+            holder.ivAvatar.setVisibility(View.GONE);
             holder.tvName.setText(req.getUsername());
+
+            // UWAGA: Możesz tu też zmienić tekst pomocniczy z xmla jeśli w adapterze podpiąłeś tvRequestInfo
+            // holder.tvRequestInfo.setText("Zaprasza Cię do grupy");
+        } else {
+            // Wyświetlamy awatar dla zaproszeń do znajomych
+            holder.ivAvatar.setVisibility(View.VISIBLE);
+            holder.tvName.setText(req.getUsername());
+
             if (req.getAvatarUrl() != null && !req.getAvatarUrl().isEmpty()) {
                 Glide.with(holder.itemView.getContext())
                         .load(req.getAvatarUrl())
@@ -65,7 +70,6 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
         holder.btnAccept.setOnClickListener(v -> listener.onAccept(req));
         holder.btnDecline.setOnClickListener(v -> listener.onDecline(req));
     }
-
     @Override
     public int getItemCount() {
         return items.size();
