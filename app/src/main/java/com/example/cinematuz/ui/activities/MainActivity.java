@@ -110,6 +110,15 @@ public class MainActivity extends AppCompatActivity {
 
         binding.navView.setVisibility(View.VISIBLE);
         setupStatisticsListener();
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            // Sprawdzamy czy to shaker lub zwycięzca
+            if (destination.getId() == R.id.shakeFragment || destination.getId() == R.id.winnerFragment) {
+                binding.navView.setVisibility(View.GONE);
+            } else {
+                // Na każdym innym ekranie pasek będzie widoczny
+                binding.navView.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     // ---------------- Statystyki dla Widgetu ----------------
