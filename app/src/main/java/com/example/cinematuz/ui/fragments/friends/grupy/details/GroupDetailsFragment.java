@@ -581,8 +581,24 @@ public class GroupDetailsFragment extends Fragment {
                             "Zaproś do grupy",
                             names.toArray(new String[0]),
                             (dialog, which) -> {
-                                sendGroupInvite(friends.get(which).getId());
-                                Toast.makeText(getContext(), "Wysłano zaproszenie do " + names.get(which), Toast.LENGTH_SHORT).show();
+                                Friend selectedFriend = friends.get(which);
+
+                                // SPRAWDZENIE CZY ZNAJOMY JEST JUŻ W GRUPIE
+                                boolean isAlreadyMember = false;
+                                for (Friend member : membersList) {
+                                    if (member.getId().equals(selectedFriend.getId())) {
+                                        isAlreadyMember = true;
+                                        break;
+                                    }
+                                }
+
+                                // WARUNKOWE WYSŁANIE ZAPROSZENIA LUB WYŚWIETLENIE KOMUNIKATU
+                                if (isAlreadyMember) {
+                                    Toast.makeText(getContext(), "Ta osoba jest już dodana w sekcji grup", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    sendGroupInvite(selectedFriend.getId());
+                                    Toast.makeText(getContext(), "Wysłano zaproszenie do " + names.get(which), Toast.LENGTH_SHORT).show();
+                                }
                             }
                     );
                 });
@@ -668,8 +684,24 @@ public class GroupDetailsFragment extends Fragment {
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
         btAdapter = new BluetoothDeviceAdapter(nearbyUsers, user -> {
-            sendGroupInvite(user.getUid());
-            Toast.makeText(getContext(), "Wysłano zaproszenie do grupy!", Toast.LENGTH_SHORT).show();
+            // --- SPRAWDZENIE CZY UŻYTKOWNIK JEST JUŻ W GRUPIE ---
+            boolean isAlreadyMember = false;
+            for (Friend member : membersList) {
+                if (member.getId().equals(user.getUid())) {
+                    isAlreadyMember = true;
+                    break;
+                }
+            }
+
+            // --- WARUNKOWE WYSŁANIE ZAPROSZENIA ---
+            if (isAlreadyMember) {
+                Toast.makeText(getContext(), "Ten użytkownik jest już w grupie", Toast.LENGTH_SHORT).show();
+                return false; // Zwracamy false - przycisk NIE zmieni się na "Wysłano"
+            } else {
+                sendGroupInvite(user.getUid());
+                Toast.makeText(getContext(), "Wysłano zaproszenie do grupy!", Toast.LENGTH_SHORT).show();
+                return true; // Zwracamy true - przycisk zmieni się na "Wysłano"
+            }
         });
         rv.setAdapter(btAdapter);
 
