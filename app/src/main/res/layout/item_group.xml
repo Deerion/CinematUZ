@@ -23,7 +23,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             app:cardBackgroundColor="?attr/colorPrimaryVariant"
-            app:cardCornerRadius="8dp"
+            app:cardCornerRadius="10dp"
             app:cardElevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -83,8 +83,7 @@
                 android:scaleType="centerCrop"
                 app:strokeWidth="1.5dp"
                 app:strokeColor="?attr/colorSurface"
-                app:shapeAppearanceOverlay="@style/CircleImageStyle"
-                tools:srcCompat="@tools:sample/avatars" />
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivParticipant2"
@@ -95,8 +94,7 @@
                 android:scaleType="centerCrop"
                 app:strokeWidth="1.5dp"
                 app:strokeColor="?attr/colorSurface"
-                app:shapeAppearanceOverlay="@style/CircleImageStyle"
-                tools:srcCompat="@tools:sample/avatars" />
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivParticipant3"
@@ -107,8 +105,7 @@
                 android:scaleType="centerCrop"
                 app:strokeWidth="1.5dp"
                 app:strokeColor="?attr/colorSurface"
-                app:shapeAppearanceOverlay="@style/CircleImageStyle"
-                tools:srcCompat="@tools:sample/avatars" />
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
 
             <TextView
                 android:id="@+id/tvExtraParticipants"

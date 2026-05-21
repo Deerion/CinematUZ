@@ -1,12 +1,7 @@
 package com.example.cinematuz.ui.fragments.friends.grupy.details;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,13 +25,13 @@ import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.MediaItem;
+import com.example.cinematuz.data.models.Group;
 import com.example.cinematuz.data.models.SearchResultUser;
 import com.example.cinematuz.ui.fragments.friends.znajomi.BluetoothDeviceAdapter;
-import com.example.cinematuz.ui.fragments.home.search.SearchResultAdapter;
+import com.example.cinematuz.utils.DialogHelper;
 import com.example.cinematuz.utils.NearbyHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
@@ -49,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class GroupDetailsFragment extends Fragment implements SensorEventListener {
+public class GroupDetailsFragment extends Fragment {
 
     private String groupId;
     private FirebaseFirestore db;
@@ -61,18 +57,19 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
     private GroupMemberCircleAdapter membersAdapter;
     private AdvancedGroupMoviesAdapter moviesAdapter;
 
+    public static String lastSeenWinnerId = null; // Zmienione na publiczne statyczne
     private List<Friend> membersList = new ArrayList<>();
     private List<MediaItem> movieProposals = new ArrayList<>();
     private Map<Integer, List<String>> votesMap = new HashMap<>();
     private int totalGroupMembers = 1;
+    private int memberProfilesRequestToken = 0;
+    private boolean hasProcessedInitialGroupSnapshot = false;
+    private boolean currentUserIsAdmin = false;
 
-    private View btnDeleteGroup, btnLeaveGroup, layoutManagement;
+    private View btnGroupMenu;
+    private View layoutManagement;
+    private ExtendedFloatingActionButton fabFinishVoting;
 
-    private SensorManager sensorManager;
-    private Sensor accelerometer;
-    private static final float SHAKE_THRESHOLD_GRAVITY = 2.7F;
-    private static final int SHAKE_SLOP_TIME_MS = 500;
-    private long mShakeTimestamp;
     private NearbyHelper nearbyHelper;
     private List<SearchResultUser> nearbyUsers = new ArrayList<>();
     private BluetoothDeviceAdapter btAdapter;
@@ -83,11 +80,6 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         super.onCreate(savedInstanceState);
         if (getArguments() != null) groupId = getArguments().getString("GROUP_ID");
         db = FirebaseFirestore.getInstance();
-
-        sensorManager = (SensorManager) requireContext().getSystemService(Context.SENSOR_SERVICE);
-        if (sensorManager != null) {
-            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        }
     }
 
     @Nullable
@@ -97,16 +89,17 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
         tvGroupName = view.findViewById(R.id.tvDetailsGroupName);
         tvMemberCount = view.findViewById(R.id.tvDetailsMemberCount);
-        btnDeleteGroup = view.findViewById(R.id.btnDeleteGroup);
-        btnLeaveGroup = view.findViewById(R.id.btnLeaveGroup);
+        btnGroupMenu = view.findViewById(R.id.btnGroupMenu);
         layoutManagement = view.findViewById(R.id.layoutManagement);
+        fabFinishVoting = view.findViewById(R.id.fabFinishVoting);
+        fabFinishVoting.setOnClickListener(v -> showVotingDecisionBottomSheet());
 
         View btnAddMember = view.findViewById(R.id.btnDetailsAddMember);
         View btnBluetooth = view.findViewById(R.id.btnDetailsBluetooth);
         View btnAddMovies = view.findViewById(R.id.btnDetailsAddMovies);
 
         View btnBack = view.findViewById(R.id.btnBack);
-        if(btnBack != null){
+        if (btnBack != null) {
             btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         }
 
@@ -121,50 +114,97 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         moviesAdapter = new AdvancedGroupMoviesAdapter();
         rvMovies.setAdapter(moviesAdapter);
 
-        setupClickListeners(btnAddMember, btnBluetooth, btnAddMovies, btnDeleteGroup, btnLeaveGroup);
+        setupClickListeners(btnAddMember, btnBluetooth, btnAddMovies, btnGroupMenu);
         listenToGroupChanges();
         listenToMovieProposals();
 
         return view;
     }
 
-    private void wylosujFilmZGrupy() {
-        if (movieProposals == null || movieProposals.isEmpty()) return;
-        Random random = new Random();
-        MediaItem selected = movieProposals.get(random.nextInt(movieProposals.size()));
-        Toast.makeText(getContext(), "Wylosowano: " + selected.getTitle(), Toast.LENGTH_LONG).show();
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("MEDIA_ITEM", selected);
-        Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
-    }
+    private void showVotingDecisionBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_voting_decision, null);
+        dialog.setContentView(sheetView);
 
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            float x = event.values[0] / SensorManager.GRAVITY_EARTH;
-            float y = event.values[1] / SensorManager.GRAVITY_EARTH;
-            float z = event.values[2] / SensorManager.GRAVITY_EARTH;
-            float gForce = (float) Math.sqrt(x * x + y * y + z * z);
-            if (gForce > SHAKE_THRESHOLD_GRAVITY) {
-                final long now = System.currentTimeMillis();
-                if (mShakeTimestamp + SHAKE_SLOP_TIME_MS > now) return;
-                mShakeTimestamp = now;
-                wylosujFilmZGrupy();
+        // Wyłuskujemy tylko filmy, które mają przynajmniej 1 głos
+        ArrayList<MediaItem> eligibleMovies = new ArrayList<>();
+        for (MediaItem m : movieProposals) {
+            if (votesMap.containsKey(m.getId()) && !votesMap.get(m.getId()).isEmpty()) {
+                eligibleMovies.add(m);
             }
         }
+
+        if (eligibleMovies.isEmpty()) {
+            Toast.makeText(getContext(), "Nikt jeszcze nie oddał głosu na żadną propozycję!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // --- OPCJA: Głos ludu ---
+        sheetView.findViewById(R.id.btnVotePopular).setOnClickListener(v -> {
+            dialog.dismiss();
+            int maxVotes = 0;
+            List<MediaItem> topMovies = new ArrayList<>();
+            for (MediaItem m : eligibleMovies) {
+                int vCount = votesMap.get(m.getId()).size();
+                if (vCount > maxVotes) {
+                    maxVotes = vCount;
+                    topMovies.clear();
+                    topMovies.add(m);
+                } else if (vCount == maxVotes) {
+                    topMovies.add(m);
+                }
+            }
+            // W razie remisu losujemy z tych o max liczbie głosów
+            MediaItem winner = topMovies.get(new Random().nextInt(topMovies.size()));
+
+            updateGroupWinner(winner, "Głos ludu (" + maxVotes + " głosów)");
+        });
+
+        // --- OPCJA: Decyzja losu ---
+        sheetView.findViewById(R.id.btnVoteRandom).setOnClickListener(v -> {
+            dialog.dismiss();
+            Bundle b = new Bundle();
+            b.putSerializable("ELIGIBLE_MOVIES", eligibleMovies);
+            b.putString("GROUP_ID", groupId); // Przekazujemy ID grupy, żeby ShakeFragment wiedział gdzie zapisać wynik
+            Navigation.findNavController(requireView()).navigate(R.id.shakeFragment, b);
+        });
+
+        dialog.show();
     }
 
-    @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-    @Override public void onResume() { super.onResume(); if (sensorManager != null && accelerometer != null) sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI); }
-    @Override public void onPause() { if (sensorManager != null) sensorManager.unregisterListener(this); super.onPause(); }
+    private void updateGroupWinner(MediaItem winner, String reason) {
+        if (groupId == null) return;
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("winnerId", String.valueOf(winner.getId()));
+        updates.put("winnerReason", reason);
+
+        db.collection("groups").document(groupId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    // Zamiast tylko Toast, wywołaj nawigację bezpośrednio:
+                    Bundle b = new Bundle();
+                    b.putString("GROUP_ID", groupId);
+                    b.putString("WINNER_ID", String.valueOf(winner.getId()));
+                    b.putString("WINNER_REASON", reason);
+                    b.putBoolean("IS_ADMIN", true);
+                    b.putSerializable("WINNER_MOVIE", winner); // Przekazujemy od razu obiekt!
+
+                    Navigation.findNavController(requireView()).navigate(R.id.winnerFragment, b);
+                })
+                .addOnFailureListener(e -> Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
 
     private void showRemoveMovieDialog(MediaItem movie) {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Usuń film")
-                .setMessage("Czy chcesz usunąć film \"" + movie.getTitle() + "\" z listy propozycji?")
-                .setPositiveButton("Usuń", (dialog, which) -> removeMovieFromGroup(movie))
-                .setNegativeButton("Anuluj", null)
-                .show();
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Usuń propozycję",
+                "Czy chcesz usunąć film \"" + movie.getTitle() + "\" z listy głosowania?",
+                "Usuń",
+                "Anuluj",
+                () -> removeMovieFromGroup(movie)
+        );
     }
 
     private void removeMovieFromGroup(MediaItem movie) {
@@ -200,15 +240,8 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
                             item.setId(doc.getLong("tmdbId").intValue());
                         }
 
-                        Object rawVoters = doc.get("votedBy");
-                        List<String> voters = new ArrayList<>();
-                        if (rawVoters instanceof List) {
-                            for (Object v : (List<?>) rawVoters) {
-                                if (v instanceof String) {
-                                    voters.add((String) v);
-                                }
-                            }
-                        }
+                        List<String> voters = (List<String>) doc.get("votedBy");
+                        if (voters == null) voters = new ArrayList<>();
 
                         movieProposals.add(item);
                         votesMap.put(item.getId(), voters);
@@ -228,46 +261,190 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
     private void listenToGroupChanges() {
         if (groupId == null) return;
+
         groupListener = db.collection("groups").document(groupId)
                 .addSnapshotListener((snapshot, e) -> {
-                    if (e != null || snapshot == null || !snapshot.exists()) return;
-                    com.example.cinematuz.data.models.Group group = snapshot.toObject(com.example.cinematuz.data.models.Group.class);
-                    if (group != null) {
-                        tvGroupName.setText(group.getName());
-                        List<String> memberUids = group.getMembers();
-                        totalGroupMembers = Math.max(1, memberUids.size());
-                        tvMemberCount.setText(totalGroupMembers + " członków");
+                    if (e != null) {
+                        android.util.Log.e("GroupDetailsFragment", "Listen failed.", e);
+                        return;
+                    }
 
-                        String myUid = FirebaseAuth.getInstance().getUid();
+                    if (snapshot != null && snapshot.exists()) {
+                        Group group = snapshot.toObject(Group.class);
+                        if (group != null) {
+                            tvGroupName.setText(group.getName());
+                            membersAdapter.setOwnerId(group.getOwnerId());
 
-                        if (myUid != null && myUid.equals(group.getOwnerId())) {
-                            btnDeleteGroup.setVisibility(View.VISIBLE);
-                            btnLeaveGroup.setVisibility(View.GONE);
-                        } else {
-                            btnDeleteGroup.setVisibility(View.GONE);
-                            btnLeaveGroup.setVisibility(View.VISIBLE);
+                            // Aktualizacja liczby członków dla obliczeń paska postępu w adapterze
+                            if (group.getMembers() != null && !group.getMembers().isEmpty()) {
+                                totalGroupMembers = group.getMembers().size();
+                                fetchMemberProfiles(group.getMembers());
+                            } else {
+                                totalGroupMembers = 1;
+                                membersList.clear();
+                                membersAdapter.notifyDataSetChanged();
+                                sortAndSubmitMovies();
+                            }
+
+                            // Widoczność przycisku zakończenia tylko dla właściciela grupy
+                            String myUid = FirebaseAuth.getInstance().getCurrentUser() != null
+                                    ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                                    : null;
+                            boolean isAdmin = myUid != null && myUid.equals(group.getOwnerId());
+                            currentUserIsAdmin = isAdmin;
+                            if (isAdmin) {
+                                fabFinishVoting.setVisibility(View.VISIBLE);
+                            } else {
+                                fabFinishVoting.setVisibility(View.GONE);
+                            }
+
+                            // KROK KRYTYCZNY: Reakcja na pojawienie się zwycięzcy w Firebase
+                            String currentWinnerId = group.getWinnerId();
+                            boolean isInitialSnapshot = !hasProcessedInitialGroupSnapshot;
+                            hasProcessedInitialGroupSnapshot = true;
+
+                            if (currentWinnerId != null && !currentWinnerId.isEmpty()) {
+                                if (isInitialSnapshot) {
+                                    lastSeenWinnerId = currentWinnerId;
+                                } else {
+                                    navigateToWinnerIfFound(currentWinnerId, group.getWinnerReason(), isAdmin);
+                                }
+                            } else {
+                                lastSeenWinnerId = null; // Resetujemy, aby umożliwić ponowną nawigację po nowym losowaniu
+                            }
                         }
-
-                        layoutManagement.setVisibility(View.VISIBLE);
-
-                        membersAdapter.setOwnerId(group.getOwnerId());
-                        fetchMemberProfiles(memberUids);
                     }
                 });
     }
 
+    private void showGroupPopupMenu(View view, boolean isAdmin) {
+        androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(requireContext(), view);
+        if (isAdmin) {
+            popup.getMenu().add("Usuń grupę");
+        } else {
+            popup.getMenu().add("Opuść grupę");
+        }
+
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Usuń grupę")) {
+                showDeleteGroupDialog();
+            } else if (item.getTitle().equals("Opuść grupę")) {
+                showLeaveGroupDialog();
+            }
+            return true;
+        });
+        popup.show();
+    }
+
+    private void showDeleteGroupDialog() {
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Usuń grupę",
+                "Czy na pewno chcesz bezpowrotnie usunąć tę grupę? Wszyscy członkowie zostaną usunięci, a propozycje filmowe przepadną.",
+                "Usuń grupę",
+                "Anuluj",
+                this::deleteGroup
+        );
+    }
+
+    private void showLeaveGroupDialog() {
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Opuść grupę",
+                "Czy na pewno chcesz opuścić tę grupę? Nie będziesz już mógł brać udziału w głosowaniu.",
+                "Opuść",
+                "Anuluj",
+                this::leaveGroup
+        );
+    }
+
+    private void navigateToWinnerIfFound(String winnerId, String winnerReason, boolean isAdmin) {
+        if (winnerId == null || winnerId.trim().isEmpty() || winnerId.equals(lastSeenWinnerId)) {
+            return;
+        }
+
+        lastSeenWinnerId = winnerId;
+
+        if (isAdded() && getView() != null) {
+            NavController navController = Navigation.findNavController(getView());
+
+            if (navController.getCurrentDestination() != null && navController.getCurrentDestination().getId() == R.id.winnerFragment) {
+                return;
+            }
+
+            Bundle b = new Bundle();
+            b.putString("GROUP_ID", groupId);
+            b.putString("WINNER_ID", winnerId);
+            b.putString("WINNER_REASON", winnerReason != null ? winnerReason : "Głosowanie grupowe");
+            b.putBoolean("IS_ADMIN", isAdmin);
+            b.putString("media_type", "movie"); // Dodaj to, aby WinnerFragment wiedział co ładować
+
+            // Znajdź pełny obiekt MediaItem, jeśli jest dostępny
+            MediaItem winnerMovie = null;
+            if (movieProposals != null) {
+                for (MediaItem m : movieProposals) {
+                    if (String.valueOf(m.getId()).equals(winnerId)) {
+                        winnerMovie = m;
+                        break;
+                    }
+                }
+            }
+
+            if (winnerMovie != null) {
+                b.putSerializable("WINNER_MOVIE", winnerMovie);
+            }
+
+            try {
+                // JEDNO wywołanie nawigacji z kompletnym Bundle
+                navController.navigate(R.id.winnerFragment, b);
+            } catch (Exception e) {
+                android.util.Log.e("GroupDetailsFragment", "Nawigacja nieudana: " + e.getMessage());
+                lastSeenWinnerId = null;
+            }
+        }
+    }
+
+
     private void fetchMemberProfiles(List<String> uids) {
+        final int requestToken = ++memberProfilesRequestToken;
         membersList.clear();
+        membersAdapter.notifyDataSetChanged();
+
+        if (uids == null || uids.isEmpty()) {
+            sortAndSubmitMovies();
+            return;
+        }
+
+        final int expectedResponses = uids.size();
+        final int[] receivedResponses = {0};
+
         for (String uid : uids) {
             db.collection("profiles").document(uid).get().addOnSuccessListener(doc -> {
-                if (doc.exists() && isAdded()) {
-                    // POPRAWKA: Używamy doc.getString("username") oraz doc.getString("avatar_url")
-                    membersList.add(new Friend(
-                            doc.getId(),
-                            doc.getString("username"),
-                            doc.getString("avatar_url"),
-                            Boolean.TRUE.equals(doc.getBoolean("isOnline"))
-                    ));
+                if (!isAdded() || requestToken != memberProfilesRequestToken) {
+                    return;
+                }
+
+                if (doc.exists()) {
+                    boolean alreadyExists = false;
+                    for (Friend friend : membersList) {
+                        if (friend.getId().equals(doc.getId())) {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+
+                    if (!alreadyExists) {
+                        membersList.add(new Friend(
+                                doc.getId(),
+                                doc.getString("username"),
+                                doc.getString("avatar_url"),
+                                Boolean.TRUE.equals(doc.getBoolean("isOnline"))
+                        ));
+                    }
+                }
+
+                receivedResponses[0]++;
+                if (receivedResponses[0] >= expectedResponses) {
                     membersAdapter.notifyDataSetChanged();
                     sortAndSubmitMovies();
                 }
@@ -275,7 +452,7 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         }
     }
 
-    private void setupClickListeners(View add, View bt, View movies, View delete, View leave) {
+    private void setupClickListeners(View add, View bt, View movies, View menu) {
         add.setOnClickListener(v -> showInviteFriendDialog());
         bt.setOnClickListener(v -> checkPermissionsAndStartBluetooth());
         movies.setOnClickListener(v -> {
@@ -284,8 +461,13 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             bundle.putBoolean("SELECTION_MODE", true);
             Navigation.findNavController(v).navigate(R.id.searchFragment, bundle);
         });
-        delete.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext()).setTitle("Usuń grupę").setMessage("Czy na pewno chcesz usunąć tę grupę?").setPositiveButton("Usuń", (dialog, which) -> deleteGroup()).setNegativeButton("Anuluj", null).show());
-        leave.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext()).setTitle("Opuść grupę").setMessage("Czy na pewno chcesz opuścić tę grupę?").setPositiveButton("Opuść", (dialog, which) -> leaveGroup()).setNegativeButton("Anuluj", null).show());
+
+        if (menu != null) {
+            menu.setOnClickListener(v -> showGroupPopupMenu(v, currentUserIsAdmin));
+        }
+
+        // Pływający przycisk dla admina - odpala BottomSheet
+        fabFinishVoting.setOnClickListener(v -> showVotingDecisionBottomSheet());
     }
 
     private void leaveGroup() {
@@ -297,9 +479,14 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
     private void removeMemberFromGroup(Friend friend) {
         if (groupId == null) return;
-        new MaterialAlertDialogBuilder(requireContext()).setTitle("Usuń z grupy").setMessage("Czy na pewno chcesz wyrzucić " + friend.getName() + "?").setPositiveButton("Wyrzuć", (dialog, which) -> {
-            db.collection("groups").document(groupId).update("members", FieldValue.arrayRemove(friend.getId()));
-        }).setNegativeButton("Anuluj", null).show();
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Usuń z grupy",
+                getString(R.string.friends_remove_message, friend.getName()),
+                "Usuń",
+                "Anuluj",
+                () -> db.collection("groups").document(groupId).update("members", FieldValue.arrayRemove(friend.getId()))
+        );
     }
 
     private void deleteGroup() {
@@ -311,17 +498,33 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
     private void showInviteFriendDialog() {
         String myUid = FirebaseAuth.getInstance().getUid();
-        // Pobieranie znajomych używa "name" i "avatarUrl" (kolekcja friends) - to było poprawne
-        db.collection("profiles").document(myUid).collection("friends").whereEqualTo("status", "accepted").get().addOnSuccessListener(snaps -> {
-            List<Friend> friends = new ArrayList<>();
-            List<String> names = new ArrayList<>();
-            for (QueryDocumentSnapshot doc : snaps) {
-                Friend f = new Friend(doc.getId(), doc.getString("name"), doc.getString("avatarUrl"), true);
-                friends.add(f);
-                names.add(f.getName());
-            }
-            new MaterialAlertDialogBuilder(requireContext()).setTitle("Zaproś znajomego").setItems(names.toArray(new String[0]), (dialog, which) -> sendGroupInvite(friends.get(which).getId())).show();
-        });
+        db.collection("profiles").document(myUid).collection("friends")
+                .whereEqualTo("status", "accepted")
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<Friend> friends = new ArrayList<>();
+                    List<String> names = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : snaps) {
+                        Friend f = new Friend(doc.getId(), doc.getString("name"), doc.getString("avatarUrl"), true);
+                        friends.add(f);
+                        names.add(f.getName());
+                    }
+
+                    if (friends.isEmpty()) {
+                        Toast.makeText(getContext(), "Nie masz jeszcze znajomych do zaproszenia", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    DialogHelper.showItemsDialog(
+                            requireContext(),
+                            "Zaproś do grupy",
+                            names.toArray(new String[0]),
+                            (dialog, which) -> {
+                                sendGroupInvite(friends.get(which).getId());
+                                Toast.makeText(getContext(), "Wysłano zaproszenie do " + names.get(which), Toast.LENGTH_SHORT).show();
+                            }
+                    );
+                });
     }
 
     private void sendGroupInvite(String friendUid) {
@@ -331,7 +534,13 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         db.collection("profiles").document(friendUid).collection("group_invites").document(groupId).set(invite);
     }
 
-    @Override public void onDestroyView() { super.onDestroyView(); if (groupListener != null) groupListener.remove(); if (moviesListener != null) moviesListener.remove(); if (nearbyHelper != null) nearbyHelper.stopSearching(); }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (groupListener != null) groupListener.remove();
+        if (moviesListener != null) moviesListener.remove();
+        if (nearbyHelper != null) nearbyHelper.stopSearching();
+    }
 
     private void checkPermissionsAndStartBluetooth() {
         List<String> permissions = new ArrayList<>();
@@ -376,7 +585,6 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
             db.collection("profiles").document(discoveredUid).get().addOnSuccessListener(doc -> {
                 if (doc.exists() && isAdded()) {
-                    // POPRAWKA: Pobieramy username i avatar_url z bazy
                     SearchResultUser user = new SearchResultUser(
                             doc.getId(),
                             doc.getString("username"),
@@ -408,17 +616,33 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             if (nearbyHelper != null) nearbyHelper.stopSearching();
             dialog.dismiss();
         });
-        dialog.setOnDismissListener(d -> { if (nearbyHelper != null) nearbyHelper.stopSearching(); });
+        dialog.setOnDismissListener(d -> {
+            if (nearbyHelper != null) nearbyHelper.stopSearching();
+        });
         dialog.show();
     }
 
-    // --- ADAPTER DO KÓŁECZEK ---
     private class GroupMemberCircleAdapter extends RecyclerView.Adapter<GroupMemberCircleAdapter.ViewHolder> {
-        private List<Friend> members; private String ownerId = "";
-        public GroupMemberCircleAdapter(List<Friend> members) { this.members = members; }
-        public void setOwnerId(String ownerId) { this.ownerId = ownerId; notifyDataSetChanged(); }
-        @NonNull @Override public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) { return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group_member_circle, parent, false)); }
-        @Override public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        private List<Friend> members;
+        private String ownerId = "";
+
+        public GroupMemberCircleAdapter(List<Friend> members) {
+            this.members = members;
+        }
+
+        public void setOwnerId(String ownerId) {
+            this.ownerId = ownerId;
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group_member_circle, parent, false));
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Friend friend = members.get(position);
             holder.tvName.setText(friend.getName());
             holder.ivStar.setVisibility((friend.getId() != null && friend.getId().equals(ownerId)) ? View.VISIBLE : View.GONE);
@@ -426,7 +650,7 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             if (friend.getAvatarUrl() != null && !friend.getAvatarUrl().isEmpty()) {
                 Glide.with(holder.itemView.getContext())
                         .load(friend.getAvatarUrl())
-                        .circleCrop() // Dodano circleCrop() dla pewności
+                        .circleCrop()
                         .placeholder(R.drawable.ic_person)
                         .error(R.drawable.ic_person)
                         .into(holder.ivAvatar);
@@ -436,17 +660,29 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
             holder.itemView.setOnClickListener(v -> {
                 String myUid = FirebaseAuth.getInstance().getUid();
-                if (myUid != null && myUid.equals(ownerId) && !friend.getId().equals(myUid)) removeMemberFromGroup(friend);
+                if (myUid != null && myUid.equals(ownerId) && !friend.getId().equals(myUid))
+                    removeMemberFromGroup(friend);
             });
         }
-        @Override public int getItemCount() { return members.size(); }
+
+        @Override
+        public int getItemCount() {
+            return members.size();
+        }
+
         class ViewHolder extends RecyclerView.ViewHolder {
-            ImageView ivStar, ivAvatar; TextView tvName;
-            ViewHolder(@NonNull View itemView) { super(itemView); ivStar = itemView.findViewById(R.id.ivOwnerStar); ivAvatar = itemView.findViewById(R.id.ivFriendAvatar); tvName = itemView.findViewById(R.id.tvFriendName); }
+            ImageView ivStar, ivAvatar;
+            TextView tvName;
+
+            ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                ivStar = itemView.findViewById(R.id.ivOwnerStar);
+                ivAvatar = itemView.findViewById(R.id.ivFriendAvatar);
+                tvName = itemView.findViewById(R.id.tvFriendName);
+            }
         }
     }
 
-    // --- ZAAWANSOWANY ADAPTER KART FILMÓW ---
     private class AdvancedGroupMoviesAdapter extends RecyclerView.Adapter<AdvancedGroupMoviesAdapter.ViewHolder> {
         private List<MediaItem> movies = new ArrayList<>();
         private Map<Integer, List<String>> votes = new HashMap<>();
@@ -461,11 +697,14 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             notifyDataSetChanged();
         }
 
-        @NonNull @Override public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group_movie, parent, false));
         }
 
-        @Override public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             MediaItem movie = movies.get(position);
             String myUid = FirebaseAuth.getInstance().getUid();
             List<String> voters = votes.getOrDefault(movie.getId(), new ArrayList<>());
@@ -480,12 +719,10 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
                 holder.tvYear.setText("");
             }
 
-            // --- POPRAWIONA LOGIKA: Tylko gatunek, bez fallbacku do typu filmu/serialu ---
             if (movie.getGenres() != null && !movie.getGenres().isEmpty()) {
                 holder.tvGenre.setText("• " + movie.getGenres().get(0).getName());
             } else {
-                String mainGenre = SearchResultAdapter.getFirstGenreName(movie.getGenreIds(), holder.itemView.getContext());
-                holder.tvGenre.setText(mainGenre.isEmpty() ? "" : "• " + mainGenre);
+                holder.tvGenre.setText("");
             }
 
             if (movie.getPosterPath() != null && !movie.getPosterPath().isEmpty()) {
@@ -498,12 +735,12 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             holder.progressBar.setMax(maxMembers);
             holder.progressBar.setProgress(voters.size(), true);
 
-            // --- IKONA CZERWONEGO SERCA ---
             holder.btnVote.setImageResource(iVoted ? R.drawable.ic_favorite : R.drawable.ic_favorite_outline);
             holder.btnVote.setColorFilter(iVoted ? 0xFFFF0000 : 0xFF757575);
             holder.btnVote.setOnClickListener(v -> toggleVote(movie, iVoted));
 
             holder.btnDelete.setOnClickListener(v -> GroupDetailsFragment.this.showRemoveMovieDialog(movie));
+
             holder.itemView.setOnClickListener(v -> {
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("MEDIA_ITEM", movie);
@@ -523,7 +760,8 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
                 String avatarUrl = null;
                 for (Friend f : groupMembers) {
                     if (f.getId().equals(uid)) {
-                        avatarUrl = f.getAvatarUrl(); break;
+                        avatarUrl = f.getAvatarUrl();
+                        break;
                     }
                 }
                 avatarViews[drawnAvatars].setVisibility(View.VISIBLE);
@@ -544,7 +782,10 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             }
         }
 
-        @Override public int getItemCount() { return movies.size(); }
+        @Override
+        public int getItemCount() {
+            return movies.size();
+        }
 
         class ViewHolder extends RecyclerView.ViewHolder {
             ImageView ivPoster, ivVoter1, ivVoter2, ivVoter3, btnVote, btnDelete;
@@ -568,5 +809,4 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             }
         }
     }
-
 }

@@ -134,8 +134,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:alpha="0.8"
-                    android:text="Potrząśnij telefonem, aby wylosować z puli zgłoszonych propozycji."
+                    android:alpha="0.9"
+                    android:text="Potrząśnij telefonem, aby wylosować film."
                     android:textColor="?attr/colorOnPrimary"
                     android:textSize="12sp" />
             </LinearLayout>

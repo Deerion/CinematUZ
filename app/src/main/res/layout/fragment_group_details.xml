@@ -61,29 +61,13 @@
                         tools:text="3 członków" />
                 </LinearLayout>
 
-                <FrameLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <ImageButton
-                        android:id="@+id/btnDeleteGroup"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_close"
-                        app:tint="@android:color/holo_red_dark"
-                        android:visibility="gone"
-                        tools:visibility="visible" />
-
-                    <ImageButton
-                        android:id="@+id/btnLeaveGroup"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_close"
-                        app:tint="?attr/colorOnSurfaceVariant"
-                        android:visibility="gone" />
-                </FrameLayout>
+                <ImageButton
+                    android:id="@+id/btnGroupMenu"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_more_vert"
+                    app:tint="?attr/colorOnSurface" />
             </LinearLayout>
 
             <LinearLayout
@@ -259,13 +243,11 @@
         android:id="@+id/fabFinishVoting"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:backgroundTint="@color/primary"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="24dp"
         android:text="Zakończ głosowanie"
-        android:textColor="?attr/colorOnPrimary"
-        app:icon="@drawable/ic_check_circle"
-        app:iconTint="?attr/colorOnPrimary"
-        app:backgroundTint="?attr/colorPrimary"
         android:visibility="gone"
-        tools:visibility="visible" />
+        app:icon="@drawable/ic_check_circle"
+        />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

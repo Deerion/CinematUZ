@@ -109,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         binding.navView.setVisibility(View.VISIBLE);
+        setupStatisticsListener();
     }
 
     // ---------------- Statystyki dla Widgetu ----------------

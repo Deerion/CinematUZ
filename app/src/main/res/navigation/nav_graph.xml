@@ -49,8 +49,18 @@
         android:label="@string/second_fragment_label"
         tools:layout="@layout/fragment_details">
         <argument
+            android:name="mediaId"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <argument
+            android:name="mediaType"
+            app:argType="string"
+            android:defaultValue="movie" />
+        <argument
             android:name="MEDIA_ITEM"
-            app:argType="com.example.cinematuz.data.models.MediaItem" />
+            app:argType="com.example.cinematuz.data.models.MediaItem"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
 
     <fragment
@@ -73,5 +83,17 @@
         android:name="com.example.cinematuz.ui.fragments.friends.grupy.GroupsListFragment"
         android:label="Grupy"
         tools:layout="@layout/fragment_groups" />
+
+    <fragment
+        android:id="@+id/shakeFragment"
+        android:name="com.example.cinematuz.ui.fragments.friends.grupy.details.ShakeFragment"
+        android:label="ShakeFragment"
+        tools:layout="@layout/fragment_shake" />
+
+    <fragment
+        android:id="@+id/winnerFragment"
+        android:name="com.example.cinematuz.ui.fragments.friends.grupy.details.WinnerFragment"
+        android:label="WinnerFragment"
+        tools:layout="@layout/fragment_winner" />
 
 </navigation>

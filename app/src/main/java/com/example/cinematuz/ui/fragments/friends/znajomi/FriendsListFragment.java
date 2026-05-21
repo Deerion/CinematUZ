@@ -189,10 +189,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
 
-        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.TransparentBottomSheetDialog);
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_my_qr, null);
-        dialog.setContentView(sheetView);
-
         ImageView ivQrCode = sheetView.findViewById(R.id.ivQrCode);
         TextView tvUsername = sheetView.findViewById(R.id.tvUsername);
 
@@ -213,16 +210,20 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         final Bitmap finalQrBitmap = qrBitmap;
 
-        sheetView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
-        sheetView.findViewById(R.id.btnDownloadQr).setOnClickListener(v -> {
-            if (finalQrBitmap != null) {
-                saveBitmapToGallery(finalQrBitmap);
-            } else {
-                Toast.makeText(getContext(), "Błąd: Nie wygenerowano kodu", Toast.LENGTH_SHORT).show();
-            }
-        });
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(requireContext())
+                .setView(sheetView)
+                .setPositiveButton("Zamknij", null)
+                .setNeutralButton("Pobierz", (dialog, which) -> {
+                    if (finalQrBitmap != null) {
+                        saveBitmapToGallery(finalQrBitmap);
+                    }
+                });
 
-        dialog.show();
+        dialogBuilder.show();
+
+        // Usuwamy stare listenery przycisków, bo MD Dialog ma własne
+        if (sheetView.findViewById(R.id.btnClose) != null) sheetView.findViewById(R.id.btnClose).setVisibility(View.GONE);
+        if (sheetView.findViewById(R.id.btnDownloadQr) != null) sheetView.findViewById(R.id.btnDownloadQr).setVisibility(View.GONE);
     }
 
     private void saveBitmapToGallery(Bitmap bitmap) {
