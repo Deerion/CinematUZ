@@ -71,6 +71,10 @@ public class WinnerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Ukrywamy dolną nawigację na tym ekranie
+        View navView = requireActivity().findViewById(R.id.nav_view);
+        if (navView != null) navView.setVisibility(View.GONE);
+
         tvWinnerTitle = view.findViewById(R.id.tvWinnerTitle);
         tvWinnerHeader = view.findViewById(R.id.tvWinnerHeader);
         tvWinnerDetails = view.findViewById(R.id.tvWinnerDetails);
@@ -84,7 +88,7 @@ public class WinnerFragment extends Fragment {
         if (btnBack != null) btnBack.setOnClickListener(v -> navigateBackToGroup());
         if (btnClose != null) btnClose.setOnClickListener(v -> navigateBackToGroup());
         if (btnReroll != null) {
-            btnReroll.setVisibility(isAdmin ? View.VISIBLE : View.GONE);
+            btnReroll.setVisibility(View.VISIBLE); // Wszystkie przyciski zawsze widoczne
             btnReroll.setOnClickListener(v -> performReroll());
         }
         if (btnSeeDetails != null) {
@@ -108,11 +112,21 @@ public class WinnerFragment extends Fragment {
         });
 
         if (winnerMovie != null) {
+            // Pobieramy pełne dane (gatunki, rok), jeśli ich brakuje
+            detailsViewModel.loadData(winnerMovie.getId(), "movie", "pl");
             bindWinnerUi();
         } else if (winnerId != null) {
             // Dopiero jeśli brak obiektu, dociągamy go
             fetchWinnerMovieIfNeeded();
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Przywracamy dolną nawigację przy wychodzeniu z fragmentu
+        View navView = requireActivity().findViewById(R.id.nav_view);
+        if (navView != null) navView.setVisibility(View.VISIBLE);
     }
 
     private void bindWinnerUi() {

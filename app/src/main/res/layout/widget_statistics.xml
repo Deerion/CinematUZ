@@ -12,7 +12,6 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:letterSpacing="0.1"
         android:text="OBEJRZANE"
         android:textAllCaps="true"
         android:textColor="#E91E63"
@@ -36,8 +35,7 @@
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@drawable/ic_movie_filter"
-                android:tint="#FFFFFF" />
+                android:src="@drawable/ic_movie_filter_widget" />
 
             <TextView
                 android:id="@+id/tvWidgetMovies"
@@ -58,7 +56,8 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
-        <View
+        <!-- Zmieniono z View na FrameLayout (wspierany przez RemoteViews) -->
+        <FrameLayout
             android:layout_width="1dp"
             android:layout_height="match_parent"
             android:layout_marginTop="8dp"
@@ -75,8 +74,7 @@
             <ImageView
                 android:layout_width="28dp"
                 android:layout_height="28dp"
-                android:src="@drawable/ic_play"
-                android:tint="#FFFFFF" />
+                android:src="@drawable/ic_play_widget" />
 
             <TextView
                 android:id="@+id/tvWidgetSeries"
