@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import android.os.Vibrator;
+import android.content.Context;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -103,6 +105,8 @@ public class WinnerFragment extends Fragment {
         }
 
         detailsViewModel = new androidx.lifecycle.ViewModelProvider(this).get(com.example.cinematuz.ui.fragments.home.details.DetailsViewModel.class);
+
+        triggerWinnerVibration();
 
         detailsViewModel.fullDetails.observe(getViewLifecycleOwner(), fullMovie -> {
             if (fullMovie != null) {
@@ -276,6 +280,13 @@ public class WinnerFragment extends Fragment {
                 }
                 break;
             }
+        }
+    }
+
+    private void triggerWinnerVibration() {
+        Vibrator vibrator = (Vibrator) requireContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null && vibrator.hasVibrator()) {
+            vibrator.vibrate(500);
         }
     }
 

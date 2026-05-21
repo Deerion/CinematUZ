@@ -478,14 +478,40 @@ public class GroupDetailsFragment extends Fragment {
     }
 
     private void removeMemberFromGroup(Friend friend) {
-        if (groupId == null) return;
+        String myUid = FirebaseAuth.getInstance().getUid();
+        if (groupId == null || myUid == null || friend.getId() == null) return;
+
         DialogHelper.showConfirmDialog(
                 requireContext(),
-                "Usuń z grupy",
+                "Usuń użytkownika",
                 getString(R.string.friends_remove_message, friend.getName()),
                 "Usuń",
                 "Anuluj",
-                () -> db.collection("groups").document(groupId).update("members", FieldValue.arrayRemove(friend.getId()))
+                () -> {
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+
+                    // 1. Usuń z grupy
+                    batch.update(db.collection("groups").document(groupId),
+                            "members", FieldValue.arrayRemove(friend.getId()));
+
+                    // 2. Usuń z moich znajomych
+                    batch.delete(db.collection("profiles").document(myUid)
+                            .collection("friends").document(friend.getId()));
+
+                    // 3. Usuń mnie ze znajomych u niego
+                    batch.delete(db.collection("profiles").document(friend.getId())
+                            .collection("friends").document(myUid));
+
+                    batch.commit().addOnSuccessListener(aVoid -> {
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "Użytkownik usunięty z grupy i znajomych", Toast.LENGTH_SHORT).show();
+                        }
+                    }).addOnFailureListener(e -> {
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
         );
     }
 
@@ -625,6 +651,7 @@ public class GroupDetailsFragment extends Fragment {
     private class GroupMemberCircleAdapter extends RecyclerView.Adapter<GroupMemberCircleAdapter.ViewHolder> {
         private List<Friend> members;
         private String ownerId = "";
+        private boolean isEditMode = false;
 
         public GroupMemberCircleAdapter(List<Friend> members) {
             this.members = members;
@@ -632,6 +659,11 @@ public class GroupDetailsFragment extends Fragment {
 
         public void setOwnerId(String ownerId) {
             this.ownerId = ownerId;
+            notifyDataSetChanged();
+        }
+
+        public void setEditMode(boolean editMode) {
+            this.isEditMode = editMode;
             notifyDataSetChanged();
         }
 
@@ -658,10 +690,38 @@ public class GroupDetailsFragment extends Fragment {
                 holder.ivAvatar.setImageResource(R.drawable.ic_person);
             }
 
+            // Obsługa trybu usuwania (wiggle + X)
+            String myUid = FirebaseAuth.getInstance().getUid();
+            boolean isMe = friend.getId() != null && friend.getId().equals(myUid);
+            boolean isAdmin = myUid != null && myUid.equals(ownerId);
+
+            if (isEditMode && isAdmin && !isMe) {
+                holder.ivRemove.setVisibility(View.VISIBLE);
+                android.view.animation.Animation shake = android.view.animation.AnimationUtils.loadAnimation(holder.itemView.getContext(), R.anim.shake_side_to_side);
+                holder.flAvatarContainer.startAnimation(shake);
+            } else {
+                holder.ivRemove.setVisibility(View.GONE);
+                holder.flAvatarContainer.clearAnimation();
+            }
+
+            holder.ivRemove.setOnClickListener(v -> {
+                removeMemberFromGroup(friend);
+            });
+
             holder.itemView.setOnClickListener(v -> {
-                String myUid = FirebaseAuth.getInstance().getUid();
-                if (myUid != null && myUid.equals(ownerId) && !friend.getId().equals(myUid))
+                if (isEditMode) {
+                    setEditMode(false);
+                } else if (isAdmin && !isMe) {
                     removeMemberFromGroup(friend);
+                }
+            });
+
+            holder.itemView.setOnLongClickListener(v -> {
+                if (isAdmin) {
+                    setEditMode(true);
+                    return true;
+                }
+                return false;
             });
         }
 
@@ -671,14 +731,17 @@ public class GroupDetailsFragment extends Fragment {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
-            ImageView ivStar, ivAvatar;
+            ImageView ivStar, ivAvatar, ivRemove;
             TextView tvName;
+            View flAvatarContainer;
 
             ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 ivStar = itemView.findViewById(R.id.ivOwnerStar);
                 ivAvatar = itemView.findViewById(R.id.ivFriendAvatar);
                 tvName = itemView.findViewById(R.id.tvFriendName);
+                ivRemove = itemView.findViewById(R.id.ivRemoveMember);
+                flAvatarContainer = itemView.findViewById(R.id.flAvatarContainer);
             }
         }
     }
@@ -740,6 +803,15 @@ public class GroupDetailsFragment extends Fragment {
             holder.btnVote.setOnClickListener(v -> toggleVote(movie, iVoted));
 
             holder.btnDelete.setOnClickListener(v -> GroupDetailsFragment.this.showRemoveMovieDialog(movie));
+
+            // Wyróżnienie oddanego głosu czerwoną ramką
+            com.google.android.material.card.MaterialCardView card = (com.google.android.material.card.MaterialCardView) holder.itemView;
+            if (iVoted) {
+                card.setStrokeColor(android.graphics.Color.RED);
+                card.setStrokeWidth(4);
+            } else {
+                card.setStrokeWidth(0);
+            }
 
             holder.itemView.setOnClickListener(v -> {
                 Bundle bundle = new Bundle();
