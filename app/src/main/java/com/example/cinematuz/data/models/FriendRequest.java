@@ -15,8 +15,15 @@ public class FriendRequest {
         this.type = type;
     }
 
+    // --- GETTERY ---
     public String getUid() { return uid; }
     public String getUsername() { return username; }
     public String getAvatarUrl() { return avatarUrl; }
     public String getType() { return type; }
+
+    // --- SETTERY (Brakowało ich!) ---
+    public void setUid(String uid) { this.uid = uid; }
+    public void setUsername(String username) { this.username = username; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public void setType(String type) { this.type = type; }
 }

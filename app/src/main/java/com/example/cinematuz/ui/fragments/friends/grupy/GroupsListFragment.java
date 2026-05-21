@@ -5,8 +5,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,8 +15,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Group;
+// DODANE IMPORTY:
+import com.example.cinematuz.data.models.FriendRequest;
+import com.example.cinematuz.ui.fragments.friends.RequestAdapter;
 import com.example.cinematuz.utils.DialogHelper;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -30,10 +30,12 @@ public class GroupsListFragment extends Fragment {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+
     private GroupsAdapter adapter;
-    private GroupsAdapter requestsAdapter;
+    private RequestAdapter requestsAdapter; // ZMIANA: używamy RequestAdaptera z powiadomień
+
     private List<Group> groupsList = new ArrayList<>();
-    private List<Group> groupRequestsList = new ArrayList<>();
+    private List<FriendRequest> groupRequestsList = new ArrayList<>(); // ZMIANA: przechowujemy FriendRequest
 
     @Nullable
     @Override
@@ -46,7 +48,7 @@ public class GroupsListFragment extends Fragment {
         RecyclerView rvGroups = view.findViewById(R.id.rvGroups);
         RecyclerView rvGroupRequests = view.findViewById(R.id.rvGroupRequests);
 
-        // Adapter dla moich grup
+        // --- ADAPTER DLA TWOICH GRUP (Wygląda normalnie jako kafle z członkami) ---
         adapter = new GroupsAdapter(groupsList, group -> {
             Bundle args = new Bundle();
             args.putString("GROUP_ID", group.getId());
@@ -54,10 +56,23 @@ public class GroupsListFragment extends Fragment {
         });
         rvGroups.setAdapter(adapter);
 
-        // Adapter dla zaproszeń do grup
-        requestsAdapter = new GroupsAdapter(groupRequestsList, group -> {
-            showAcceptInviteDialog(group);
+        // --- ADAPTER DLA ZAPROSZEŃ DO GRUP (Wygląda jak w powiadomieniach z przyciskami V i X) ---
+        requestsAdapter = new RequestAdapter(groupRequestsList, new RequestAdapter.OnRequestActionListener() {
+            @Override
+            public void onAccept(FriendRequest request) {
+                Group group = new Group();
+                group.setId(request.getUid()); // UID to nasze schowane ID grupy
+                joinGroup(group);
+            }
+
+            @Override
+            public void onDecline(FriendRequest request) {
+                Group group = new Group();
+                group.setId(request.getUid());
+                rejectInvite(group);
+            }
         });
+
         if (rvGroupRequests != null) {
             rvGroupRequests.setAdapter(requestsAdapter);
         }
@@ -84,25 +99,17 @@ public class GroupsListFragment extends Fragment {
                     if (value != null) {
                         groupRequestsList.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            Group g = new Group();
-                            g.setId(doc.getId());
-                            g.setName(doc.getString("groupName"));
-                            groupRequestsList.add(g);
+                            // Mapujemy na FriendRequest, żeby wpasować się w RequestAdapter!
+                            FriendRequest req = new FriendRequest();
+                            req.setUid(doc.getId()); // chowamy ID grupy do UID
+                            req.setUsername(doc.getString("groupName")); // nazwa grupy jako nazwa wyświetlana
+                            req.setType("group"); // ustawiamy typ "group", aby zniknęło logo (logika z poprzedniej poprawki)
+
+                            groupRequestsList.add(req);
                         }
                         if (requestsAdapter != null) requestsAdapter.notifyDataSetChanged();
                     }
                 });
-    }
-
-    private void showAcceptInviteDialog(Group group) {
-        DialogHelper.showConfirmDialog(
-                requireContext(),
-                "Zaproszenie do grupy",
-                "Czy chcesz dołączyć do grupy \"" + group.getName() + "\"?",
-                "Dołącz",
-                "Odrzuć",
-                () -> joinGroup(group)
-        );
     }
 
     private void joinGroup(Group group) {
