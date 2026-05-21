@@ -39,6 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +59,7 @@ public class GroupDetailsFragment extends Fragment {
     private AdvancedGroupMoviesAdapter moviesAdapter;
 
     public static String lastSeenWinnerId = null; // Zmienione na publiczne statyczne
+    public static String lastSeenWinnerReason = null; // <--- DODAJ TĘ LINIJKĘ
     private List<Friend> membersList = new ArrayList<>();
     private List<MediaItem> movieProposals = new ArrayList<>();
     private Map<Integer, List<String>> votesMap = new HashMap<>();
@@ -74,6 +76,8 @@ public class GroupDetailsFragment extends Fragment {
     private List<SearchResultUser> nearbyUsers = new ArrayList<>();
     private BluetoothDeviceAdapter btAdapter;
     private static final int PERMISSION_REQUEST_CODE = 101;
+
+    private boolean blockWinnerNavigation = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -103,15 +107,27 @@ public class GroupDetailsFragment extends Fragment {
             btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
         }
 
+        // Konfiguracja widoku członków grupy z nowym adapterem i listenerem
         rvMembers = view.findViewById(R.id.rvGroupMembers);
         rvMembers.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        membersAdapter = new GroupMemberCircleAdapter(membersList);
+        membersAdapter = new GroupMemberCircleAdapter(membersList, friend -> removeMemberFromGroup(friend));
         rvMembers.setAdapter(membersAdapter);
 
+        // Konfiguracja widoku filmów z nowym adapterem i listenerem
         rvMovies = view.findViewById(R.id.rvGroupMovies);
         rvMovies.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
 
-        moviesAdapter = new AdvancedGroupMoviesAdapter();
+        moviesAdapter = new AdvancedGroupMoviesAdapter(new AdvancedGroupMoviesAdapter.OnMovieInteractionListener() {
+            @Override
+            public void onToggleVote(MediaItem movie, boolean currentlyVoted) {
+                toggleVote(movie, currentlyVoted);
+            }
+
+            @Override
+            public void onDeleteMovie(MediaItem movie) {
+                showRemoveMovieDialog(movie);
+            }
+        });
         rvMovies.setAdapter(moviesAdapter);
 
         setupClickListeners(btnAddMember, btnBluetooth, btnAddMovies, btnGroupMenu);
@@ -120,7 +136,6 @@ public class GroupDetailsFragment extends Fragment {
 
         return view;
     }
-
     private void showVotingDecisionBottomSheet() {
         BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_voting_decision, null);
@@ -182,17 +197,23 @@ public class GroupDetailsFragment extends Fragment {
         db.collection("groups").document(groupId)
                 .update(updates)
                 .addOnSuccessListener(aVoid -> {
-                    // Zamiast tylko Toast, wywołaj nawigację bezpośrednio:
-                    Bundle b = new Bundle();
-                    b.putString("GROUP_ID", groupId);
-                    b.putString("WINNER_ID", String.valueOf(winner.getId()));
-                    b.putString("WINNER_REASON", reason);
-                    b.putBoolean("IS_ADMIN", true);
-                    b.putSerializable("WINNER_MOVIE", winner); // Przekazujemy od razu obiekt!
+                    // Bezpieczne sprawdzenie, czy Fragment wciąż jest podpięty i ma widok
+                    if (isAdded() && getView() != null) {
+                        Bundle b = new Bundle();
+                        b.putString("GROUP_ID", groupId);
+                        b.putString("WINNER_ID", String.valueOf(winner.getId()));
+                        b.putString("WINNER_REASON", reason);
+                        b.putBoolean("IS_ADMIN", true);
+                        b.putSerializable("WINNER_MOVIE", winner); // Przekazujemy od razu obiekt!
 
-                    Navigation.findNavController(requireView()).navigate(R.id.winnerFragment, b);
+                        Navigation.findNavController(getView()).navigate(R.id.winnerFragment, b);
+                    }
                 })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
 
@@ -275,7 +296,6 @@ public class GroupDetailsFragment extends Fragment {
                             tvGroupName.setText(group.getName());
                             membersAdapter.setOwnerId(group.getOwnerId());
 
-                            // Aktualizacja liczby członków dla obliczeń paska postępu w adapterze
                             if (group.getMembers() != null && !group.getMembers().isEmpty()) {
                                 totalGroupMembers = group.getMembers().size();
                                 fetchMemberProfiles(group.getMembers());
@@ -286,7 +306,6 @@ public class GroupDetailsFragment extends Fragment {
                                 sortAndSubmitMovies();
                             }
 
-                            // Widoczność przycisku zakończenia tylko dla właściciela grupy
                             String myUid = FirebaseAuth.getInstance().getCurrentUser() != null
                                     ? FirebaseAuth.getInstance().getCurrentUser().getUid()
                                     : null;
@@ -298,19 +317,23 @@ public class GroupDetailsFragment extends Fragment {
                                 fabFinishVoting.setVisibility(View.GONE);
                             }
 
-                            // KROK KRYTYCZNY: Reakcja na pojawienie się zwycięzcy w Firebase
+                            // --- POPRAWIONA SEKCJA WYKRYWANIA ZWYCIĘZCY ---
                             String currentWinnerId = group.getWinnerId();
+                            String currentWinnerReason = group.getWinnerReason(); // Pobieramy powód
                             boolean isInitialSnapshot = !hasProcessedInitialGroupSnapshot;
                             hasProcessedInitialGroupSnapshot = true;
 
                             if (currentWinnerId != null && !currentWinnerId.isEmpty()) {
                                 if (isInitialSnapshot) {
                                     lastSeenWinnerId = currentWinnerId;
+                                    lastSeenWinnerReason = currentWinnerReason; // Zapisujemy powód
                                 } else {
-                                    navigateToWinnerIfFound(currentWinnerId, group.getWinnerReason(), isAdmin);
+                                    // Wysyłamy do sprawdzenia zarówno ID jak i powód
+                                    navigateToWinnerIfFound(currentWinnerId, currentWinnerReason, isAdmin);
                                 }
                             } else {
-                                lastSeenWinnerId = null; // Resetujemy, aby umożliwić ponowną nawigację po nowym losowaniu
+                                lastSeenWinnerId = null;
+                                lastSeenWinnerReason = null; // Czyścimy
                             }
                         }
                     }
@@ -359,15 +382,25 @@ public class GroupDetailsFragment extends Fragment {
     }
 
     private void navigateToWinnerIfFound(String winnerId, String winnerReason, boolean isAdmin) {
-        if (winnerId == null || winnerId.trim().isEmpty() || winnerId.equals(lastSeenWinnerId)) {
+        if (winnerId == null || winnerId.trim().isEmpty()) {
+            return;
+        }
+
+        // ZMIANA: Sprawdzamy blokadę
+        if (blockWinnerNavigation) return;
+
+        boolean isSameId = winnerId.equals(lastSeenWinnerId);
+        boolean isSameReason = (winnerReason != null && winnerReason.equals(lastSeenWinnerReason));
+
+        if (isSameId && isSameReason) {
             return;
         }
 
         lastSeenWinnerId = winnerId;
+        lastSeenWinnerReason = winnerReason;
 
         if (isAdded() && getView() != null) {
             NavController navController = Navigation.findNavController(getView());
-
             if (navController.getCurrentDestination() != null && navController.getCurrentDestination().getId() == R.id.winnerFragment) {
                 return;
             }
@@ -377,9 +410,8 @@ public class GroupDetailsFragment extends Fragment {
             b.putString("WINNER_ID", winnerId);
             b.putString("WINNER_REASON", winnerReason != null ? winnerReason : "Głosowanie grupowe");
             b.putBoolean("IS_ADMIN", isAdmin);
-            b.putString("media_type", "movie"); // Dodaj to, aby WinnerFragment wiedział co ładować
+            b.putString("media_type", "movie");
 
-            // Znajdź pełny obiekt MediaItem, jeśli jest dostępny
             MediaItem winnerMovie = null;
             if (movieProposals != null) {
                 for (MediaItem m : movieProposals) {
@@ -389,17 +421,13 @@ public class GroupDetailsFragment extends Fragment {
                     }
                 }
             }
-
-            if (winnerMovie != null) {
-                b.putSerializable("WINNER_MOVIE", winnerMovie);
-            }
+            if (winnerMovie != null) b.putSerializable("WINNER_MOVIE", winnerMovie);
 
             try {
-                // JEDNO wywołanie nawigacji z kompletnym Bundle
                 navController.navigate(R.id.winnerFragment, b);
             } catch (Exception e) {
-                android.util.Log.e("GroupDetailsFragment", "Nawigacja nieudana: " + e.getMessage());
                 lastSeenWinnerId = null;
+                lastSeenWinnerReason = null;
             }
         }
     }
@@ -483,34 +511,41 @@ public class GroupDetailsFragment extends Fragment {
 
         DialogHelper.showConfirmDialog(
                 requireContext(),
-                "Usuń użytkownika",
-                getString(R.string.friends_remove_message, friend.getName()),
+                "Usuń z grupy",
+                "Czy na pewno chcesz usunąć użytkownika " + friend.getName() + " z tej grupy? Jego głosy na filmy również zostaną usunięte.",
                 "Usuń",
                 "Anuluj",
                 () -> {
-                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    // Najpierw pobieramy wszystkie filmy z grupy, aby móc usunąć z nich głosy użytkownika
+                    db.collection("groups").document(groupId).collection("movies").get()
+                            .addOnSuccessListener(queryDocumentSnapshots -> {
+                                com.google.firebase.firestore.WriteBatch batch = db.batch();
 
-                    // 1. Usuń z grupy
-                    batch.update(db.collection("groups").document(groupId),
-                            "members", FieldValue.arrayRemove(friend.getId()));
+                                // 1. Usuwamy użytkownika z tablicy members w głównym dokumencie grupy
+                                batch.update(db.collection("groups").document(groupId),
+                                        "members", FieldValue.arrayRemove(friend.getId()));
 
-                    // 2. Usuń z moich znajomych
-                    batch.delete(db.collection("profiles").document(myUid)
-                            .collection("friends").document(friend.getId()));
+                                // 2. Przechodzimy przez wszystkie filmy i usuwamy głos tego użytkownika z tablicy votedBy
+                                for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                                    batch.update(doc.getReference(), "votedBy", FieldValue.arrayRemove(friend.getId()));
+                                }
 
-                    // 3. Usuń mnie ze znajomych u niego
-                    batch.delete(db.collection("profiles").document(friend.getId())
-                            .collection("friends").document(myUid));
-
-                    batch.commit().addOnSuccessListener(aVoid -> {
-                        if (isAdded()) {
-                            Toast.makeText(getContext(), "Użytkownik usunięty z grupy i znajomych", Toast.LENGTH_SHORT).show();
-                        }
-                    }).addOnFailureListener(e -> {
-                        if (isAdded()) {
-                            Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                                // 3. Zatwierdzamy wszystkie zmiany naraz (Batch commit)
+                                batch.commit().addOnSuccessListener(aVoid -> {
+                                    if (isAdded()) {
+                                        Toast.makeText(getContext(), "Użytkownik i jego głosy zostały usunięte z grupy", Toast.LENGTH_SHORT).show();
+                                    }
+                                }).addOnFailureListener(e -> {
+                                    if (isAdded()) {
+                                        Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            })
+                            .addOnFailureListener(e -> {
+                                if (isAdded()) {
+                                    Toast.makeText(getContext(), "Błąd podczas pobierania filmów: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 }
         );
     }
@@ -648,237 +683,6 @@ public class GroupDetailsFragment extends Fragment {
         dialog.show();
     }
 
-    private class GroupMemberCircleAdapter extends RecyclerView.Adapter<GroupMemberCircleAdapter.ViewHolder> {
-        private List<Friend> members;
-        private String ownerId = "";
-        private boolean isEditMode = false;
 
-        public GroupMemberCircleAdapter(List<Friend> members) {
-            this.members = members;
-        }
 
-        public void setOwnerId(String ownerId) {
-            this.ownerId = ownerId;
-            notifyDataSetChanged();
-        }
-
-        public void setEditMode(boolean editMode) {
-            this.isEditMode = editMode;
-            notifyDataSetChanged();
-        }
-
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group_member_circle, parent, false));
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            Friend friend = members.get(position);
-            holder.tvName.setText(friend.getName());
-            holder.ivStar.setVisibility((friend.getId() != null && friend.getId().equals(ownerId)) ? View.VISIBLE : View.GONE);
-
-            if (friend.getAvatarUrl() != null && !friend.getAvatarUrl().isEmpty()) {
-                Glide.with(holder.itemView.getContext())
-                        .load(friend.getAvatarUrl())
-                        .circleCrop()
-                        .placeholder(R.drawable.ic_person)
-                        .error(R.drawable.ic_person)
-                        .into(holder.ivAvatar);
-            } else {
-                holder.ivAvatar.setImageResource(R.drawable.ic_person);
-            }
-
-            // Obsługa trybu usuwania (wiggle + X)
-            String myUid = FirebaseAuth.getInstance().getUid();
-            boolean isMe = friend.getId() != null && friend.getId().equals(myUid);
-            boolean isAdmin = myUid != null && myUid.equals(ownerId);
-
-            if (isEditMode && isAdmin && !isMe) {
-                holder.ivRemove.setVisibility(View.VISIBLE);
-                android.view.animation.Animation shake = android.view.animation.AnimationUtils.loadAnimation(holder.itemView.getContext(), R.anim.shake_side_to_side);
-                holder.flAvatarContainer.startAnimation(shake);
-            } else {
-                holder.ivRemove.setVisibility(View.GONE);
-                holder.flAvatarContainer.clearAnimation();
-            }
-
-            holder.ivRemove.setOnClickListener(v -> {
-                removeMemberFromGroup(friend);
-            });
-
-            holder.itemView.setOnClickListener(v -> {
-                if (isEditMode) {
-                    setEditMode(false);
-                } else if (isAdmin && !isMe) {
-                    removeMemberFromGroup(friend);
-                }
-            });
-
-            holder.itemView.setOnLongClickListener(v -> {
-                if (isAdmin) {
-                    setEditMode(true);
-                    return true;
-                }
-                return false;
-            });
-        }
-
-        @Override
-        public int getItemCount() {
-            return members.size();
-        }
-
-        class ViewHolder extends RecyclerView.ViewHolder {
-            ImageView ivStar, ivAvatar, ivRemove;
-            TextView tvName;
-            View flAvatarContainer;
-
-            ViewHolder(@NonNull View itemView) {
-                super(itemView);
-                ivStar = itemView.findViewById(R.id.ivOwnerStar);
-                ivAvatar = itemView.findViewById(R.id.ivFriendAvatar);
-                tvName = itemView.findViewById(R.id.tvFriendName);
-                ivRemove = itemView.findViewById(R.id.ivRemoveMember);
-                flAvatarContainer = itemView.findViewById(R.id.flAvatarContainer);
-            }
-        }
-    }
-
-    private class AdvancedGroupMoviesAdapter extends RecyclerView.Adapter<AdvancedGroupMoviesAdapter.ViewHolder> {
-        private List<MediaItem> movies = new ArrayList<>();
-        private Map<Integer, List<String>> votes = new HashMap<>();
-        private List<Friend> groupMembers = new ArrayList<>();
-        private int maxMembers = 1;
-
-        public void setGroupData(List<MediaItem> newMovies, Map<Integer, List<String>> newVotes, List<Friend> members, int maxMembers) {
-            this.movies = new ArrayList<>(newMovies);
-            this.votes = new HashMap<>(newVotes);
-            this.groupMembers = members;
-            this.maxMembers = maxMembers;
-            notifyDataSetChanged();
-        }
-
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_group_movie, parent, false));
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            MediaItem movie = movies.get(position);
-            String myUid = FirebaseAuth.getInstance().getUid();
-            List<String> voters = votes.getOrDefault(movie.getId(), new ArrayList<>());
-            boolean iVoted = voters.contains(myUid);
-
-            holder.tvTitle.setText(movie.getTitle() != null ? movie.getTitle() : "Brak tytułu");
-
-            String date = movie.getReleaseDate();
-            if (date != null && date.length() >= 4) {
-                holder.tvYear.setText(date.substring(0, 4));
-            } else {
-                holder.tvYear.setText("");
-            }
-
-            if (movie.getGenres() != null && !movie.getGenres().isEmpty()) {
-                holder.tvGenre.setText("• " + movie.getGenres().get(0).getName());
-            } else {
-                holder.tvGenre.setText("");
-            }
-
-            if (movie.getPosterPath() != null && !movie.getPosterPath().isEmpty()) {
-                Glide.with(holder.itemView.getContext())
-                        .load("https://image.tmdb.org/t/p/w200" + movie.getPosterPath())
-                        .into(holder.ivPoster);
-            }
-
-            holder.tvVoteCount.setText(voters.size() + " głosów");
-            holder.progressBar.setMax(maxMembers);
-            holder.progressBar.setProgress(voters.size(), true);
-
-            holder.btnVote.setImageResource(iVoted ? R.drawable.ic_favorite : R.drawable.ic_favorite_outline);
-            holder.btnVote.setColorFilter(iVoted ? 0xFFFF0000 : 0xFF757575);
-            holder.btnVote.setOnClickListener(v -> toggleVote(movie, iVoted));
-
-            holder.btnDelete.setOnClickListener(v -> GroupDetailsFragment.this.showRemoveMovieDialog(movie));
-
-            // Wyróżnienie oddanego głosu czerwoną ramką
-            com.google.android.material.card.MaterialCardView card = (com.google.android.material.card.MaterialCardView) holder.itemView;
-            if (iVoted) {
-                card.setStrokeColor(android.graphics.Color.RED);
-                card.setStrokeWidth(4);
-            } else {
-                card.setStrokeWidth(0);
-            }
-
-            holder.itemView.setOnClickListener(v -> {
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("MEDIA_ITEM", movie);
-                Navigation.findNavController(v).navigate(R.id.detailsFragment, bundle);
-            });
-
-            holder.ivVoter1.setVisibility(View.GONE);
-            holder.ivVoter2.setVisibility(View.GONE);
-            holder.ivVoter3.setVisibility(View.GONE);
-            holder.tvExtraVoters.setVisibility(View.GONE);
-
-            ImageView[] avatarViews = {holder.ivVoter1, holder.ivVoter2, holder.ivVoter3};
-            int drawnAvatars = 0;
-
-            for (String uid : voters) {
-                if (drawnAvatars >= 3) break;
-                String avatarUrl = null;
-                for (Friend f : groupMembers) {
-                    if (f.getId().equals(uid)) {
-                        avatarUrl = f.getAvatarUrl();
-                        break;
-                    }
-                }
-                avatarViews[drawnAvatars].setVisibility(View.VISIBLE);
-                if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                    Glide.with(holder.itemView.getContext())
-                            .load(avatarUrl)
-                            .circleCrop()
-                            .into(avatarViews[drawnAvatars]);
-                } else {
-                    avatarViews[drawnAvatars].setImageResource(R.drawable.ic_person);
-                }
-                drawnAvatars++;
-            }
-
-            if (voters.size() > 3) {
-                holder.tvExtraVoters.setVisibility(View.VISIBLE);
-                holder.tvExtraVoters.setText("+" + (voters.size() - 3));
-            }
-        }
-
-        @Override
-        public int getItemCount() {
-            return movies.size();
-        }
-
-        class ViewHolder extends RecyclerView.ViewHolder {
-            ImageView ivPoster, ivVoter1, ivVoter2, ivVoter3, btnVote, btnDelete;
-            TextView tvTitle, tvYear, tvGenre, tvVoteCount, tvExtraVoters;
-            LinearProgressIndicator progressBar;
-
-            ViewHolder(@NonNull View itemView) {
-                super(itemView);
-                ivPoster = itemView.findViewById(R.id.ivMoviePoster);
-                tvTitle = itemView.findViewById(R.id.tvMovieTitle);
-                tvYear = itemView.findViewById(R.id.tvMovieYear);
-                tvGenre = itemView.findViewById(R.id.tvMovieGenre);
-                tvVoteCount = itemView.findViewById(R.id.tvVoteCount);
-                tvExtraVoters = itemView.findViewById(R.id.tvExtraVoters);
-                ivVoter1 = itemView.findViewById(R.id.ivVoter1);
-                ivVoter2 = itemView.findViewById(R.id.ivVoter2);
-                ivVoter3 = itemView.findViewById(R.id.ivVoter3);
-                progressBar = itemView.findViewById(R.id.progressVotes);
-                btnVote = itemView.findViewById(R.id.btnVote);
-                btnDelete = itemView.findViewById(R.id.btnOptions);
-            }
-        }
-    }
 }

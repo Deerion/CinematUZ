@@ -21,11 +21,11 @@ import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.MediaItem;
 import com.example.cinematuz.ui.fragments.home.search.SearchResultAdapter;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class WinnerFragment extends Fragment {
 
@@ -35,6 +35,8 @@ public class WinnerFragment extends Fragment {
     private String winnerId;
     private ArrayList<MediaItem> eligibleMovies;
     private boolean isAdmin;
+    private boolean hasVibrated = false;
+    private ListenerRegistration groupListener;
 
     private TextView tvWinnerTitle;
     private TextView tvWinnerHeader;
@@ -49,8 +51,8 @@ public class WinnerFragment extends Fragment {
             winnerMovie = (MediaItem) getArguments().getSerializable("WINNER_MOVIE");
             winnerId = getArguments().getString("WINNER_ID");
             groupId = getArguments().getString("GROUP_ID");
-            winnerId = getArguments().getString("WINNER_ID");
             isAdmin = getArguments().getBoolean("IS_ADMIN", false);
+            winnerReason = getArguments().getString("WINNER_REASON", "Głosowanie grupowe");
             if (getArguments().containsKey("ELIGIBLE_MOVIES")) {
                 eligibleMovies = (ArrayList<MediaItem>) getArguments().getSerializable("ELIGIBLE_MOVIES");
             }
@@ -89,16 +91,26 @@ public class WinnerFragment extends Fragment {
 
         if (btnBack != null) btnBack.setOnClickListener(v -> navigateBackToGroup());
         if (btnClose != null) btnClose.setOnClickListener(v -> navigateBackToGroup());
+
+        // Logika wyświetlania przycisku "Losuj ponownie"
         if (btnReroll != null) {
-            btnReroll.setVisibility(View.VISIBLE); // Wszystkie przyciski zawsze widoczne
-            btnReroll.setOnClickListener(v -> performReroll());
+            if (groupId != null && !groupId.isEmpty() && !isAdmin) {
+                // Uczestnik grupy (nie admin) - ukrywamy przycisk
+                btnReroll.setVisibility(View.GONE);
+            } else {
+                // Admin grupy LUB tryb solo - pokazujemy przycisk i aktywujemy kliknięcie
+                btnReroll.setVisibility(View.VISIBLE);
+                btnReroll.setOnClickListener(v -> navigateToShake());
+            }
         }
+
         if (btnSeeDetails != null) {
             btnSeeDetails.setOnClickListener(v -> {
                 if (winnerMovie != null) {
                     Bundle b = new Bundle();
+                    b.putSerializable("MEDIA_ITEM", winnerMovie);
                     b.putInt("mediaId", winnerMovie.getId());
-                    b.putString("mediaType", "movie"); // Winner is always movie in this context
+                    b.putString("mediaType", "movie");
                     Navigation.findNavController(view).navigate(R.id.detailsFragment, b);
                 }
             });
@@ -106,7 +118,11 @@ public class WinnerFragment extends Fragment {
 
         detailsViewModel = new androidx.lifecycle.ViewModelProvider(this).get(com.example.cinematuz.ui.fragments.home.details.DetailsViewModel.class);
 
-        triggerWinnerVibration();
+        // Wibracja: Uruchamia się tylko raz przy pierwszym otwarciu ekranu (nie przy powrocie ze szczegółów)
+        if (!hasVibrated) {
+            triggerWinnerVibration();
+            hasVibrated = true;
+        }
 
         detailsViewModel.fullDetails.observe(getViewLifecycleOwner(), fullMovie -> {
             if (fullMovie != null) {
@@ -123,36 +139,69 @@ public class WinnerFragment extends Fragment {
             // Dopiero jeśli brak obiektu, dociągamy go
             fetchWinnerMovieIfNeeded();
         }
-    }
 
-    @Override
+        // Słuchamy zmian w dokumencie grupy na żywo, aby zaktualizować ekran u zwykłych uczestników
+        if (groupId != null && !groupId.isEmpty()) {
+            groupListener = FirebaseFirestore.getInstance()
+                    .collection("groups")
+                    .document(groupId)
+                    .addSnapshotListener((snapshot, error) -> {
+                        if (error != null || snapshot == null || !snapshot.exists()) return;
+
+                        String firebaseWinnerId = snapshot.getString("winnerId");
+                        String firebaseWinnerReason = snapshot.getString("winnerReason");
+
+                        if (firebaseWinnerId != null && !firebaseWinnerId.isEmpty() &&
+                                (winnerMovie == null || !String.valueOf(winnerMovie.getId()).equals(firebaseWinnerId))) {
+
+                            winnerId = firebaseWinnerId;
+                            winnerReason = firebaseWinnerReason != null ? firebaseWinnerReason : "Decyzja losu";
+
+                            // ROZWIĄZANIE PROBLEMU Z ZAMYKANIEM:
+                            // Aktualizujemy zmienną w głównym fragmencie, żeby po wyjściu stąd nie otwierał zwycięzcy drugi raz
+                            GroupDetailsFragment.lastSeenWinnerId = firebaseWinnerId;
+
+                            triggerWinnerVibration();
+
+                            fetchWinnerMovieIfNeeded();
+
+                            try {
+                                int tmdbId = Integer.parseInt(firebaseWinnerId);
+                                detailsViewModel.loadData(tmdbId, "movie", "pl");
+                            } catch (NumberFormatException ignored) {}
+                        }
+                    });
+        }
+    }    @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Przywracamy dolną nawigację przy wychodzeniu z fragmentu
+        if (groupListener != null) {
+            groupListener.remove();
+        }
         View navView = requireActivity().findViewById(R.id.nav_view);
         if (navView != null) navView.setVisibility(View.VISIBLE);
     }
 
     private void bindWinnerUi() {
-        // Sprawdzenie czy mamy jakiekolwiek dane
         if (winnerMovie == null) {
             if (tvWinnerTitle != null) tvWinnerTitle.setText("Brak danych o zwycięzcy");
             if (tvWinnerDetails != null) tvWinnerDetails.setText("Spróbuj ponownie później");
             return;
         }
 
-        // Tytuł
         if (tvWinnerTitle != null) {
             tvWinnerTitle.setText(winnerMovie.getTitle() != null ? winnerMovie.getTitle() : "Brak tytułu");
         }
 
-        // Detale (rok • gatunki) - tutaj sprawdzamy czy buildDetailsText zwraca pusty ciąg
+        if (tvWinnerHeader != null && winnerReason != null) {
+            tvWinnerHeader.setText(winnerReason);
+        }
+
         if (tvWinnerDetails != null) {
             String details = buildDetailsText(winnerMovie);
             tvWinnerDetails.setText(!details.isEmpty() ? details : "Brak informacji");
         }
 
-        // Plakat
         if (ivWinnerPoster != null && winnerMovie.getPosterPath() != null) {
             String imageUrl = "https://image.tmdb.org/t/p/w500" + winnerMovie.getPosterPath();
             Glide.with(this)
@@ -167,13 +216,11 @@ public class WinnerFragment extends Fragment {
     private String buildDetailsText(MediaItem movie) {
         List<String> parts = new ArrayList<>();
 
-        // Rok
         String date = movie.getReleaseDate();
         if (date != null && date.length() >= 4) {
             parts.add(date.substring(0, 4));
         }
 
-        // Gatunki
         if (movie.getGenres() != null && !movie.getGenres().isEmpty()) {
             for (int i = 0; i < Math.min(movie.getGenres().size(), 2); i++) {
                 parts.add(movie.getGenres().get(i).getName());
@@ -209,7 +256,7 @@ public class WinnerFragment extends Fragment {
                 });
     }
 
-    private void performReroll() {
+    private void navigateToShake() {
         if (eligibleMovies == null || eligibleMovies.isEmpty()) {
             if (groupId == null) return;
             FirebaseFirestore.getInstance()
@@ -226,40 +273,32 @@ public class WinnerFragment extends Fragment {
                             }
                             eligibleMovies.add(item);
                         }
-                        rerollWithCandidates();
+                        proceedToShake();
                     });
             return;
         }
-        rerollWithCandidates();
+        proceedToShake();
     }
 
-    private void rerollWithCandidates() {
-        MediaItem nextWinner = pickDifferentWinner();
-        if (nextWinner == null) return;
-
-        winnerMovie = nextWinner;
-        winnerReason = "Decyzja losu";
-        bindWinnerUi();
-
-        if (groupId != null) {
-            FirebaseFirestore.getInstance()
-                    .collection("groups")
-                    .document(groupId)
-                    .update("winnerId", String.valueOf(nextWinner.getId()), "winnerReason", winnerReason);
-        }
-    }
-
-    private MediaItem pickDifferentWinner() {
-        if (eligibleMovies == null || eligibleMovies.isEmpty()) return null;
-        List<MediaItem> candidates = new ArrayList<>();
-        int currentId = winnerMovie != null ? winnerMovie.getId() : -1;
-        for (MediaItem movie : eligibleMovies) {
-            if (movie != null && movie.getId() != currentId) {
-                candidates.add(movie);
+    private void proceedToShake() {
+        if (eligibleMovies == null || eligibleMovies.isEmpty()) {
+            if (getView() != null) {
+                android.widget.Toast.makeText(requireContext(), "Brak filmów do wylosowania!", android.widget.Toast.LENGTH_SHORT).show();
             }
+            return;
         }
-        if (candidates.isEmpty()) return null;
-        return candidates.get(new Random().nextInt(candidates.size()));
+
+        Bundle b = new Bundle();
+        b.putSerializable("ELIGIBLE_MOVIES", eligibleMovies); // Przekazujemy całą listę z powrotem do losowania
+        if (groupId != null) {
+            b.putString("GROUP_ID", groupId);
+        }
+
+        if (getView() != null) {
+            NavController navController = Navigation.findNavController(requireView());
+            navController.popBackStack(R.id.winnerFragment, true);
+            navController.navigate(R.id.shakeFragment, b);
+        }
     }
 
     private void mergeWinnerDetailsFromEligibleMovies(MediaItem loaded) {
