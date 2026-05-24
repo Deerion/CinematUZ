@@ -71,6 +71,24 @@
         tools:text="Crimson Horizon" />
 
     <TextView
+        android:id="@+id/text_genre"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:alpha="0.7"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAllCaps="true"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.05"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_title"
+        tools:text="AKCJA" />
+
+    <TextView
         android:id="@+id/text_subtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -83,7 +101,7 @@
         android:letterSpacing="0.05"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_title"
-        tools:text="AKCJA • 2023" />
+        app:layout_constraintTop_toBottomOf="@+id/text_genre"
+        tools:text="2023" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -32,8 +32,26 @@ public class LibraryViewModel extends AndroidViewModel {
     }
 
     // Usuwanie filmu z biblioteki
-    public void removeFromLibrary(int movieId) {
-        repository.deleteMovieById(movieId);
+    public void removeFromLibrary(MediaItem item) {
+        repository.deleteMovieById(item.getId());
+        updateFirebaseStats(item, false);
+    }
+
+    private void updateFirebaseStats(MediaItem item, boolean isMarkingAsWatched) {
+        String uid = com.google.firebase.auth.FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        com.google.firebase.firestore.DocumentReference profileRef = com.google.firebase.firestore.FirebaseFirestore.getInstance().collection("profiles").document(uid);
+        String fieldToUpdate = "tv".equalsIgnoreCase(item.getMediaType()) ? "stats.tvShowsWatched" : "stats.moviesWatched";
+
+        if (isMarkingAsWatched) {
+            profileRef.update(fieldToUpdate, com.google.firebase.firestore.FieldValue.increment(1));
+        } else {
+            // Przy usuwaniu z biblioteki, musimy wiedzieć czy był obejrzany, 
+            // ale w tym ViewModelu zakładamy, że jeśli usuwamy coś co jest w watchedList, to zmniejszamy.
+            // LibraryFragment wywołuje to tylko przy usuwaniu.
+            profileRef.update(fieldToUpdate, com.google.firebase.firestore.FieldValue.increment(-1));
+        }
     }
 
     // Konwersja formatu bazy danych (MovieEntity) na format API (MediaItem)

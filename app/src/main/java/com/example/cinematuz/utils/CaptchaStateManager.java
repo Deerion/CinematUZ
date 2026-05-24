@@ -16,6 +16,7 @@ public class CaptchaStateManager {
 
     private String captchaToken;
 
+
     public CaptchaStateManager(MaterialCardView captchaContainer, CheckBox captchaCheckBox, Button submitButton) {
         this.captchaContainer = captchaContainer;
         this.captchaCheckBox = captchaCheckBox;

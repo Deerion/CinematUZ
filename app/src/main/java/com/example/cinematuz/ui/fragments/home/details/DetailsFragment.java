@@ -54,13 +54,17 @@ public class DetailsFragment extends Fragment {
         setupObservers();
         setupListeners();
 
+        String lang = getResources().getConfiguration().locale.getLanguage().equals("pl") ? "pl-PL" : "en-US";
+
         if (mediaItem != null) {
             bindBasicInfo(mediaItem);
-            String lang = getResources().getConfiguration().locale.getLanguage().equals("pl") ? "pl-PL" : "en-US";
             viewModel.loadData(mediaItem.getId(), mediaItem.getMediaType(), lang);
-
-            // Sprawdzenie statusu zapisania filmu zaraz po załadowaniu ekranu
             viewModel.checkLocalMovieState(mediaItem.getId());
+        } else if (getArguments() != null && getArguments().containsKey("mediaId")) {
+            int id = getArguments().getInt("mediaId");
+            String type = getArguments().getString("mediaType", "movie");
+            viewModel.loadData(id, type, lang);
+            viewModel.checkLocalMovieState(id);
         }
     }
 

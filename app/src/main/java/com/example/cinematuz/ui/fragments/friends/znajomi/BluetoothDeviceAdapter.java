@@ -18,7 +18,8 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
     private final OnInviteClickListener listener;
 
     public interface OnInviteClickListener {
-        void onInvite(SearchResultUser user);
+        // Zmiana typu zwracanego z void na boolean
+        boolean onInvite(SearchResultUser user);
     }
 
     public BluetoothDeviceAdapter(List<SearchResultUser> users, OnInviteClickListener listener) {
@@ -37,16 +38,20 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
         SearchResultUser user = users.get(position);
         holder.tvName.setText(user.getUsername());
 
-        // Ładowanie awatara z Firebase
         Glide.with(holder.itemView.getContext())
                 .load(user.getAvatarUrl())
                 .placeholder(R.drawable.ic_person)
                 .into(holder.ivAvatar);
 
         holder.btnInvite.setOnClickListener(v -> {
-            listener.onInvite(user);
-            holder.btnInvite.setText("WYSŁANO");
-            holder.btnInvite.setEnabled(false);
+            // Sprawdzamy czy zaproszenie zostało faktycznie wysłane
+            boolean inviteSent = listener.onInvite(user);
+
+            // Tylko jeśli wysłano, zmieniamy stan przycisku
+            if (inviteSent) {
+                holder.btnInvite.setText("WYSŁANO");
+                holder.btnInvite.setEnabled(false);
+            }
         });
     }
 
@@ -61,8 +66,7 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
         ViewHolder(View v) {
             super(v);
             tvName = v.findViewById(R.id.tvDeviceName);
-            // Pamiętaj, aby w swoim pliku item_bluetooth_device.xml nadać id dla ImageView awatara! (np. ivDeviceAvatar)
-            ivAvatar = v.findViewById(R.id.ivDeviceAvatarContainer).findViewById(R.id.ivDeviceAvatar); // Dopasuj ID z XML
+            ivAvatar = v.findViewById(R.id.ivDeviceAvatarContainer).findViewById(R.id.ivDeviceAvatar);
             btnInvite = v.findViewById(R.id.btnInviteDevice);
         }
     }

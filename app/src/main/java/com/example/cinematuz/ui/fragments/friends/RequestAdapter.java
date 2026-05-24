@@ -41,14 +41,32 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
     public void onBindViewHolder(@NonNull RequestViewHolder holder, int position) {
         FriendRequest req = items.get(position);
 
-        if ("group".equals(req.getType())) {
-            holder.tvName.setText("Zaproszenie do grupy: " + req.getUsername());
-            Glide.with(holder.itemView.getContext())
-                    .load(R.drawable.ic_group_add)
-                    .centerCrop()
-                    .into(holder.ivAvatar);
+        if ("group_removal".equals(req.getType())) {
+            // ZWYKŁA INFORMACJA O WYRZUCENIU: Ukrywamy awatar, przycisk akceptacji ORAZ podtytuł
+            holder.ivAvatar.setVisibility(View.GONE);
+            holder.tvName.setText(req.getUsername()); // Tu jest np. "Usunięto z grupy: Matrix"
+            holder.tvRequestInfo.setVisibility(View.GONE); // UKRYWAMY TEKST POMOCNICZY
+            holder.btnAccept.setVisibility(View.GONE);
+            holder.btnDecline.setVisibility(View.VISIBLE);
+
+        } else if ("group".equals(req.getType())) {
+            // ZAPROSZENIE DO GRUPY: Ukrywamy awatar, pokazujemy przyciski i zmieniamy tekst
+            holder.ivAvatar.setVisibility(View.GONE);
+            holder.tvName.setText(req.getUsername()); // Tu jest nazwa grupy
+            holder.tvRequestInfo.setVisibility(View.VISIBLE);
+            holder.tvRequestInfo.setText("Zaprasza Cię do grupy"); // ODPOWIEDNI TEKST
+            holder.btnAccept.setVisibility(View.VISIBLE);
+            holder.btnDecline.setVisibility(View.VISIBLE);
+
         } else {
+            // ZAPROSZENIE DO ZNAJOMYCH: Pokazujemy wszystko i ustawiamy standardowy tekst
+            holder.ivAvatar.setVisibility(View.VISIBLE);
             holder.tvName.setText(req.getUsername());
+            holder.tvRequestInfo.setVisibility(View.VISIBLE);
+            holder.tvRequestInfo.setText("Chce dodać Cię do znajomych"); // STANDARDOWY TEKST
+            holder.btnAccept.setVisibility(View.VISIBLE);
+            holder.btnDecline.setVisibility(View.VISIBLE);
+
             if (req.getAvatarUrl() != null && !req.getAvatarUrl().isEmpty()) {
                 Glide.with(holder.itemView.getContext())
                         .load(req.getAvatarUrl())
@@ -73,12 +91,14 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
 
     static class RequestViewHolder extends RecyclerView.ViewHolder {
         TextView tvName;
+        TextView tvRequestInfo; // DODANO ZMIENNĄ DLA TEKSTU POMOCNICZEGO
         ImageView ivAvatar;
         View btnAccept, btnDecline;
 
         RequestViewHolder(View v) {
             super(v);
             tvName = v.findViewById(R.id.tvRequestName);
+            tvRequestInfo = v.findViewById(R.id.tvRequestInfo); // PODPIĘCIE WIDOKU
             ivAvatar = v.findViewById(R.id.ivRequestAvatar);
             btnAccept = v.findViewById(R.id.btnAccept);
             btnDecline = v.findViewById(R.id.btnDecline);

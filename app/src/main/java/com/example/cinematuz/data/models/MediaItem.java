@@ -56,15 +56,19 @@ public class MediaItem implements Serializable {
     public String getReleaseDate() { return releaseDate; }
     public double getVoteAverage() { return voteAverage; }
     public String getMediaType() { return mediaType; }
-    public void setMediaType(String mediaType) { this.mediaType = mediaType; }
     public Integer getRuntime() { return runtime; }
     public List<Integer> getGenreIds() { return genreIds; }
     public List<Genre> getGenres() { return genres; }
-
 
     public void setId(int id) { this.id = id; }
     public void setTitle(String title) { this.title = title; }
     public void setOverview(String overview) { this.overview = overview; }
     public void setPosterPath(String posterPath) { this.posterPath = posterPath; }
     public void setVoteAverage(double voteAverage) { this.voteAverage = voteAverage; }
+    public void setMediaType(String mediaType) { this.mediaType = mediaType; }
+
+    // DODANE SETTERY DO OBSŁUGI BŁĘDÓW KOMPILACJI
+    public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
+    public void setGenres(List<Genre> genres) { this.genres = genres; }
+    public void setGenreIds(List<Integer> genreIds) { this.genreIds = genreIds; }
 }

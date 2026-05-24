@@ -12,12 +12,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.Navigation; // Dodano import
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Group;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -43,17 +42,16 @@ public class GroupFragment extends Fragment {
 
         RecyclerView rvGroups = view.findViewById(R.id.rvGroups);
 
-        // POPRAWKA: Przekazujemy groupsList ORAZ listener kliknięcia
         adapter = new GroupsAdapter(groupsList, group -> {
             Bundle args = new Bundle();
             args.putString("GROUP_ID", group.getId());
-            // Nawigacja do fragmentu szczegółów
             Navigation.findNavController(view).navigate(R.id.groupDetailsFragment, args);
         });
 
         rvGroups.setAdapter(adapter);
 
-        FloatingActionButton btnCreateGroup = view.findViewById(R.id.btnCreateGroup);
+        // POPRAWKA: Zmiana FloatingActionButton na View
+        View btnCreateGroup = view.findViewById(R.id.btnCreateGroup);
         if (btnCreateGroup != null) {
             btnCreateGroup.setOnClickListener(v -> showCreateGroupDialog());
         }

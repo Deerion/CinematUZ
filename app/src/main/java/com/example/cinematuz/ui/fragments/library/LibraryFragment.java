@@ -130,7 +130,7 @@ public class LibraryFragment extends Fragment {
 
             popup.setOnMenuItemClickListener(menuItem -> {
                 if (menuItem.getTitle().equals("Usuń z biblioteki")) {
-                    viewModel.removeFromLibrary(item.getId());
+                    viewModel.removeFromLibrary(item);
                     return true;
                 }
                 return false;

@@ -189,10 +189,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
 
-        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.TransparentBottomSheetDialog);
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_my_qr, null);
-        dialog.setContentView(sheetView);
-
         ImageView ivQrCode = sheetView.findViewById(R.id.ivQrCode);
         TextView tvUsername = sheetView.findViewById(R.id.tvUsername);
 
@@ -213,16 +210,20 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         final Bitmap finalQrBitmap = qrBitmap;
 
-        sheetView.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
-        sheetView.findViewById(R.id.btnDownloadQr).setOnClickListener(v -> {
-            if (finalQrBitmap != null) {
-                saveBitmapToGallery(finalQrBitmap);
-            } else {
-                Toast.makeText(getContext(), "Błąd: Nie wygenerowano kodu", Toast.LENGTH_SHORT).show();
-            }
-        });
+        MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(requireContext())
+                .setView(sheetView)
+                .setPositiveButton("Zamknij", null)
+                .setNeutralButton("Pobierz", (dialog, which) -> {
+                    if (finalQrBitmap != null) {
+                        saveBitmapToGallery(finalQrBitmap);
+                    }
+                });
 
-        dialog.show();
+        dialogBuilder.show();
+
+        // Usuwamy stare listenery przycisków, bo MD Dialog ma własne
+        if (sheetView.findViewById(R.id.btnClose) != null) sheetView.findViewById(R.id.btnClose).setVisibility(View.GONE);
+        if (sheetView.findViewById(R.id.btnDownloadQr) != null) sheetView.findViewById(R.id.btnDownloadQr).setVisibility(View.GONE);
     }
 
     private void saveBitmapToGallery(Bitmap bitmap) {
@@ -270,6 +271,24 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
 
+        // --- NOWY BLOK 1: Sprawdzenie, czy jest już naszym znajomym lub czy my już do niego wysłaliśmy ---
+        for (Friend friend : friendsList) {
+            if (friend.getId().equals(targetUser.getUid())) {
+                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście znajomych", Toast.LENGTH_SHORT).show();
+                return; // Przerywamy działanie, nie wysyłamy do Firebase
+            }
+        }
+
+        // --- NOWY BLOK 2: Sprawdzenie, czy ten użytkownik już nas nie zaprosił ---
+        for (FriendRequest req : pendingRequests) {
+            if (req.getUid().equals(targetUser.getUid())) {
+                // Skoro on już nas zaprosił, a my chcemy go dodać - automatycznie akceptujemy!
+                acceptRequest(req);
+                return; // Przerywamy wysyłanie nowego zaproszenia
+            }
+        }
+
+        // --- Właściwe wysłanie zaproszenia, jeśli przeszedł powyższe filtry ---
         db.collection("profiles").document(myUid).get().addOnSuccessListener(documentSnapshot -> {
             String myUsername = documentSnapshot.getString("username");
             String myAvatarUrl = documentSnapshot.getString("avatar_url");
@@ -295,7 +314,6 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             });
         });
     }
-
     private void checkPermissionsAndStartBluetooth() {
         List<String> permissions = new ArrayList<>();
 
@@ -370,8 +388,27 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         RecyclerView rv = sheetView.findViewById(R.id.rvBluetoothDevices);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Zaktualizowany Adapter obsługuje kliknięcie przycisku i przyjmuje NearbyUsers
-        btAdapter = new BluetoothDeviceAdapter(nearbyUsers, this::sendFriendRequest);
+        // Zaktualizowany Adapter obsługuje kliknięcie przycisku i zwraca wartość boolean
+        btAdapter = new BluetoothDeviceAdapter(nearbyUsers, user -> {
+
+            // --- SPRAWDZENIE CZY UŻYTKOWNIK JEST JUŻ ZNAJOMYM LUB MA WYSŁANE ZAPROSZENIE ---
+            boolean isAlreadyFriend = false;
+            for (Friend friend : friendsList) {
+                if (friend.getId().equals(user.getUid())) {
+                    isAlreadyFriend = true;
+                    break;
+                }
+            }
+
+            if (isAlreadyFriend) {
+                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście znajomych", Toast.LENGTH_SHORT).show();
+                return false; // Zwracamy false - przycisk NIE zmieni się na "Wysłano"
+            } else {
+                sendFriendRequest(user);
+                return true; // Zwracamy true - zaproszenie poszło, przycisk zmieni się na "Wysłano"
+            }
+        });
+
         rv.setAdapter(btAdapter);
 
         sheetView.findViewById(R.id.btnCancelDiscovery).setOnClickListener(v -> {
@@ -535,15 +572,23 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         db.collection("profiles").document(myUid).get().addOnSuccessListener(documentSnapshot -> {
             WriteBatch batch = db.batch();
+
+            // Ustawienie statusu na zaakceptowany u Ciebie
             Friend friendForMe = new Friend(request.getUid(), request.getUsername(), request.getAvatarUrl(), true);
             friendForMe.setStatus("accepted");
             batch.set(db.collection("profiles").document(myUid).collection("friends").document(request.getUid()), friendForMe);
 
+            // Ustawienie statusu na zaakceptowany u nadawcy
             Friend friendForSender = new Friend(myUid, documentSnapshot.getString("username"), documentSnapshot.getString("avatar_url"), true);
             friendForSender.setStatus("accepted");
             batch.set(db.collection("profiles").document(request.getUid()).collection("friends").document(myUid), friendForSender);
 
+            // Usuwa zaproszenie od nadawcy z Twojej bazy
             batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()));
+
+            // --- NOWA LINIA: Usuwa zaproszenie od Ciebie z bazy nadawcy (jeśli istnieje) ---
+            batch.delete(db.collection("profiles").document(request.getUid()).collection("friend_requests").document(myUid));
+
             batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Zaakceptowano!", Toast.LENGTH_SHORT).show());
         });
     }

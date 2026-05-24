@@ -140,7 +140,7 @@ public class DetailsViewModel extends AndroidViewModel {
         DocumentReference profileRef = FirebaseFirestore.getInstance().collection("profiles").document(uid);
 
         // Rozróżnienie Film vs Serial (TV)
-        String fieldToUpdate = "tv".equalsIgnoreCase(item.getMediaType()) ? "stats.tv_shows_watched" : "stats.movies_watched";
+        String fieldToUpdate = "tv".equalsIgnoreCase(item.getMediaType()) ? "stats.tvShowsWatched" : "stats.moviesWatched";
 
         if (isMarkingAsWatched && !wasAlreadyWatched) {
             // Zaznaczono jako obejrzane -> Zwiększamy licznik

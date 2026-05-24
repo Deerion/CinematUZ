@@ -1,17 +1,14 @@
 package com.example.cinematuz.ui.fragments.friends.grupy.details;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,26 +16,29 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
 import com.example.cinematuz.data.models.MediaItem;
+import com.example.cinematuz.data.models.Group;
 import com.example.cinematuz.data.models.SearchResultUser;
 import com.example.cinematuz.ui.fragments.friends.znajomi.BluetoothDeviceAdapter;
-import com.example.cinematuz.ui.fragments.friends.znajomi.FriendsAdapter;
+import com.example.cinematuz.utils.DialogHelper;
 import com.example.cinematuz.utils.NearbyHelper;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class GroupDetailsFragment extends Fragment implements SensorEventListener {
+public class GroupDetailsFragment extends Fragment {
 
     private String groupId;
     private FirebaseFirestore db;
@@ -55,40 +55,35 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
     private TextView tvGroupName, tvMemberCount;
     private RecyclerView rvMembers, rvMovies;
-    private FriendsAdapter membersAdapter;
-    private GroupMoviesAdapter moviesAdapter;
+    private GroupMemberCircleAdapter membersAdapter;
+    private AdvancedGroupMoviesAdapter moviesAdapter;
 
+    public static String lastSeenWinnerId = null; // Zmienione na publiczne statyczne
+    public static String lastSeenWinnerReason = null; // <--- DODAJ TĘ LINIJKĘ
     private List<Friend> membersList = new ArrayList<>();
     private List<MediaItem> movieProposals = new ArrayList<>();
     private Map<Integer, List<String>> votesMap = new HashMap<>();
+    private int totalGroupMembers = 1;
+    private int memberProfilesRequestToken = 0;
+    private boolean hasProcessedInitialGroupSnapshot = false;
+    private boolean currentUserIsAdmin = false;
 
-    private MaterialButton btnDeleteGroup;
-    private MaterialButton btnLeaveGroup;
+    private View btnGroupMenu;
     private View layoutManagement;
+    private ExtendedFloatingActionButton fabFinishVoting;
 
-    // Zmienne dla akcelerometru
-    private SensorManager sensorManager;
-    private Sensor accelerometer;
-    private static final float SHAKE_THRESHOLD_GRAVITY = 2.7F; // Siła potrząśnięcia
-    private static final int SHAKE_SLOP_TIME_MS = 500;
-    private long mShakeTimestamp;
     private NearbyHelper nearbyHelper;
     private List<SearchResultUser> nearbyUsers = new ArrayList<>();
     private BluetoothDeviceAdapter btAdapter;
     private static final int PERMISSION_REQUEST_CODE = 101;
+
+    private boolean blockWinnerNavigation = false;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            groupId = getArguments().getString("GROUP_ID");
-        }
+        if (getArguments() != null) groupId = getArguments().getString("GROUP_ID");
         db = FirebaseFirestore.getInstance();
-
-        // Inicjalizacja sensora
-        sensorManager = (SensorManager) requireContext().getSystemService(Context.SENSOR_SERVICE);
-        if (sensorManager != null) {
-            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        }
     }
 
     @Nullable
@@ -98,185 +93,172 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
         tvGroupName = view.findViewById(R.id.tvDetailsGroupName);
         tvMemberCount = view.findViewById(R.id.tvDetailsMemberCount);
-        btnDeleteGroup = view.findViewById(R.id.btnDeleteGroup);
-        btnLeaveGroup = view.findViewById(R.id.btnLeaveGroup);
+        btnGroupMenu = view.findViewById(R.id.btnGroupMenu);
         layoutManagement = view.findViewById(R.id.layoutManagement);
+        fabFinishVoting = view.findViewById(R.id.fabFinishVoting);
+        fabFinishVoting.setOnClickListener(v -> showVotingDecisionBottomSheet());
 
-        MaterialButton btnAddMember = view.findViewById(R.id.btnDetailsAddMember);
-        MaterialButton btnBluetooth = view.findViewById(R.id.btnDetailsBluetooth);
-        MaterialButton btnAddMovies = view.findViewById(R.id.btnDetailsAddMovies);
+        View btnAddMember = view.findViewById(R.id.btnDetailsAddMember);
+        View btnBluetooth = view.findViewById(R.id.btnDetailsBluetooth);
+        View btnAddMovies = view.findViewById(R.id.btnDetailsAddMovies);
 
+        View btnBack = view.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> Navigation.findNavController(v).navigateUp());
+        }
+
+        // Konfiguracja widoku członków grupy z nowym adapterem i listenerem
         rvMembers = view.findViewById(R.id.rvGroupMembers);
-        rvMembers.setLayoutManager(new LinearLayoutManager(getContext()));
-        membersAdapter = new FriendsAdapter(membersList, (friend, position) -> removeMemberFromGroup(friend));
+        rvMembers.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        membersAdapter = new GroupMemberCircleAdapter(membersList, friend -> removeMemberFromGroup(friend));
         rvMembers.setAdapter(membersAdapter);
 
+        // Konfiguracja widoku filmów z nowym adapterem i listenerem
         rvMovies = view.findViewById(R.id.rvGroupMovies);
-        rvMovies.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        rvMovies.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
 
-        moviesAdapter = new GroupMoviesAdapter(
-                item -> {
-                    Bundle bundle = new Bundle();
-                    bundle.putSerializable("MEDIA_ITEM", item);
-                    Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
-                },
-                (item, isVoted) -> toggleVote(item, isVoted),
-                this::showRemoveMovieDialog
-        );
+        moviesAdapter = new AdvancedGroupMoviesAdapter(new AdvancedGroupMoviesAdapter.OnMovieInteractionListener() {
+            @Override
+            public void onToggleVote(MediaItem movie, boolean currentlyVoted) {
+                toggleVote(movie, currentlyVoted);
+            }
+
+            @Override
+            public void onDeleteMovie(MediaItem movie) {
+                showRemoveMovieDialog(movie);
+            }
+        });
         rvMovies.setAdapter(moviesAdapter);
 
-        setupClickListeners(btnAddMember, btnBluetooth, btnAddMovies, btnDeleteGroup, btnLeaveGroup);
+        setupClickListeners(btnAddMember, btnBluetooth, btnAddMovies, btnGroupMenu);
         listenToGroupChanges();
         listenToMovieProposals();
 
         return view;
     }
+    private void showVotingDecisionBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
+        View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_voting_decision, null);
+        dialog.setContentView(sheetView);
 
-    private void wylosujFilmZGrupy() {
-        if (movieProposals == null || movieProposals.isEmpty()) {
-            Toast.makeText(getContext(), "Brak filmów do wylosowania!", Toast.LENGTH_SHORT).show();
+        // Wyłuskujemy tylko filmy, które mają przynajmniej 1 głos
+        ArrayList<MediaItem> eligibleMovies = new ArrayList<>();
+        for (MediaItem m : movieProposals) {
+            if (votesMap.containsKey(m.getId()) && !votesMap.get(m.getId()).isEmpty()) {
+                eligibleMovies.add(m);
+            }
+        }
+
+        if (eligibleMovies.isEmpty()) {
+            Toast.makeText(getContext(), "Nikt jeszcze nie oddał głosu na żadną propozycję!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Losowanie
-        Random random = new Random();
-        int index = random.nextInt(movieProposals.size());
-        MediaItem selected = movieProposals.get(index);
-
-        Toast.makeText(getContext(), "Wylosowano: " + selected.getTitle(), Toast.LENGTH_LONG).show();
-
-        // Przejście do szczegółów wylosowanego filmu
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("MEDIA_ITEM", selected);
-        Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
-    }
-
-    // --- Metody Sensora ---
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            float x = event.values[0];
-            float y = event.values[1];
-            float z = event.values[2];
-
-            float gX = x / SensorManager.GRAVITY_EARTH;
-            float gY = y / SensorManager.GRAVITY_EARTH;
-            float gZ = z / SensorManager.GRAVITY_EARTH;
-
-            // gForce będzie bliskie 1, gdy telefon leży spokojnie
-            float gForce = (float) Math.sqrt(gX * gX + gY * gY + gZ * gZ);
-
-            if (gForce > SHAKE_THRESHOLD_GRAVITY) {
-                final long now = System.currentTimeMillis();
-                // Ignoruj wstrząsy zbyt blisko siebie
-                if (mShakeTimestamp + SHAKE_SLOP_TIME_MS > now) {
-                    return;
+        // --- OPCJA: Głos ludu ---
+        sheetView.findViewById(R.id.btnVotePopular).setOnClickListener(v -> {
+            dialog.dismiss();
+            int maxVotes = 0;
+            List<MediaItem> topMovies = new ArrayList<>();
+            for (MediaItem m : eligibleMovies) {
+                int vCount = votesMap.get(m.getId()).size();
+                if (vCount > maxVotes) {
+                    maxVotes = vCount;
+                    topMovies.clear();
+                    topMovies.add(m);
+                } else if (vCount == maxVotes) {
+                    topMovies.add(m);
                 }
-                mShakeTimestamp = now;
-                wylosujFilmZGrupy();
             }
-        }
+            // W razie remisu losujemy z tych o max liczbie głosów
+            MediaItem winner = topMovies.get(new Random().nextInt(topMovies.size()));
+
+            updateGroupWinner(winner, "Głos ludu (" + maxVotes + " głosów)");
+        });
+
+        // --- OPCJA: Decyzja losu ---
+        sheetView.findViewById(R.id.btnVoteRandom).setOnClickListener(v -> {
+            dialog.dismiss();
+            Bundle b = new Bundle();
+            b.putSerializable("ELIGIBLE_MOVIES", eligibleMovies);
+            b.putString("GROUP_ID", groupId); // Przekazujemy ID grupy, żeby ShakeFragment wiedział gdzie zapisać wynik
+            Navigation.findNavController(requireView()).navigate(R.id.shakeFragment, b);
+        });
+
+        dialog.show();
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // Niepotrzebne w tym przypadku
+    private void updateGroupWinner(MediaItem winner, String reason) {
+        if (groupId == null) return;
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("winnerId", String.valueOf(winner.getId()));
+        updates.put("winnerReason", reason);
+
+        db.collection("groups").document(groupId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    // Bezpieczne sprawdzenie, czy Fragment wciąż jest podpięty i ma widok
+                    if (isAdded() && getView() != null) {
+                        Bundle b = new Bundle();
+                        b.putString("GROUP_ID", groupId);
+                        b.putString("WINNER_ID", String.valueOf(winner.getId()));
+                        b.putString("WINNER_REASON", reason);
+                        b.putBoolean("IS_ADMIN", true);
+                        b.putSerializable("WINNER_MOVIE", winner); // Przekazujemy od razu obiekt!
+
+                        Navigation.findNavController(getView()).navigate(R.id.winnerFragment, b);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (sensorManager != null && accelerometer != null) {
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
-        }
-    }
-
-    @Override
-    public void onPause() {
-        if (sensorManager != null) {
-            sensorManager.unregisterListener(this);
-        }
-        super.onPause();
-    }
-    // -----------------------
 
     private void showRemoveMovieDialog(MediaItem movie) {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Usuń film")
-                .setMessage("Czy chcesz usunąć film \"" + movie.getTitle() + "\" z listy propozycji?")
-                .setPositiveButton("Usuń", (dialog, which) -> removeMovieFromGroup(movie))
-                .setNegativeButton("Anuluj", null)
-                .show();
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Usuń propozycję",
+                "Czy chcesz usunąć film \"" + movie.getTitle() + "\" z listy głosowania?",
+                "Usuń",
+                "Anuluj",
+                () -> removeMovieFromGroup(movie)
+        );
     }
 
     private void removeMovieFromGroup(MediaItem movie) {
         if (groupId == null) return;
-        db.collection("groups").document(groupId)
-                .collection("movies").document(String.valueOf(movie.getId()))
-                .delete();
+        db.collection("groups").document(groupId).collection("movies").document(String.valueOf(movie.getId())).delete();
     }
 
     private void toggleVote(MediaItem movie, boolean currentlyVoted) {
         String myUid = FirebaseAuth.getInstance().getUid();
         if (myUid == null || groupId == null) return;
 
-        // --- 1. OPTYMISTYCZNA AKTUALIZACJA UI (Natychmiastowa reakcja) ---
-        // Pobieramy aktualną listę głosujących dla tego filmu
-        List<String> voters = votesMap.get(movie.getId());
-        if (voters == null) {
-            voters = new ArrayList<>();
-        } else {
-            // Tworzymy nową instancję listy, by adapter wykrył zmianę
-            voters = new ArrayList<>(voters);
-        }
+        List<String> voters = new ArrayList<>(votesMap.getOrDefault(movie.getId(), new ArrayList<>()));
+        if (currentlyVoted) voters.remove(myUid);
+        else if (!voters.contains(myUid)) voters.add(myUid);
 
-        if (currentlyVoted) {
-            voters.remove(myUid); // Cofamy głos lokalnie
-        } else {
-            if (!voters.contains(myUid)) {
-                voters.add(myUid); // Dodajemy głos lokalnie
-            }
-        }
-
-        // Nadpisujemy mapę nowymi danymi
         votesMap.put(movie.getId(), voters);
+        sortAndSubmitMovies();
 
-        // Natychmiast odświeżamy adapter (tworzymy nową mapę, żeby DiffUtil zauważył różnicę)
-        moviesAdapter.submitList(new ArrayList<>(movieProposals), new HashMap<>(votesMap));
-
-        // --- 2. WYSYŁKA DO FIREBASE W TLE ---
-        db.collection("groups").document(groupId)
-                .collection("movies").document(String.valueOf(movie.getId()))
-                .update("votedBy", currentlyVoted ?
-                        FieldValue.arrayRemove(myUid) :
-                        FieldValue.arrayUnion(myUid))
-                .addOnFailureListener(e -> {
-                    // Jeśli coś pójdzie nie tak (np. brak internetu), Firebase SnapshotListener
-                    // i tak za chwilę nadpisze nasz "optymistyczny" widok poprawnym stanem z serwera.
-                });
+        db.collection("groups").document(groupId).collection("movies").document(String.valueOf(movie.getId()))
+                .update("votedBy", currentlyVoted ? FieldValue.arrayRemove(myUid) : FieldValue.arrayUnion(myUid));
     }
 
     private void listenToMovieProposals() {
         if (groupId == null) return;
-
-        moviesListener = db.collection("groups").document(groupId)
-                .collection("movies")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
+        moviesListener = db.collection("groups").document(groupId).collection("movies")
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
-
                     movieProposals.clear();
                     votesMap.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        MediaItem item = new MediaItem();
+                        MediaItem item = doc.toObject(MediaItem.class);
                         if (doc.contains("tmdbId")) {
                             item.setId(doc.getLong("tmdbId").intValue());
-                        }
-                        item.setTitle(doc.getString("title"));
-                        item.setPosterPath(doc.getString("posterPath"));
-                        item.setMediaType(doc.getString("mediaType"));
-                        if (doc.contains("voteAverage")) {
-                            item.setVoteAverage(doc.getDouble("voteAverage"));
                         }
 
                         List<String> voters = (List<String>) doc.get("votedBy");
@@ -285,50 +267,220 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
                         movieProposals.add(item);
                         votesMap.put(item.getId(), voters);
                     }
-                    moviesAdapter.submitList(new ArrayList<>(movieProposals), votesMap);
+                    sortAndSubmitMovies();
                 });
+    }
+
+    private void sortAndSubmitMovies() {
+        movieProposals.sort((m1, m2) -> {
+            int v1 = votesMap.containsKey(m1.getId()) ? votesMap.get(m1.getId()).size() : 0;
+            int v2 = votesMap.containsKey(m2.getId()) ? votesMap.get(m2.getId()).size() : 0;
+            return Integer.compare(v2, v1);
+        });
+        moviesAdapter.setGroupData(movieProposals, votesMap, membersList, totalGroupMembers);
     }
 
     private void listenToGroupChanges() {
         if (groupId == null) return;
+
         groupListener = db.collection("groups").document(groupId)
                 .addSnapshotListener((snapshot, e) -> {
-                    if (e != null || snapshot == null || !snapshot.exists()) return;
-                    com.example.cinematuz.data.models.Group group = snapshot.toObject(com.example.cinematuz.data.models.Group.class);
-                    if (group != null) {
-                        tvGroupName.setText(group.getName());
-                        List<String> memberUids = group.getMembers();
-                        tvMemberCount.setText(memberUids.size() + " członków");
-                        String myUid = FirebaseAuth.getInstance().getUid();
-                        if (myUid != null && myUid.equals(group.getOwnerId())) {
-                            btnDeleteGroup.setVisibility(View.VISIBLE);
-                            btnLeaveGroup.setVisibility(View.GONE);
-                            layoutManagement.setVisibility(View.VISIBLE);
-                        } else {
-                            btnDeleteGroup.setVisibility(View.GONE);
-                            btnLeaveGroup.setVisibility(View.VISIBLE);
-                            layoutManagement.setVisibility(View.GONE);
+                    if (e != null) {
+                        android.util.Log.e("GroupDetailsFragment", "Listen failed.", e);
+                        return;
+                    }
+
+                    if (snapshot != null && snapshot.exists()) {
+                        Group group = snapshot.toObject(Group.class);
+                        if (group != null) {
+                            tvGroupName.setText(group.getName());
+                            membersAdapter.setOwnerId(group.getOwnerId());
+
+                            if (group.getMembers() != null && !group.getMembers().isEmpty()) {
+                                totalGroupMembers = group.getMembers().size();
+                                fetchMemberProfiles(group.getMembers());
+                            } else {
+                                totalGroupMembers = 1;
+                                membersList.clear();
+                                membersAdapter.notifyDataSetChanged();
+                                sortAndSubmitMovies();
+                            }
+
+                            String myUid = FirebaseAuth.getInstance().getCurrentUser() != null
+                                    ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                                    : null;
+                            boolean isAdmin = myUid != null && myUid.equals(group.getOwnerId());
+                            currentUserIsAdmin = isAdmin;
+                            if (isAdmin) {
+                                fabFinishVoting.setVisibility(View.VISIBLE);
+                            } else {
+                                fabFinishVoting.setVisibility(View.GONE);
+                            }
+
+                            // --- POPRAWIONA SEKCJA WYKRYWANIA ZWYCIĘZCY ---
+                            String currentWinnerId = group.getWinnerId();
+                            String currentWinnerReason = group.getWinnerReason(); // Pobieramy powód
+                            boolean isInitialSnapshot = !hasProcessedInitialGroupSnapshot;
+                            hasProcessedInitialGroupSnapshot = true;
+
+                            if (currentWinnerId != null && !currentWinnerId.isEmpty()) {
+                                if (isInitialSnapshot) {
+                                    lastSeenWinnerId = currentWinnerId;
+                                    lastSeenWinnerReason = currentWinnerReason; // Zapisujemy powód
+                                } else {
+                                    // Wysyłamy do sprawdzenia zarówno ID jak i powód
+                                    navigateToWinnerIfFound(currentWinnerId, currentWinnerReason, isAdmin);
+                                }
+                            } else {
+                                lastSeenWinnerId = null;
+                                lastSeenWinnerReason = null; // Czyścimy
+                            }
                         }
-                        membersAdapter.setOwnerId(group.getOwnerId());
-                        fetchMemberProfiles(memberUids);
                     }
                 });
     }
 
+    private void showGroupPopupMenu(View view, boolean isAdmin) {
+        androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(requireContext(), view);
+        if (isAdmin) {
+            popup.getMenu().add("Usuń grupę");
+        } else {
+            popup.getMenu().add("Opuść grupę");
+        }
+
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Usuń grupę")) {
+                showDeleteGroupDialog();
+            } else if (item.getTitle().equals("Opuść grupę")) {
+                showLeaveGroupDialog();
+            }
+            return true;
+        });
+        popup.show();
+    }
+
+    private void showDeleteGroupDialog() {
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Usuń grupę",
+                "Czy na pewno chcesz bezpowrotnie usunąć tę grupę? Wszyscy członkowie zostaną usunięci, a propozycje filmowe przepadną.",
+                "Usuń grupę",
+                "Anuluj",
+                this::deleteGroup
+        );
+    }
+
+    private void showLeaveGroupDialog() {
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Opuść grupę",
+                "Czy na pewno chcesz opuścić tę grupę? Nie będziesz już mógł brać udziału w głosowaniu.",
+                "Opuść",
+                "Anuluj",
+                this::leaveGroup
+        );
+    }
+
+    private void navigateToWinnerIfFound(String winnerId, String winnerReason, boolean isAdmin) {
+        if (winnerId == null || winnerId.trim().isEmpty()) {
+            return;
+        }
+
+        // ZMIANA: Sprawdzamy blokadę
+        if (blockWinnerNavigation) return;
+
+        boolean isSameId = winnerId.equals(lastSeenWinnerId);
+        boolean isSameReason = (winnerReason != null && winnerReason.equals(lastSeenWinnerReason));
+
+        if (isSameId && isSameReason) {
+            return;
+        }
+
+        lastSeenWinnerId = winnerId;
+        lastSeenWinnerReason = winnerReason;
+
+        if (isAdded() && getView() != null) {
+            NavController navController = Navigation.findNavController(getView());
+            if (navController.getCurrentDestination() != null && navController.getCurrentDestination().getId() == R.id.winnerFragment) {
+                return;
+            }
+
+            Bundle b = new Bundle();
+            b.putString("GROUP_ID", groupId);
+            b.putString("WINNER_ID", winnerId);
+            b.putString("WINNER_REASON", winnerReason != null ? winnerReason : "Głosowanie grupowe");
+            b.putBoolean("IS_ADMIN", isAdmin);
+            b.putString("media_type", "movie");
+
+            MediaItem winnerMovie = null;
+            if (movieProposals != null) {
+                for (MediaItem m : movieProposals) {
+                    if (String.valueOf(m.getId()).equals(winnerId)) {
+                        winnerMovie = m;
+                        break;
+                    }
+                }
+            }
+            if (winnerMovie != null) b.putSerializable("WINNER_MOVIE", winnerMovie);
+
+            try {
+                navController.navigate(R.id.winnerFragment, b);
+            } catch (Exception e) {
+                lastSeenWinnerId = null;
+                lastSeenWinnerReason = null;
+            }
+        }
+    }
+
+
     private void fetchMemberProfiles(List<String> uids) {
+        final int requestToken = ++memberProfilesRequestToken;
         membersList.clear();
+        membersAdapter.notifyDataSetChanged();
+
+        if (uids == null || uids.isEmpty()) {
+            sortAndSubmitMovies();
+            return;
+        }
+
+        final int expectedResponses = uids.size();
+        final int[] receivedResponses = {0};
+
         for (String uid : uids) {
             db.collection("profiles").document(uid).get().addOnSuccessListener(doc -> {
-                if (doc.exists() && isAdded()) {
-                    Friend member = new Friend(doc.getId(), doc.getString("username"), doc.getString("avatar_url"), Boolean.TRUE.equals(doc.getBoolean("isOnline")));
-                    membersList.add(member);
+                if (!isAdded() || requestToken != memberProfilesRequestToken) {
+                    return;
+                }
+
+                if (doc.exists()) {
+                    boolean alreadyExists = false;
+                    for (Friend friend : membersList) {
+                        if (friend.getId().equals(doc.getId())) {
+                            alreadyExists = true;
+                            break;
+                        }
+                    }
+
+                    if (!alreadyExists) {
+                        membersList.add(new Friend(
+                                doc.getId(),
+                                doc.getString("username"),
+                                doc.getString("avatar_url"),
+                                Boolean.TRUE.equals(doc.getBoolean("isOnline"))
+                        ));
+                    }
+                }
+
+                receivedResponses[0]++;
+                if (receivedResponses[0] >= expectedResponses) {
                     membersAdapter.notifyDataSetChanged();
+                    sortAndSubmitMovies();
                 }
             });
         }
     }
 
-    private void setupClickListeners(View add, View bt, View movies, View delete, View leave) {
+    private void setupClickListeners(View add, View bt, View movies, View menu) {
         add.setOnClickListener(v -> showInviteFriendDialog());
         bt.setOnClickListener(v -> checkPermissionsAndStartBluetooth());
         movies.setOnClickListener(v -> {
@@ -337,23 +489,68 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             bundle.putBoolean("SELECTION_MODE", true);
             Navigation.findNavController(v).navigate(R.id.searchFragment, bundle);
         });
-        delete.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext()).setTitle("Usuń grupę").setMessage("Czy na pewno chcesz usunąć tę grupę?").setPositiveButton("Usuń", (dialog, which) -> deleteGroup()).setNegativeButton("Anuluj", null).show());
-        leave.setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext()).setTitle("Opuść grupę").setMessage("Czy na pewno chcesz opuścić tę grupę?").setPositiveButton("Opuść", (dialog, which) -> leaveGroup()).setNegativeButton("Anuluj", null).show());
+
+        if (menu != null) {
+            menu.setOnClickListener(v -> showGroupPopupMenu(v, currentUserIsAdmin));
+        }
+
+        // Pływający przycisk dla admina - odpala BottomSheet
+        fabFinishVoting.setOnClickListener(v -> showVotingDecisionBottomSheet());
     }
 
     private void leaveGroup() {
         if (groupId == null) return;
-        String myUid = FirebaseAuth.getInstance().getUid();
-        db.collection("groups").document(groupId).update("members", FieldValue.arrayRemove(myUid)).addOnSuccessListener(aVoid -> {
+        db.collection("groups").document(groupId).update("members", FieldValue.arrayRemove(FirebaseAuth.getInstance().getUid())).addOnSuccessListener(aVoid -> {
             if (getActivity() != null) getActivity().onBackPressed();
         });
     }
 
     private void removeMemberFromGroup(Friend friend) {
-        if (groupId == null) return;
-        new MaterialAlertDialogBuilder(requireContext()).setTitle("Usuń z grupy").setMessage("Czy na pewno chcesz wyrzucić " + friend.getName() + "?").setPositiveButton("Wyrzuć", (dialog, which) -> {
-            db.collection("groups").document(groupId).update("members", FieldValue.arrayRemove(friend.getId()));
-        }).setNegativeButton("Anuluj", null).show();
+        String myUid = FirebaseAuth.getInstance().getUid();
+        if (groupId == null || myUid == null || friend.getId() == null) return;
+
+        DialogHelper.showConfirmDialog(
+                requireContext(),
+                "Usuń z grupy",
+                "Czy na pewno chcesz usunąć użytkownika " + friend.getName() + " z tej grupy? Jego głosy na filmy również zostaną usunięte.",
+                "Usuń",
+                "Anuluj",
+                () -> {
+                    db.collection("groups").document(groupId).collection("movies").get()
+                            .addOnSuccessListener(queryDocumentSnapshots -> {
+                                com.google.firebase.firestore.WriteBatch batch = db.batch();
+
+                                // 1. Usunięcie z tablicy members
+                                batch.update(db.collection("groups").document(groupId),
+                                        "members", FieldValue.arrayRemove(friend.getId()));
+
+                                // 2. Usunięcie głosów
+                                for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                                    batch.update(doc.getReference(), "votedBy", FieldValue.arrayRemove(friend.getId()));
+                                }
+
+                                // 3. WYŚLIJ POWIADOMIENIE DO DZWONKA
+                                java.util.Map<String, Object> notificationData = new java.util.HashMap<>();
+                                notificationData.put("type", "group_removal");
+                                notificationData.put("groupName", "Usunięto z grupy: " + tvGroupName.getText().toString());
+
+                                // Zapis w kolekcji 'notifications'
+                                batch.set(db.collection("profiles")
+                                                .document(friend.getId())
+                                                .collection("notifications")
+                                                .document(), // Losowe ID powiadomienia
+                                        notificationData);
+
+                                // 4. Zatwierdzenie
+                                batch.commit().addOnSuccessListener(aVoid -> {
+                                    if (isAdded()) {
+                                        Toast.makeText(getContext(), "Użytkownik usunięty", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            })
+                            .addOnFailureListener(e -> { /* obsługa błędu */ });
+                }
+        );
     }
 
     private void deleteGroup() {
@@ -365,16 +562,49 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
 
     private void showInviteFriendDialog() {
         String myUid = FirebaseAuth.getInstance().getUid();
-        db.collection("profiles").document(myUid).collection("friends").whereEqualTo("status", "accepted").get().addOnSuccessListener(snaps -> {
-            List<Friend> friends = new ArrayList<>();
-            List<String> names = new ArrayList<>();
-            for (QueryDocumentSnapshot doc : snaps) {
-                Friend f = new Friend(doc.getId(), doc.getString("name"), doc.getString("avatarUrl"), true);
-                friends.add(f);
-                names.add(f.getName());
-            }
-            new MaterialAlertDialogBuilder(requireContext()).setTitle("Zaproś znajomego").setItems(names.toArray(new String[0]), (dialog, which) -> sendGroupInvite(friends.get(which).getId())).show();
-        });
+        db.collection("profiles").document(myUid).collection("friends")
+                .whereEqualTo("status", "accepted")
+                .get()
+                .addOnSuccessListener(snaps -> {
+                    List<Friend> friends = new ArrayList<>();
+                    List<String> names = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : snaps) {
+                        Friend f = new Friend(doc.getId(), doc.getString("name"), doc.getString("avatarUrl"), true);
+                        friends.add(f);
+                        names.add(f.getName());
+                    }
+
+                    if (friends.isEmpty()) {
+                        Toast.makeText(getContext(), "Nie masz jeszcze znajomych do zaproszenia", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    DialogHelper.showItemsDialog(
+                            requireContext(),
+                            "Zaproś do grupy",
+                            names.toArray(new String[0]),
+                            (dialog, which) -> {
+                                Friend selectedFriend = friends.get(which);
+
+                                // SPRAWDZENIE CZY ZNAJOMY JEST JUŻ W GRUPIE
+                                boolean isAlreadyMember = false;
+                                for (Friend member : membersList) {
+                                    if (member.getId().equals(selectedFriend.getId())) {
+                                        isAlreadyMember = true;
+                                        break;
+                                    }
+                                }
+
+                                // WARUNKOWE WYSŁANIE ZAPROSZENIA LUB WYŚWIETLENIE KOMUNIKATU
+                                if (isAlreadyMember) {
+                                    Toast.makeText(getContext(), "Ta osoba jest już dodana w sekcji grup", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    sendGroupInvite(selectedFriend.getId());
+                                    Toast.makeText(getContext(), "Wysłano zaproszenie do " + names.get(which), Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                    );
+                });
     }
 
     private void sendGroupInvite(String friendUid) {
@@ -391,6 +621,7 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         if (moviesListener != null) moviesListener.remove();
         if (nearbyHelper != null) nearbyHelper.stopSearching();
     }
+
     private void checkPermissionsAndStartBluetooth() {
         List<String> permissions = new ArrayList<>();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -424,11 +655,10 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         nearbyUsers.clear();
-        showBluetoothDiscoveryDialog(); // Odpalamy UI
+        showBluetoothDiscoveryDialog();
 
         nearbyHelper = new NearbyHelper(requireContext(), myUid, discoveredUid -> {
-            if (discoveredUid.equals(myUid)) return; // Ignoruj siebie
-
+            if (discoveredUid.equals(myUid)) return;
             for (SearchResultUser user : nearbyUsers) {
                 if (user.getUid().equals(discoveredUid)) return;
             }
@@ -445,7 +675,6 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
                 }
             });
         });
-
         nearbyHelper.startSearching();
     }
 
@@ -457,11 +686,25 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
         RecyclerView rv = sheetView.findViewById(R.id.rvBluetoothDevices);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Magia dzieje się tutaj: Używamy tego samego adaptera ze zdjęciami,
-        // ale przekierowujemy kliknięcie na wysłanie zaproszenia DO GRUPY!
         btAdapter = new BluetoothDeviceAdapter(nearbyUsers, user -> {
-            sendGroupInvite(user.getUid()); // Wywołanie Twojej metody
-            Toast.makeText(getContext(), "Wysłano zaproszenie do grupy!", Toast.LENGTH_SHORT).show();
+            // --- SPRAWDZENIE CZY UŻYTKOWNIK JEST JUŻ W GRUPIE ---
+            boolean isAlreadyMember = false;
+            for (Friend member : membersList) {
+                if (member.getId().equals(user.getUid())) {
+                    isAlreadyMember = true;
+                    break;
+                }
+            }
+
+            // --- WARUNKOWE WYSŁANIE ZAPROSZENIA ---
+            if (isAlreadyMember) {
+                Toast.makeText(getContext(), "Ten użytkownik jest już w grupie", Toast.LENGTH_SHORT).show();
+                return false; // Zwracamy false - przycisk NIE zmieni się na "Wysłano"
+            } else {
+                sendGroupInvite(user.getUid());
+                Toast.makeText(getContext(), "Wysłano zaproszenie do grupy!", Toast.LENGTH_SHORT).show();
+                return true; // Zwracamy true - przycisk zmieni się na "Wysłano"
+            }
         });
         rv.setAdapter(btAdapter);
 
@@ -469,11 +712,12 @@ public class GroupDetailsFragment extends Fragment implements SensorEventListene
             if (nearbyHelper != null) nearbyHelper.stopSearching();
             dialog.dismiss();
         });
-
         dialog.setOnDismissListener(d -> {
             if (nearbyHelper != null) nearbyHelper.stopSearching();
         });
-
         dialog.show();
     }
+
+
+
 }

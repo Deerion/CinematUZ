@@ -98,6 +98,37 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         return visibleItems.size();
     }
 
+    public static String getFirstGenreName(List<Integer> genreIds, Context context) {
+        if (genreIds == null || genreIds.isEmpty()) return "";
+        int id = genreIds.get(0);
+        switch (id) {
+            case 28: return context.getString(R.string.genre_action);
+            case 12: return context.getString(R.string.genre_adventure);
+            case 16: return context.getString(R.string.genre_animation);
+            case 35: return context.getString(R.string.genre_comedy);
+            case 80: return context.getString(R.string.genre_crime);
+            case 99: return context.getString(R.string.genre_documentary);
+            case 18: return context.getString(R.string.genre_drama);
+            case 10751: return context.getString(R.string.genre_family);
+            case 14: return context.getString(R.string.genre_fantasy);
+            case 36: return context.getString(R.string.genre_history);
+            case 27: return context.getString(R.string.genre_horror);
+            case 10402: return context.getString(R.string.genre_music);
+            case 9648: return context.getString(R.string.genre_mystery);
+            case 10749: return context.getString(R.string.genre_romance);
+            case 878: return context.getString(R.string.genre_scifi);
+            case 10770: return context.getString(R.string.genre_movie);
+            case 53: return context.getString(R.string.genre_thriller);
+            case 10752: return context.getString(R.string.genre_war);
+            case 37: return context.getString(R.string.genre_western);
+            case 10759: return context.getString(R.string.genre_action_adventure);
+            case 10762: return context.getString(R.string.genre_kids);
+            case 10765: return context.getString(R.string.genre_scifi_fantasy);
+            case 10768: return context.getString(R.string.genre_politics);
+            default: return "";
+        }
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         ShapeableImageView ivPoster;
         TextView tvTitle, tvYear, tvRating, tvGenres;
@@ -126,7 +157,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
 
             Context context = itemView.getContext();
             String mediaTypeStr = "tv".equals(item.getMediaType()) ? context.getString(R.string.filter_tv) : context.getString(R.string.filter_movies);
-            String firstGenre = getFirstGenreName(item.getGenreIds(), context);
+            String firstGenre = SearchResultAdapter.getFirstGenreName(item.getGenreIds(), context);
 
             if (!firstGenre.isEmpty()) {
                 tvGenres.setText(mediaTypeStr + " • " + firstGenre);
@@ -148,37 +179,6 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
                     addListener.onAddClick(item);
                 }
             });
-        }
-
-        private String getFirstGenreName(List<Integer> genreIds, Context context) {
-            if (genreIds == null || genreIds.isEmpty()) return "";
-            int id = genreIds.get(0);
-            switch (id) {
-                case 28: return context.getString(R.string.genre_action);
-                case 12: return context.getString(R.string.genre_adventure);
-                case 16: return context.getString(R.string.genre_animation);
-                case 35: return context.getString(R.string.genre_comedy);
-                case 80: return context.getString(R.string.genre_crime);
-                case 99: return context.getString(R.string.genre_documentary);
-                case 18: return context.getString(R.string.genre_drama);
-                case 10751: return context.getString(R.string.genre_family);
-                case 14: return context.getString(R.string.genre_fantasy);
-                case 36: return context.getString(R.string.genre_history);
-                case 27: return context.getString(R.string.genre_horror);
-                case 10402: return context.getString(R.string.genre_music);
-                case 9648: return context.getString(R.string.genre_mystery);
-                case 10749: return context.getString(R.string.genre_romance);
-                case 878: return context.getString(R.string.genre_scifi);
-                case 10770: return context.getString(R.string.genre_movie);
-                case 53: return context.getString(R.string.genre_thriller);
-                case 10752: return context.getString(R.string.genre_war);
-                case 37: return context.getString(R.string.genre_western);
-                case 10759: return context.getString(R.string.genre_action_adventure);
-                case 10762: return context.getString(R.string.genre_kids);
-                case 10765: return context.getString(R.string.genre_scifi_fantasy);
-                case 10768: return context.getString(R.string.genre_politics);
-                default: return "";
-            }
         }
     }
 }

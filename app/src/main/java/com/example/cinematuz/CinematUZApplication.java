@@ -1,4 +1,3 @@
-// Lokalizacja: java/com/example/cinematuz/CinematUZApplication.java
 package com.example.cinematuz;
 
 import android.app.Application;
@@ -19,8 +18,15 @@ public class CinematUZApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        // 1. Uruchamiamy nasz cichy serwis do wykrywania "ubicia" aplikacji
-        startService(new Intent(this, AppKillDetectionService.class));
+        // 1. Zabezpieczamy uruchomienie serwisu blokiem try-catch.
+        // W trakcie testów Espresso system może zablokować start serwisu w tle, co wyrzuca błąd.
+        try {
+            startService(new Intent(this, AppKillDetectionService.class));
+        } catch (Exception e) {
+            // Ignorujemy błąd. Serwis nie wystartuje w środowisku testowym,
+            // ale zapobiega to wyrzuceniu crasha i pozwala wykonać testy UI.
+            e.printStackTrace();
+        }
 
         // 2. Nasłuchujemy, kiedy użytkownik wchodzi do aplikacji
         ProcessLifecycleOwner.get().getLifecycle().addObserver(new DefaultLifecycleObserver() {

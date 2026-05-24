@@ -29,27 +29,26 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private HomeViewModel viewModel;
     private MovieGridAdapter adapter;
-    private View rootView;
     private String currentFilter = "all";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        if (rootView == null) {
-            binding = FragmentHomeBinding.inflate(inflater, container, false);
-            rootView = binding.getRoot();
-
-            setupRecyclerView();
-            setupInitialState();
-            setupListeners();
-        }
-        return rootView;
+        // CZYSTY CYKL ŻYCIA: Zawsze budujemy widok poprawnie od nowa
+        binding = FragmentHomeBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         viewModel = new ViewModelProvider(requireActivity(), ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(HomeViewModel.class);
+
+        setupRecyclerView();
+        setupInitialState();
+        setupListeners();
         setupObservers();
+
         applyFilter(currentFilter, false);
 
         if (viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty()) {
@@ -79,18 +78,19 @@ public class HomeFragment extends Fragment {
     private void setupInitialState() {
         binding.rvTrending.setVisibility(View.GONE);
         binding.layoutEmptyTrending.setVisibility(View.GONE);
+        binding.layoutSkeletonHero.getRoot().setVisibility(View.GONE);
+        binding.layoutSkeletonTrending.getRoot().setVisibility(View.GONE);
     }
 
     private void hideSkeletonsInstantly() {
         if (binding == null) return;
         binding.layoutSkeletonHero.getRoot().setVisibility(View.GONE);
         binding.layoutSkeletonTrending.getRoot().setVisibility(View.GONE);
-        binding.layoutHeroMovie.getRoot().setVisibility(View.VISIBLE);
     }
 
     private void showEmptyTrendingState(boolean show) {
+        if (binding == null) return;
         binding.layoutEmptyTrending.setVisibility(show ? View.VISIBLE : View.GONE);
-        binding.layoutHeroMovie.getRoot().setVisibility(View.VISIBLE);
         binding.rvTrending.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
@@ -99,18 +99,20 @@ public class HomeFragment extends Fragment {
 
         viewModel.trendingList.observe(getViewLifecycleOwner(), list -> {
             hideSkeletonsInstantly();
+            Boolean loading = viewModel.isLoading.getValue();
             boolean isEmpty = list == null || list.isEmpty();
-            showEmptyTrendingState(isEmpty);
-            if (!isEmpty) {
-                adapter.submitList(list);
+            if (loading == null || !loading) {
+                showEmptyTrendingState(isEmpty);
             }
+            if (!isEmpty) adapter.submitList(list);
         });
 
         viewModel.isLoading.observe(getViewLifecycleOwner(), loading -> {
-            if (loading && (viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty())) {
+            if (loading != null && loading) {
                 binding.layoutSkeletonHero.getRoot().setVisibility(View.VISIBLE);
                 binding.layoutSkeletonTrending.getRoot().setVisibility(View.VISIBLE);
                 binding.layoutEmptyTrending.setVisibility(View.GONE);
+                binding.layoutHeroMovie.getRoot().setVisibility(View.GONE);
             } else if (!loading) {
                 hideSkeletonsInstantly();
                 boolean isEmpty = viewModel.trendingList.getValue() == null || viewModel.trendingList.getValue().isEmpty();
@@ -133,21 +135,25 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        binding.cardSearch.setOnClickListener(v -> {
-            Navigation.findNavController(v).navigate(R.id.searchFragment);
-        });
-        binding.tvSearchBar.setOnClickListener(v -> {
-            Navigation.findNavController(v).navigate(R.id.searchFragment);
-        });
+        binding.cardSearch.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.searchFragment));
+        binding.tvSearchBar.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.searchFragment));
     }
 
     private void updateHeroUi(MediaItem item) {
         if (binding == null) return;
 
-        String heroTitle = item != null ? item.getTitle() : null;
-        String heroOverview = item != null ? item.getOverview() : null;
-        double heroRating = item != null ? item.getVoteAverage() : 0d;
-        String posterPath = item != null ? item.getPosterPath() : null;
+        // POPRAWKA: Jeśli nie ma głównego filmu (np. zły filtr), całkowicie chowamy wielką kartę
+        if (item == null) {
+            binding.layoutHeroMovie.getRoot().setVisibility(View.GONE);
+            return;
+        }
+
+        binding.layoutHeroMovie.getRoot().setVisibility(View.VISIBLE);
+
+        String heroTitle = item.getTitle();
+        String heroOverview = item.getOverview();
+        double heroRating = item.getVoteAverage();
+        String posterPath = item.getPosterPath();
 
         binding.layoutHeroMovie.tvHeroTitle.setText(orFallback(heroTitle, R.string.hero_empty_title));
         binding.layoutHeroMovie.tvHeroSubtitle.setText(orFallback(heroOverview, R.string.hero_empty_overview));
@@ -169,24 +175,17 @@ public class HomeFragment extends Fragment {
     }
 
     private String getHeroRatingText(double rating) {
-        if (rating > 0d) {
-            return String.format(Locale.getDefault(), "%.1f", rating);
-        }
+        if (rating > 0d) return String.format(Locale.getDefault(), "%.1f", rating);
         return getString(R.string.hero_empty_rating);
     }
 
     private String orFallback(String value, int fallbackRes) {
-        if (value == null || value.trim().isEmpty()) {
-            return getString(fallbackRes);
-        }
-        return value;
+        return (value == null || value.trim().isEmpty()) ? getString(fallbackRes) : value;
     }
 
     private void applyFilter(String filter, boolean updateData) {
         currentFilter = filter;
-        if (updateData) {
-            viewModel.applyFilter(filter);
-        }
+        if (updateData) viewModel.applyFilter(filter);
 
         updateButtonStyle(binding.btnFilterAll, "all".equals(filter));
         updateButtonStyle(binding.btnFilterMovies, "movie".equals(filter));
@@ -209,12 +208,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+        // POPRAWKA: Obowiązkowe czyszczenie bindingu zapobiegające wyciekom pamięci!
         binding = null;
-        rootView = null;
     }
 }

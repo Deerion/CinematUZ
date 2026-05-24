@@ -2,58 +2,123 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="?attr/colorSurfaceVariant"
     app:cardCornerRadius="12dp"
-    app:cardElevation="0dp"
-    app:cardBackgroundColor="?attr/colorSurfaceVariant">
+    app:cardElevation="0dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:gravity="center_vertical">
+        android:padding="12dp">
 
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_people"
-            app:tint="?attr/colorPrimary"
-            android:background="@drawable/bg_pill_primary"
-            android:padding="8dp"
-            android:alpha="0.2"/>
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvGroupAvatarContainer"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:cardBackgroundColor="?attr/colorPrimaryVariant"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-        <LinearLayout
+            <ImageView
+                android:id="@+id/ivGroupAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="10dp"
+                android:src="@drawable/ic_people"
+                app:tint="?attr/colorOnPrimary" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvGroupName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="16dp"
-            android:orientation="vertical">
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"
+            app:layout_constraintStart_toEndOf="@id/cvGroupAvatarContainer"
+            app:layout_constraintTop_toTopOf="@id/cvGroupAvatarContainer"
+            app:layout_constraintEnd_toStartOf="@id/layoutParticipantAvatars"
+            tools:text="Wieczorni Kinomaniacy" />
+
+        <TextView
+            android:id="@+id/tvGroupMembersCount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="@id/tvGroupName"
+            app:layout_constraintTop_toBottomOf="@id/tvGroupName"
+            app:layout_constraintEnd_toStartOf="@id/layoutParticipantAvatars"
+            tools:text="12 członków" />
+
+        <LinearLayout
+            android:id="@+id/layoutParticipantAvatars"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivParticipant1"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="?attr/colorSurfaceVariant"
+                android:scaleType="centerCrop"
+                app:strokeWidth="1.5dp"
+                app:strokeColor="?attr/colorSurface"
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivParticipant2"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="-10dp"
+                android:background="?attr/colorSurfaceVariant"
+                android:scaleType="centerCrop"
+                app:strokeWidth="1.5dp"
+                app:strokeColor="?attr/colorSurface"
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivParticipant3"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginStart="-10dp"
+                android:background="?attr/colorSurfaceVariant"
+                android:scaleType="centerCrop"
+                app:strokeWidth="1.5dp"
+                app:strokeColor="?attr/colorSurface"
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
 
             <TextView
-                android:id="@+id/tvGroupName"
+                android:id="@+id/tvExtraParticipants"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nazwa grupy"
-                android:textSize="16sp"
+                android:layout_marginStart="4dp"
+                android:text="+3"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary"/>
-
-            <TextView
-                android:id="@+id/tvGroupMembersCount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="1 członek"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary"/>
+                android:visibility="gone"
+                tools:visibility="visible" />
         </LinearLayout>
 
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_chevron_right"
-            app:tint="?android:attr/textColorSecondary" />
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>
