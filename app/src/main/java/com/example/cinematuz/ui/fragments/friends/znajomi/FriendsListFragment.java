@@ -274,7 +274,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         // --- NOWY BLOK 1: Sprawdzenie, czy jest już naszym znajomym lub czy my już do niego wysłaliśmy ---
         for (Friend friend : friendsList) {
             if (friend.getId().equals(targetUser.getUid())) {
-                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście znajomych (lub zaproszenie oczekuje)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście znajomych", Toast.LENGTH_SHORT).show();
                 return; // Przerywamy działanie, nie wysyłamy do Firebase
             }
         }

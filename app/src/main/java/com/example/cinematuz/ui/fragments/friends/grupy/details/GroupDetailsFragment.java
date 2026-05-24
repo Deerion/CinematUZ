@@ -516,36 +516,39 @@ public class GroupDetailsFragment extends Fragment {
                 "Usuń",
                 "Anuluj",
                 () -> {
-                    // Najpierw pobieramy wszystkie filmy z grupy, aby móc usunąć z nich głosy użytkownika
                     db.collection("groups").document(groupId).collection("movies").get()
                             .addOnSuccessListener(queryDocumentSnapshots -> {
                                 com.google.firebase.firestore.WriteBatch batch = db.batch();
 
-                                // 1. Usuwamy użytkownika z tablicy members w głównym dokumencie grupy
+                                // 1. Usunięcie z tablicy members
                                 batch.update(db.collection("groups").document(groupId),
                                         "members", FieldValue.arrayRemove(friend.getId()));
 
-                                // 2. Przechodzimy przez wszystkie filmy i usuwamy głos tego użytkownika z tablicy votedBy
+                                // 2. Usunięcie głosów
                                 for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                                     batch.update(doc.getReference(), "votedBy", FieldValue.arrayRemove(friend.getId()));
                                 }
 
-                                // 3. Zatwierdzamy wszystkie zmiany naraz (Batch commit)
+                                // 3. WYŚLIJ POWIADOMIENIE DO DZWONKA
+                                java.util.Map<String, Object> notificationData = new java.util.HashMap<>();
+                                notificationData.put("type", "group_removal");
+                                notificationData.put("groupName", "Usunięto z grupy: " + tvGroupName.getText().toString());
+
+                                // Zapis w kolekcji 'notifications'
+                                batch.set(db.collection("profiles")
+                                                .document(friend.getId())
+                                                .collection("notifications")
+                                                .document(), // Losowe ID powiadomienia
+                                        notificationData);
+
+                                // 4. Zatwierdzenie
                                 batch.commit().addOnSuccessListener(aVoid -> {
                                     if (isAdded()) {
-                                        Toast.makeText(getContext(), "Użytkownik i jego głosy zostały usunięte z grupy", Toast.LENGTH_SHORT).show();
-                                    }
-                                }).addOnFailureListener(e -> {
-                                    if (isAdded()) {
-                                        Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), "Użytkownik usunięty", Toast.LENGTH_SHORT).show();
                                     }
                                 });
                             })
-                            .addOnFailureListener(e -> {
-                                if (isAdded()) {
-                                    Toast.makeText(getContext(), "Błąd podczas pobierania filmów: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                            .addOnFailureListener(e -> { /* obsługa błędu */ });
                 }
         );
     }

@@ -54,6 +54,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.junit)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)
@@ -101,4 +103,19 @@ dependencies {
     implementation(libs.zxing.core)
     implementation("com.squareup:seismic:1.0.3")
     implementation("com.google.android.gms:play-services-nearby:19.0.0")
+
+    // --- TESTY JEDNOSTKOWE (Folder: src/test/java) ---
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.7.0")
+
+    // Opcjonalnie: ułatwia mockowanie klas finalnych i statycznych w Mockito
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+
+    // --- TESTY INTERFEJSU UI (Folder: src/androidTest/java) ---
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
+    // Dodatkowe reguły i narzędzia dla testów Androida (np. ActivityScenarioRule)
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
 }

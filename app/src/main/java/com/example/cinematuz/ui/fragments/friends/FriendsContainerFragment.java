@@ -42,6 +42,7 @@ public class FriendsContainerFragment extends Fragment {
     private List<FriendRequest> requestList = new ArrayList<>();
     private List<FriendRequest> friendReqs = new ArrayList<>();
     private List<FriendRequest> groupReqs = new ArrayList<>();
+    private List<FriendRequest> removalReqs = new ArrayList<>(); // DODANE: Lista powiadomień o usunięciu
 
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
@@ -68,7 +69,7 @@ public class FriendsContainerFragment extends Fragment {
                 } else if (!requestList.isEmpty()) {
                     notificationPanel.setVisibility(View.VISIBLE);
                 } else {
-                    Toast.makeText(getContext(), "Brak nowych zaproszeń", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Brak powiadomień", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -121,12 +122,28 @@ public class FriendsContainerFragment extends Fragment {
                         updateCombinedNotifications();
                     }
                 });
+
+        // 3. DODANE: Nasłuchujemy ogólnych powiadomień (np. o usunięciu z grupy)
+        db.collection("profiles").document(myUid).collection("notifications")
+                .addSnapshotListener((value, error) -> {
+                    if (value != null && isAdded()) {
+                        removalReqs.clear();
+                        for (QueryDocumentSnapshot doc : value) {
+                            if ("group_removal".equals(doc.getString("type"))) {
+                                // Używamy modelu FriendRequest dla wygody - "groupName" trafia pod username
+                                removalReqs.add(new FriendRequest(doc.getId(), doc.getString("groupName"), null, "group_removal"));
+                            }
+                        }
+                        updateCombinedNotifications();
+                    }
+                });
     }
 
     private void updateCombinedNotifications() {
         requestList.clear();
         requestList.addAll(friendReqs);
         requestList.addAll(groupReqs);
+        requestList.addAll(removalReqs); // DODANE: złączamy listy
         requestAdapter.notifyDataSetChanged();
 
         int count = requestList.size();
@@ -148,6 +165,9 @@ public class FriendsContainerFragment extends Fragment {
 
     private void acceptRequest(FriendRequest request) {
         String myUid = mAuth.getUid();
+
+        // Jeśli to group_removal to przycisk jest schowany, ale dla bezpieczeństwa
+        if ("group_removal".equals(request.getType())) return;
 
         if ("group".equals(request.getType())) {
             db.collection("groups").document(request.getUid())
@@ -179,11 +199,15 @@ public class FriendsContainerFragment extends Fragment {
 
     private void declineRequest(FriendRequest request) {
         if (mAuth.getCurrentUser() == null) return;
+        String myUid = mAuth.getUid();
 
         if ("group".equals(request.getType())) {
-            db.collection("profiles").document(mAuth.getUid()).collection("group_invites").document(request.getUid()).delete();
+            db.collection("profiles").document(myUid).collection("group_invites").document(request.getUid()).delete();
+        } else if ("group_removal".equals(request.getType())) {
+            // DODANE: Użytkownik zamyka powiadomienie (X) - usuwamy je z bazy
+            db.collection("profiles").document(myUid).collection("notifications").document(request.getUid()).delete();
         } else {
-            db.collection("profiles").document(mAuth.getUid()).collection("friend_requests").document(request.getUid()).delete();
+            db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()).delete();
         }
     }
 

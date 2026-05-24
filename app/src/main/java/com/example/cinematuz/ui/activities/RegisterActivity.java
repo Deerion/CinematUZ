@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -48,6 +49,12 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        // W onCreate, po setContentView
+        TextView tvLoginLink = findViewById(R.id.tvLoginLink);
+        if (tvLoginLink != null) {
+            tvLoginLink.setOnClickListener(v -> navigateToLogin());
+        }
+
         ScrollView scrollView = findViewById(R.id.registerScrollView);
         if (scrollView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(scrollView, (v, insets) -> {
@@ -58,6 +65,12 @@ public class RegisterActivity extends AppCompatActivity {
                 return WindowInsetsCompat.CONSUMED;
             });
         }
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                navigateToLogin();
+            }
+        });
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -182,5 +195,12 @@ public class RegisterActivity extends AppCompatActivity {
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase));
+    }
+    private void navigateToLogin() {
+        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+        // Użyj flag, aby wyczyścić stos aktywności i uniknąć zapętlenia
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish(); // Zamknij RegisterActivity
     }
 }
