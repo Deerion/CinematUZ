@@ -106,7 +106,10 @@ dependencies {
 
     // --- TESTY JEDNOSTKOWE (Folder: src/test/java) ---
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.mockito:mockito-core:5.7.0")
+    testImplementation("org.mockito:mockito-core:5.10.0")
+    androidTestImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
 
     // Opcjonalnie: ułatwia mockowanie klas finalnych i statycznych w Mockito
     testImplementation("org.mockito:mockito-inline:5.2.0")
@@ -118,4 +121,5 @@ dependencies {
     // Dodatkowe reguły i narzędzia dla testów Androida (np. ActivityScenarioRule)
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test:rules:1.5.0")
+    testImplementation("org.robolectric:robolectric:4.11.1")
 }

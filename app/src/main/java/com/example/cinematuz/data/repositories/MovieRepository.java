@@ -29,10 +29,16 @@ public class MovieRepository {
     // NOWY KONSTRUKTOR WYMAGAJĄCY APPLICATION
     public MovieRepository(Application application) {
         this.api = RetrofitClient.getClient().create(TmdbApi.class);
-
         AppDatabase db = AppDatabase.getInstance(application);
         this.movieDao = db.movieDao();
         this.executorService = Executors.newFixedThreadPool(2);
+    }
+
+    // --- KONSTRUKTOR DO TESTÓW JEDNOSTKOWYCH ---
+    public MovieRepository(TmdbApi api, MovieDao movieDao) {
+        this.api = api;
+        this.movieDao = movieDao;
+        this.executorService = Executors.newFixedThreadPool(2); // Pozwala na testowanie operacji w tle
     }
 
     // --- ORYGINALNE METODY SIECIOWE (TMDB) ---
