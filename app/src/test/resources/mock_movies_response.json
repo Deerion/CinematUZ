@@ -1,0 +1,25 @@
+{
+  "page": 1,
+  "results": [
+    {
+      "id": 550,
+      "title": "Diuna",
+      "original_title": "Dune",
+      "overview": "Opis filmu Diuna...",
+      "poster_path": "/d5NXSklXoSnfasvNTvw19A9f2yv.jpg",
+      "vote_average": 8.0,
+      "media_type": "movie"
+    },
+    {
+      "id": 157336,
+      "title": "Interstellar",
+      "original_title": "Interstellar",
+      "overview": "Ziemia umiera...",
+      "poster_path": "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+      "vote_average": 8.6,
+      "media_type": "movie"
+    }
+  ],
+  "total_pages": 100,
+  "total_results": 2000
+}
