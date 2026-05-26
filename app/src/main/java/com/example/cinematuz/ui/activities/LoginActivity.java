@@ -106,11 +106,11 @@ public class LoginActivity extends AppCompatActivity {
         googleSignInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == RESULT_OK) {
-                        Intent data = result.getData();
-                        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-                        handleGoogleSignInResult(task);
-                    }
+                    Intent data = result.getData();
+                    // GoogleSignIn.getSignedInAccountFromIntent poradzi sobie nawet z nieudanym logowaniem
+                    // i poprawnie rzuci wyjątkiem ApiException, co złapie nasza metoda
+                    Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+                    handleGoogleSignInResult(task);
                 }
         );
 
@@ -127,6 +127,11 @@ public class LoginActivity extends AppCompatActivity {
 
         cvCaptchaContainer = findViewById(R.id.cvCaptchaContainer);
         cbCaptcha = findViewById(R.id.cbCaptcha);
+
+        if (cbCaptcha != null) {
+            cbCaptcha.setText(getString(R.string.captcha_checkbox_label));
+        }
+
         captchaStateManager = new CaptchaStateManager(cvCaptchaContainer, cbCaptcha, btnLogin);
 
         if (cvCaptchaContainer != null) {
@@ -134,7 +139,7 @@ public class LoginActivity extends AppCompatActivity {
                 HCaptcha.getClient(LoginActivity.this).verifyWithHCaptcha(HCAPTCHA_SITE_KEY)
                         .addOnSuccessListener(response -> {
                             captchaStateManager.onCaptchaVerified(response.getTokenResult());
-                            Toast.makeText(LoginActivity.this, "Weryfikacja udana!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, getString(R.string.toast_captcha_success), Toast.LENGTH_SHORT).show();
                         })
                         .addOnFailureListener(e -> {
                             captchaStateManager.onCaptchaReset();
@@ -152,12 +157,12 @@ public class LoginActivity extends AppCompatActivity {
                 String password = etPassword.getText().toString().trim();
 
                 if (email.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(LoginActivity.this, "Wypełnij pola!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, getString(R.string.toast_fill_fields), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 if (!captchaStateManager.hasVerifiedCaptcha()) {
-                    Toast.makeText(LoginActivity.this, "Potwierdź, że nie jesteś robotem!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, getString(R.string.toast_confirm_robot), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -194,7 +199,7 @@ public class LoginActivity extends AppCompatActivity {
                 firebaseAuthWithGoogle(account.getIdToken());
             }
         } catch (ApiException e) {
-            Toast.makeText(this, "Błąd Google: " + e.getStatusCode(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_google_error, e.getStatusCode()), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -208,7 +213,7 @@ public class LoginActivity extends AppCompatActivity {
                             checkAndCreateProfile(user);
                         }
                     } else {
-                        Toast.makeText(LoginActivity.this, "Błąd autoryzacji Firebase", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, getString(R.string.toast_firebase_auth_error), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -237,7 +242,6 @@ public class LoginActivity extends AppCompatActivity {
             tempUsername = email.split("@")[0];
         }
 
-        // Ta zmienna musi być finalna, aby lambda mogła jej użyć
         final String finalUsername = tempUsername;
 
         User newUser = new User(finalUsername, email);
@@ -245,7 +249,7 @@ public class LoginActivity extends AppCompatActivity {
         db.collection("profiles").document(firebaseUser.getUid())
                 .set(newUser)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(LoginActivity.this, "Witaj w CinematUZ, " + finalUsername + "!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, getString(R.string.toast_welcome, finalUsername), Toast.LENGTH_SHORT).show();
                     goToMainActivity();
                 })
                 .addOnFailureListener(e -> {
@@ -270,7 +274,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onFailure(Call call, IOException e) {
                 runOnUiThread(() -> {
                     if (captchaStateManager != null) captchaStateManager.onCaptchaReset();
-                    Toast.makeText(LoginActivity.this, "Błąd sieci: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, getString(R.string.toast_network_error, e.getMessage()), Toast.LENGTH_SHORT).show();
                 });
             }
 
@@ -281,7 +285,7 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     runOnUiThread(() -> {
                         if (captchaStateManager != null) captchaStateManager.onCaptchaReset();
-                        Toast.makeText(LoginActivity.this, "Weryfikacja nieudana.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, getString(R.string.toast_verification_failed), Toast.LENGTH_LONG).show();
                     });
                 }
             }
@@ -297,7 +301,7 @@ public class LoginActivity extends AppCompatActivity {
                         if (captchaStateManager != null) {
                             captchaStateManager.onSubmitFinished();
                         }
-                        Toast.makeText(LoginActivity.this, "Nieprawidłowy e-mail lub hasło.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, getString(R.string.toast_invalid_credentials), Toast.LENGTH_LONG).show();
                     }
                 });
     }

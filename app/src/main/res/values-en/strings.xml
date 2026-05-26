@@ -1,5 +1,4 @@
 <resources>
-    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com</string>
 
     <string name="app_name">CinematUZ</string>
     <string name="welcome_back">Welcome back</string>
@@ -199,6 +198,46 @@
     <string name="qr_scan_already_friend">This user is already in your list!</string>
     <string name="qr_scan_invalid">Invalid QR code</string>
     <string name="qr_scan_fetch_error">Error fetching user data</string>
-    <string name="qr_scan_prompt">Scan a friend\'s QR code</string>
     <string name="qr_saving_toast">Saving QR code...</string>
+
+    <string name="toast_captcha_success">Verification successful!</string>
+    <string name="toast_fill_fields">Please fill in all fields!</string>
+    <string name="toast_confirm_robot">Please confirm you are not a robot!</string>
+    <string name="toast_google_error">Google error: %1$d</string>
+    <string name="toast_firebase_auth_error">Firebase authorization error</string>
+    <string name="toast_welcome">Welcome to CinematUZ, %1$s!</string>
+    <string name="toast_network_error">Network error: %1$s</string>
+    <string name="toast_verification_failed">Verification failed.</string>
+    <string name="toast_invalid_credentials">Invalid email or password.</string>
+
+    <string name="captcha_checkbox_label">Confirm you are human</string>
+
+    <string name="toast_hcaptcha_error">hCaptcha error</string>
+    <string name="toast_register_success">Registered successfully!</string>
+    <string name="toast_data_save_error">Data save error: %1$s</string>
+    <string name="toast_general_error">Error: %1$s</string>
+
+    <string name="toast_movie_added">Added: %1$s</string>
+    <string name="toast_add_movie_error">Error adding movie</string>
+
+    <string name="menu_remove_from_library">Remove from library</string>
+
+    <string name="toast_scan_cancelled">Scan cancelled</string>
+    <string name="toast_scan_self_error">You cannot add yourself!</string>
+    <string name="toast_scan_already_friend">This user is already in your list!</string>
+    <string name="toast_scan_invalid">Invalid QR code</string>
+    <string name="toast_scan_fetch_error">Error fetching user data</string>
+    <string name="toast_qr_saved">QR code saved to gallery!</string>
+    <string name="toast_qr_save_error">Error saving image</string>
+    <string name="toast_already_friend_extended">This user is already in your friends list</string>
+    <string name="toast_invite_sent">Invitation sent to %1$s</string>
+    <string name="toast_accepted">Accepted!</string>
+    <string name="toast_rejected">Rejected</string>
+    <string name="toast_invite_cancelled">Invitation cancelled</string>
+    <string name="toast_permissions_required">Permissions required!</string>
+
+    <string name="qr_scan_prompt">Scan a friend's QR code</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_download">Download</string>
+    <string name="invitations_title">Invitations (%1$d)</string>
 </resources>

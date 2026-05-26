@@ -310,7 +310,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             batch.set(myPendingRef, pendingFriend);
 
             batch.commit().addOnSuccessListener(aVoid -> {
-                Toast.makeText(getContext(), "Wysłano zaproszenie do " + targetUser.getUsername() + "!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.toast_invite_sent, targetUser.getUsername()), Toast.LENGTH_SHORT).show();
             });
         });
     }
