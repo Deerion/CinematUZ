@@ -2,6 +2,7 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardCornerRadius="24dp"
@@ -34,7 +35,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:text="CinematUZ"
+                    android:text="@string/app_name"
                     android:textColor="#E50914"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -101,7 +102,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="KinoManiak_99"
+            tools:text="KinoManiak_99"
             android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold" />

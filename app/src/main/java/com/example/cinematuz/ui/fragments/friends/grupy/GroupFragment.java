@@ -87,18 +87,18 @@ public class GroupFragment extends Fragment {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.setMargins(50, 20, 50, 0);
         EditText input = new EditText(requireContext());
-        input.setHint("Nazwa grupy");
+        input.setHint(R.string.group_name_hint);
         input.setLayoutParams(params);
         container.addView(input);
 
         new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Nowa grupa")
+                .setTitle(R.string.dialog_new_group_title)
                 .setView(container)
-                .setPositiveButton("Stwórz", (dialog, which) -> {
+                .setPositiveButton(R.string.dialog_create, (dialog, which) -> {
                     String name = input.getText().toString().trim();
                     if (!TextUtils.isEmpty(name)) createGroupInFirebase(name);
                 })
-                .setNegativeButton("Anuluj", null)
+                .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
     }
 
@@ -114,12 +114,12 @@ public class GroupFragment extends Fragment {
         db.collection("groups").add(newGroup)
                 .addOnSuccessListener(ref -> {
                     if (isAdded()) {
-                        Toast.makeText(getContext(), "Stworzono grupę!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.toast_group_created, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(e -> {
                     if (isAdded()) {
-                        Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), getString(R.string.group_error_format, e.getMessage()), Toast.LENGTH_SHORT).show();
                     }
                 });
     }

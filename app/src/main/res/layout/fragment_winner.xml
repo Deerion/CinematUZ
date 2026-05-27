@@ -97,7 +97,7 @@
                     android:id="@+id/btnWinnerSeeDetails"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:text="ZOBACZ SZCZEGÓŁY"
+                    android:text="@string/winner_see_details"
                     app:cornerRadius="12dp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -106,7 +106,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="12dp"
-                    android:text="LOSUJ PONOWNIE"
+                    android:text="@string/winner_reroll"
                     app:cornerRadius="12dp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -115,7 +115,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:layout_marginTop="8dp"
-                    android:text="POWRÓT DO PROPOZYCJI"
+                    android:text="@string/winner_back_to_proposals"
                     app:cornerRadius="12dp" />
             </LinearLayout>
 

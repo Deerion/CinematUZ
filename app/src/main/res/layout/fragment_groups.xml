@@ -65,7 +65,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Stwórz nową grupę"
+                            android:text="@string/groups_create_new"
                             android:textColor="?attr/colorOnPrimary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -75,7 +75,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:alpha="0.8"
-                            android:text="Zaproś znajomych do wspólnego seansu"
+                            android:text="@string/groups_create_desc"
                             android:textColor="?attr/colorOnPrimary"
                             android:textSize="12sp" />
                     </LinearLayout>
@@ -93,7 +93,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="Moje grupy"
+                android:text="@string/groups_my_groups"
                 android:textAllCaps="true"
                 android:letterSpacing="0.05"
                 android:textColor="?attr/colorOnSurface"
@@ -113,7 +113,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="12dp"
-                android:text="Twoje oczekiwania"
+                android:text="@string/groups_my_requests"
                 android:textAllCaps="true"
                 android:letterSpacing="0.05"
                 android:textColor="?attr/colorOnSurfaceVariant"

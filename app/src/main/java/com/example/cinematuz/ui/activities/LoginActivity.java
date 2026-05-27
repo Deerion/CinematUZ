@@ -236,7 +236,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void createProfileFromEmail(FirebaseUser firebaseUser) {
         final String email = firebaseUser.getEmail();
-        String tempUsername = "User";
+        String tempUsername = getString(R.string.profile_default_user);
 
         if (email != null && email.contains("@")) {
             tempUsername = email.split("@")[0];

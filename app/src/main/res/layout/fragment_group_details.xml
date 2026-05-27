@@ -89,7 +89,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Zaproś do grupy"
+                    android:text="@string/dialog_invite_to_group"
                     android:textAllCaps="true"
                     android:letterSpacing="0.05"
                     android:textSize="12sp"
@@ -129,7 +129,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
-                                android:text="Z listy"
+                                android:text="@string/groups_invite_from_list"
                                 android:textStyle="bold"
                                 android:textSize="13sp"
                                 android:textColor="?attr/colorOnSurfaceVariant"/>
@@ -162,7 +162,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
-                                android:text="W pobliżu"
+                                android:text="@string/groups_invite_nearby"
                                 android:textStyle="bold"
                                 android:textSize="13sp"
                                 android:textColor="?attr/colorOnSurfaceVariant"/>
@@ -175,7 +175,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:text="Uczestnicy"
+                android:text="@string/groups_participants"
                 android:textAllCaps="true"
                 android:letterSpacing="0.05"
                 android:textSize="14sp"
@@ -205,7 +205,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Propozycje na wieczór"
+                    android:text="@string/groups_movie_proposals"
                     android:textAllCaps="true"
                     android:letterSpacing="0.05"
                     android:textSize="14sp"
@@ -231,7 +231,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="4dp"
-                        android:text="DODAJ"
+                        android:text="@string/btn_add"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:textColor="?attr/colorPrimary" />
@@ -254,7 +254,7 @@
         android:layout_margin="16dp"
         app:backgroundTint="@color/primary"
         android:layout_gravity="bottom|center_horizontal"
-        android:text="Zakończ głosowanie"
+        android:text="@string/groups_finish_voting"
         android:visibility="gone"
         app:icon="@drawable/ic_check_circle"
         />
