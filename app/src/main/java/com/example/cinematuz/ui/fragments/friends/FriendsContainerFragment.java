@@ -69,7 +69,7 @@ public class FriendsContainerFragment extends Fragment {
                 } else if (!requestList.isEmpty()) {
                     notificationPanel.setVisibility(View.VISIBLE);
                 } else {
-                    Toast.makeText(getContext(), "Brak powiadomień", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.no_notifications, Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -174,7 +174,7 @@ public class FriendsContainerFragment extends Fragment {
                     .update("members", FieldValue.arrayUnion(myUid))
                     .addOnSuccessListener(aVoid -> {
                         db.collection("profiles").document(myUid).collection("group_invites").document(request.getUid()).delete();
-                        if (isAdded()) Toast.makeText(getContext(), "Dołączyłeś do grupy!", Toast.LENGTH_SHORT).show();
+                        if (isAdded()) Toast.makeText(getContext(), R.string.joined_group, Toast.LENGTH_SHORT).show();
                     });
         } else {
             db.collection("profiles").document(myUid).get().addOnSuccessListener(doc -> {
@@ -191,7 +191,7 @@ public class FriendsContainerFragment extends Fragment {
                 batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()));
 
                 batch.commit().addOnSuccessListener(aVoid -> {
-                    if (isAdded()) Toast.makeText(getContext(), "Zaakceptowano!", Toast.LENGTH_SHORT).show();
+                    if (isAdded()) Toast.makeText(getContext(), R.string.action_accepted, Toast.LENGTH_SHORT).show();
                 });
             });
         }

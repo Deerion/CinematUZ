@@ -37,7 +37,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Szukanie osób w pobliżu..."
+        android:text="@string/bluetooth_searching"
         android:textColor="@android:color/white"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -47,7 +47,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Upewnij się, że inni też mają włączone\nCinematUZ"
+        android:text="@string/bluetooth_ensure_visible"
         android:textColor="#B3FFFFFF"
         android:textSize="13sp" />
 
@@ -57,7 +57,7 @@
         android:layout_marginTop="32dp"
         android:layout_marginBottom="12dp"
         android:letterSpacing="0.1"
-        android:text="ZNALEZIONE URZĄDZENIA"
+        android:text="@string/bluetooth_found_devices"
         android:textColor="@color/primary"
         android:textSize="11sp"
         android:textStyle="bold" />
@@ -77,7 +77,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="16dp"
-        android:text="Anuluj"
+        android:text="@string/dialog_cancel"
         android:textColor="#80FFFFFF"
         android:textStyle="bold" />
 </LinearLayout>

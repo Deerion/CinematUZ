@@ -50,6 +50,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         Friend friend = friendsList.get(position);
         holder.tvFriendName.setText(friend.getName());
 
+        android.content.Context context = holder.itemView.getContext();
+
         String myUid = FirebaseAuth.getInstance().getUid();
 
         // Weryfikacja czy aktualny wpis to właściciel grupy (aby pokazać gwiazdkę)
@@ -100,15 +102,15 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
 
         // Status
         if ("pending".equals(friend.getStatus())) {
-            holder.tvFriendStatus.setText("Oczekuje na akceptację...");
+            holder.tvFriendStatus.setText(context.getString(R.string.status_pending_acceptance));
             holder.tvFriendStatus.setTextColor(Color.parseColor("#F59E0B"));
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
         } else if (friend.isOnline()) {
-            holder.tvFriendStatus.setText("Aktywny teraz");
+            holder.tvFriendStatus.setText(context.getString(R.string.status_active_now));
             holder.tvFriendStatus.setTextColor(Color.parseColor("#22C55E"));
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.VISIBLE);
         } else {
-            holder.tvFriendStatus.setText("Offline");
+            holder.tvFriendStatus.setText(context.getString(R.string.status_offline));
             holder.tvFriendStatus.setTextColor(Color.GRAY);
             if (holder.vOnlineStatusDot != null) holder.vOnlineStatusDot.setVisibility(View.GONE);
         }

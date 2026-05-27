@@ -150,7 +150,7 @@ public class GroupDetailsFragment extends Fragment {
         }
 
         if (eligibleMovies.isEmpty()) {
-            Toast.makeText(getContext(), "Nikt jeszcze nie oddał głosu na żadną propozycję!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.toast_no_votes_yet, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -172,7 +172,7 @@ public class GroupDetailsFragment extends Fragment {
             // W razie remisu losujemy z tych o max liczbie głosów
             MediaItem winner = topMovies.get(new Random().nextInt(topMovies.size()));
 
-            updateGroupWinner(winner, "Głos ludu (" + maxVotes + " głosów)");
+            updateGroupWinner(winner, getString(R.string.winner_reason_votes, maxVotes));
         });
 
         // --- OPCJA: Decyzja losu ---
@@ -211,7 +211,7 @@ public class GroupDetailsFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     if (isAdded() && getContext() != null) {
-                        Toast.makeText(getContext(), "Błąd: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), getString(R.string.error_msg_format, e.getMessage()), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -220,10 +220,10 @@ public class GroupDetailsFragment extends Fragment {
     private void showRemoveMovieDialog(MediaItem movie) {
         DialogHelper.showConfirmDialog(
                 requireContext(),
-                "Usuń propozycję",
-                "Czy chcesz usunąć film \"" + movie.getTitle() + "\" z listy głosowania?",
-                "Usuń",
-                "Anuluj",
+                getString(R.string.dialog_delete_proposal_title),
+                getString(R.string.dialog_delete_proposal_msg, movie.getTitle()),
+                getString(R.string.dialog_delete),
+                getString(R.string.dialog_cancel),
                 () -> removeMovieFromGroup(movie)
         );
     }
@@ -343,15 +343,15 @@ public class GroupDetailsFragment extends Fragment {
     private void showGroupPopupMenu(View view, boolean isAdmin) {
         androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(requireContext(), view);
         if (isAdmin) {
-            popup.getMenu().add("Usuń grupę");
+            popup.getMenu().add(getString(R.string.menu_delete_group));
         } else {
-            popup.getMenu().add("Opuść grupę");
+            popup.getMenu().add(getString(R.string.menu_leave_group));
         }
 
         popup.setOnMenuItemClickListener(item -> {
-            if (item.getTitle().equals("Usuń grupę")) {
+            if (item.getTitle().equals(getString(R.string.menu_delete_group))) {
                 showDeleteGroupDialog();
-            } else if (item.getTitle().equals("Opuść grupę")) {
+            } else if (item.getTitle().equals(getString(R.string.menu_leave_group))) {
                 showLeaveGroupDialog();
             }
             return true;
@@ -362,10 +362,10 @@ public class GroupDetailsFragment extends Fragment {
     private void showDeleteGroupDialog() {
         DialogHelper.showConfirmDialog(
                 requireContext(),
-                "Usuń grupę",
-                "Czy na pewno chcesz bezpowrotnie usunąć tę grupę? Wszyscy członkowie zostaną usunięci, a propozycje filmowe przepadną.",
-                "Usuń grupę",
-                "Anuluj",
+                getString(R.string.menu_delete_group),
+                getString(R.string.dialog_delete_group_msg),
+                getString(R.string.dialog_delete),
+                getString(R.string.dialog_cancel),
                 this::deleteGroup
         );
     }
@@ -373,10 +373,10 @@ public class GroupDetailsFragment extends Fragment {
     private void showLeaveGroupDialog() {
         DialogHelper.showConfirmDialog(
                 requireContext(),
-                "Opuść grupę",
-                "Czy na pewno chcesz opuścić tę grupę? Nie będziesz już mógł brać udziału w głosowaniu.",
-                "Opuść",
-                "Anuluj",
+                getString(R.string.menu_leave_group),
+                getString(R.string.dialog_leave_group_msg),
+                getString(R.string.dialog_leave),
+                getString(R.string.dialog_cancel),
                 this::leaveGroup
         );
     }
@@ -511,10 +511,10 @@ public class GroupDetailsFragment extends Fragment {
 
         DialogHelper.showConfirmDialog(
                 requireContext(),
-                "Usuń z grupy",
-                "Czy na pewno chcesz usunąć użytkownika " + friend.getName() + " z tej grupy? Jego głosy na filmy również zostaną usunięte.",
-                "Usuń",
-                "Anuluj",
+                getString(R.string.dialog_remove_from_group_title),
+                getString(R.string.dialog_remove_from_group_msg, friend.getName()),
+                getString(R.string.dialog_delete),
+                getString(R.string.dialog_cancel),
                 () -> {
                     db.collection("groups").document(groupId).collection("movies").get()
                             .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -532,7 +532,7 @@ public class GroupDetailsFragment extends Fragment {
                                 // 3. WYŚLIJ POWIADOMIENIE DO DZWONKA
                                 java.util.Map<String, Object> notificationData = new java.util.HashMap<>();
                                 notificationData.put("type", "group_removal");
-                                notificationData.put("groupName", "Usunięto z grupy: " + tvGroupName.getText().toString());
+                                notificationData.put("groupName", getString(R.string.notification_removed_from_group, tvGroupName.getText().toString()));
 
                                 // Zapis w kolekcji 'notifications'
                                 batch.set(db.collection("profiles")
@@ -544,7 +544,7 @@ public class GroupDetailsFragment extends Fragment {
                                 // 4. Zatwierdzenie
                                 batch.commit().addOnSuccessListener(aVoid -> {
                                     if (isAdded()) {
-                                        Toast.makeText(getContext(), "Użytkownik usunięty", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), R.string.toast_user_removed, Toast.LENGTH_SHORT).show();
                                     }
                                 });
                             })
@@ -575,13 +575,13 @@ public class GroupDetailsFragment extends Fragment {
                     }
 
                     if (friends.isEmpty()) {
-                        Toast.makeText(getContext(), "Nie masz jeszcze znajomych do zaproszenia", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.toast_no_friends_to_invite, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     DialogHelper.showItemsDialog(
                             requireContext(),
-                            "Zaproś do grupy",
+                            getString(R.string.dialog_invite_to_group),
                             names.toArray(new String[0]),
                             (dialog, which) -> {
                                 Friend selectedFriend = friends.get(which);
@@ -597,10 +597,10 @@ public class GroupDetailsFragment extends Fragment {
 
                                 // WARUNKOWE WYSŁANIE ZAPROSZENIA LUB WYŚWIETLENIE KOMUNIKATU
                                 if (isAlreadyMember) {
-                                    Toast.makeText(getContext(), "Ta osoba jest już dodana w sekcji grup", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), R.string.toast_already_added_to_group_section, Toast.LENGTH_SHORT).show();
                                 } else {
                                     sendGroupInvite(selectedFriend.getId());
-                                    Toast.makeText(getContext(), "Wysłano zaproszenie do " + names.get(which), Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), getString(R.string.toast_invite_sent, names.get(which)), Toast.LENGTH_SHORT).show();
                                 }
                             }
                     );
@@ -698,11 +698,11 @@ public class GroupDetailsFragment extends Fragment {
 
             // --- WARUNKOWE WYSŁANIE ZAPROSZENIA ---
             if (isAlreadyMember) {
-                Toast.makeText(getContext(), "Ten użytkownik jest już w grupie", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.toast_user_already_in_group, Toast.LENGTH_SHORT).show();
                 return false; // Zwracamy false - przycisk NIE zmieni się na "Wysłano"
             } else {
                 sendGroupInvite(user.getUid());
-                Toast.makeText(getContext(), "Wysłano zaproszenie do grupy!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.toast_group_invite_sent, Toast.LENGTH_SHORT).show();
                 return true; // Zwracamy true - przycisk zmieni się na "Wysłano"
             }
         });

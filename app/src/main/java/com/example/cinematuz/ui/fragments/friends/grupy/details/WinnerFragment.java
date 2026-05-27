@@ -9,6 +9,8 @@ import android.widget.TextView;
 
 import android.os.Vibrator;
 import android.content.Context;
+import android.widget.Toast;
+
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -184,13 +186,13 @@ public class WinnerFragment extends Fragment {
 
     private void bindWinnerUi() {
         if (winnerMovie == null) {
-            if (tvWinnerTitle != null) tvWinnerTitle.setText("Brak danych o zwycięzcy");
-            if (tvWinnerDetails != null) tvWinnerDetails.setText("Spróbuj ponownie później");
+            if (tvWinnerTitle != null) tvWinnerTitle.setText(R.string.winner_no_data);
+            if (tvWinnerDetails != null) tvWinnerDetails.setText(R.string.winner_try_later);
             return;
         }
 
         if (tvWinnerTitle != null) {
-            tvWinnerTitle.setText(winnerMovie.getTitle() != null ? winnerMovie.getTitle() : "Brak tytułu");
+            tvWinnerTitle.setText(winnerMovie.getTitle() != null ? winnerMovie.getTitle() : getString(R.string.winner_no_title));
         }
 
         if (tvWinnerHeader != null && winnerReason != null) {
@@ -199,7 +201,7 @@ public class WinnerFragment extends Fragment {
 
         if (tvWinnerDetails != null) {
             String details = buildDetailsText(winnerMovie);
-            tvWinnerDetails.setText(!details.isEmpty() ? details : "Brak informacji");
+            tvWinnerDetails.setText(!details.isEmpty() ? details : getString(R.string.winner_no_info));
         }
 
         if (ivWinnerPoster != null && winnerMovie.getPosterPath() != null) {
@@ -283,7 +285,7 @@ public class WinnerFragment extends Fragment {
     private void proceedToShake() {
         if (eligibleMovies == null || eligibleMovies.isEmpty()) {
             if (getView() != null) {
-                android.widget.Toast.makeText(requireContext(), "Brak filmów do wylosowania!", android.widget.Toast.LENGTH_SHORT).show();
+                android.widget.Toast.makeText(getContext(), R.string.toast_no_movies_to_draw, Toast.LENGTH_SHORT).show();
             }
             return;
         }

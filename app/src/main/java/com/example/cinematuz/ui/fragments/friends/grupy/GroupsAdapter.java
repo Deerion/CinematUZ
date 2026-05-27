@@ -50,7 +50,7 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
 
         List<String> members = group.getMembers();
         int membersSize = members != null ? members.size() : 0;
-        holder.tvCount.setText(membersSize + " członków");
+        holder.tvCount.setText(holder.itemView.getContext().getString(R.string.group_members_format, membersSize));
 
         // Ustawienie kliknięcia na całą kartę grupy
         holder.itemView.setOnClickListener(v -> {

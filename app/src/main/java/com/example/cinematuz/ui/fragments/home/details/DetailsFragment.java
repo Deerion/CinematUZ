@@ -84,10 +84,6 @@ public class DetailsFragment extends Fragment {
                 viewModel.toggleLibraryStatus(mediaItem, true); // true = Obejrzane
             }
         });
-
-        binding.cardFavorite.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "Ulubione: do wdrożenia w kolejnym kroku", Toast.LENGTH_SHORT).show();
-        });
     }
 
     private void setupObservers() {
