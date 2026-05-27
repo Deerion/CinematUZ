@@ -136,10 +136,11 @@ public class LibraryFragment extends Fragment {
 
         adapter.setOnItemLongClickListener((item, anchorView) -> {
             PopupMenu popup = new PopupMenu(requireContext(), anchorView);
-            popup.getMenu().add("Usuń z biblioteki");
+            popup.getMenu().add(getString(R.string.menu_remove_from_library));
+            // popup.getMenu().add("Dodaj do ulubionych"); // Miejsce na krok 3.
 
             popup.setOnMenuItemClickListener(menuItem -> {
-                if (menuItem.getTitle().equals("Usuń z biblioteki")) {
+                if (item.getTitle().equals(getString(R.string.menu_remove_from_library))) {
                     viewModel.removeFromLibrary(item);
                     return true;
                 }

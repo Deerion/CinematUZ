@@ -92,8 +92,8 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
     private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(),
             result -> {
                 if(result.getContents() == null) {
-                    Toast.makeText(getContext(), "Anulowano skanowanie", Toast.LENGTH_LONG).show();
-                } else {
+                    Toast.makeText(getContext(), R.string.qr_scan_cancelled, Toast.LENGTH_LONG).show();}
+                else {
                     processScannedUid(result.getContents());
                 }
             });
@@ -159,7 +159,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
      */
     private void startQrScanner() {
         ScanOptions options = new ScanOptions();
-        options.setPrompt("Zeskanuj kod QR znajomego");
+        options.setPrompt(getString(R.string.qr_scan_prompt));
         options.setBeepEnabled(true);
         options.setOrientationLocked(false);
         options.setCaptureActivity(com.journeyapps.barcodescanner.CaptureActivity.class);
@@ -176,13 +176,13 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         String myUid = mAuth.getCurrentUser().getUid();
 
         if (uid.equals(myUid)) {
-            Toast.makeText(getContext(), "Nie możesz dodać samego siebie!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.friend_add_self_error, Toast.LENGTH_SHORT).show();
             return;
         }
 
         for (Friend f : friendsList) {
             if (f.getId().equals(uid)) {
-                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.friend_already_on_list, Toast.LENGTH_SHORT).show();
                 return;
             }
         }
@@ -196,10 +196,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                 );
                 sendFriendRequest(scannedUser);
             } else {
-                Toast.makeText(getContext(), "Nieprawidłowy kod QR", Toast.LENGTH_SHORT).show();
-            }
+                Toast.makeText(getContext(), R.string.qr_invalid, Toast.LENGTH_SHORT).show();            }
         }).addOnFailureListener(e -> {
-            Toast.makeText(getContext(), "Błąd podczas pobierania danych użytkownika", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.user_data_fetch_error, Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -233,8 +232,8 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         MaterialAlertDialogBuilder dialogBuilder = new MaterialAlertDialogBuilder(requireContext())
                 .setView(sheetView)
-                .setPositiveButton("Zamknij", null)
-                .setNeutralButton("Pobierz", (dialog, which) -> {
+                .setPositiveButton(R.string.dialog_close, null)
+                .setNeutralButton(R.string.dialog_download, (dialog, which) -> {
                     if (finalQrBitmap != null) {
                         saveBitmapToGallery(finalQrBitmap);
                     }
@@ -278,11 +277,11 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
             if (fos != null) {
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                Toast.makeText(getContext(), "Zapisano kod QR w galerii!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.qr_saved_to_gallery, Toast.LENGTH_SHORT).show();
             }
         } catch (IOException e) {
             Log.e(TAG, "Błąd zapisu obrazu", e);
-            Toast.makeText(getContext(), "Błąd zapisu obrazu", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.image_save_error, Toast.LENGTH_SHORT).show();
         } finally {
             try {
                 if (fos != null) fos.close();
@@ -303,8 +302,8 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         for (Friend friend : friendsList) {
             if (friend.getId().equals(targetUser.getUid())) {
-                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście znajomych", Toast.LENGTH_SHORT).show();
-                return;
+                Toast.makeText(getContext(), R.string.friend_already_added, Toast.LENGTH_SHORT).show();
+                return; // Przerywamy działanie, nie wysyłamy do Firebase
             }
         }
 
@@ -336,7 +335,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             batch.set(myPendingRef, pendingFriend);
 
             batch.commit().addOnSuccessListener(aVoid -> {
-                Toast.makeText(getContext(), "Wysłano zaproszenie do " + targetUser.getUsername() + "!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.toast_invite_sent, targetUser.getUsername()), Toast.LENGTH_SHORT).show();
             });
         });
     }
@@ -428,8 +427,8 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             }
 
             if (isAlreadyFriend) {
-                Toast.makeText(getContext(), "Ten użytkownik jest już na Twojej liście znajomych", Toast.LENGTH_SHORT).show();
-                return false;
+                Toast.makeText(getContext(), R.string.friend_already_added, Toast.LENGTH_SHORT).show();
+                return false; // Zwracamy false - przycisk NIE zmieni się na "Wysłano"
             } else {
                 sendFriendRequest(user);
                 return true;
@@ -549,7 +548,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         if (tvInvitationsTitle != null) {
             tvInvitationsTitle.setVisibility(hasRequests ? View.VISIBLE : View.GONE);
-            tvInvitationsTitle.setText("Zaproszenia (" + pendingRequests.size() + ")");
+            tvInvitationsTitle.setText(getString(R.string.invitations_title_format, pendingRequests.size()));
         }
 
         if (rvFriendRequests != null) {
@@ -630,7 +629,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
             batch.delete(db.collection("profiles").document(request.getUid()).collection("friend_requests").document(myUid));
 
-            batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Zaakceptowano!", Toast.LENGTH_SHORT).show());
+            batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), R.string.friend_request_accepted, Toast.LENGTH_SHORT).show());
         });
     }
 
@@ -646,7 +645,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         WriteBatch batch = db.batch();
         batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()));
         batch.delete(db.collection("profiles").document(request.getUid()).collection("friends").document(myUid));
-        batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Odrzucono", Toast.LENGTH_SHORT).show());
+        batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), R.string.friend_request_declined, Toast.LENGTH_SHORT).show());
     }
 
     /**
@@ -685,7 +684,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         WriteBatch batch = db.batch();
         batch.delete(db.collection("profiles").document(myUid).collection("friends").document(friend.getId()));
         batch.delete(db.collection("profiles").document(friend.getId()).collection("friend_requests").document(myUid));
-        batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Anulowano zaproszenie", Toast.LENGTH_SHORT).show());
+        batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), R.string.friend_request_cancelled, Toast.LENGTH_SHORT).show());
     }
 
     /**
@@ -700,7 +699,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             if (allGranted) {
                 startBluetoothSearch();
             } else {
-                Toast.makeText(getContext(), "Wymagane uprawnienia!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.permissions_required, Toast.LENGTH_SHORT).show();
             }
         }
     }

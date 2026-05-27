@@ -1,5 +1,4 @@
 <resources>
-    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com</string>
 
     <string name="app_name">CinematUZ</string>
     <string name="welcome_back">Welcome back</string>
@@ -199,6 +198,173 @@
     <string name="qr_scan_already_friend">This user is already in your list!</string>
     <string name="qr_scan_invalid">Invalid QR code</string>
     <string name="qr_scan_fetch_error">Error fetching user data</string>
-    <string name="qr_scan_prompt">Scan a friend\'s QR code</string>
     <string name="qr_saving_toast">Saving QR code...</string>
+
+    <string name="toast_captcha_success">Verification successful!</string>
+    <string name="toast_fill_fields">Please fill in all fields!</string>
+    <string name="toast_confirm_robot">Please confirm you are not a robot!</string>
+    <string name="toast_google_error">Google error: %1$d</string>
+    <string name="toast_firebase_auth_error">Firebase authorization error</string>
+    <string name="toast_welcome">Welcome to CinematUZ, %1$s!</string>
+    <string name="toast_network_error">Network error: %1$s</string>
+    <string name="toast_verification_failed">Verification failed.</string>
+    <string name="toast_invalid_credentials">Invalid email or password.</string>
+
+    <string name="captcha_checkbox_label">Confirm you are human</string>
+
+    <string name="toast_hcaptcha_error">hCaptcha error</string>
+    <string name="toast_register_success">Registered successfully!</string>
+    <string name="toast_data_save_error">Data save error: %1$s</string>
+    <string name="toast_general_error">Error: %1$s</string>
+
+    <string name="toast_movie_added">Added: %1$s</string>
+    <string name="toast_add_movie_error">Error adding movie</string>
+
+    <string name="menu_remove_from_library">Remove from library</string>
+
+    <string name="toast_scan_cancelled">Scan cancelled</string>
+    <string name="toast_scan_self_error">You cannot add yourself!</string>
+    <string name="toast_scan_already_friend">This user is already in your list!</string>
+    <string name="toast_scan_invalid">Invalid QR code</string>
+    <string name="toast_scan_fetch_error">Error fetching user data</string>
+    <string name="toast_qr_saved">QR code saved to gallery!</string>
+    <string name="toast_qr_save_error">Error saving image</string>
+    <string name="toast_already_friend_extended">This user is already in your friends list</string>
+    <string name="toast_invite_sent">Invitation sent to %1$s</string>
+    <string name="toast_accepted">Accepted!</string>
+    <string name="toast_rejected">Rejected</string>
+    <string name="toast_invite_cancelled">Invitation cancelled</string>
+    <string name="toast_permissions_required">Permissions required!</string>
+
+    <string name="qr_scan_prompt">Scan a friend\'s QR code</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_download">Download</string>
+    <string name="invitations_title">Invitations (%1$d)</string>
+
+    <string name="qr_scan_cancelled">Scan cancelled</string>
+    <string name="friend_add_self_error">You cannot add yourself!</string>
+    <string name="friend_already_on_list">This user is already on your list!</string>
+    <string name="qr_invalid">Invalid QR code</string>
+    <string name="user_data_fetch_error">Error fetching user data</string>
+    <string name="qr_saved_to_gallery">QR code saved to gallery!</string>
+    <string name="image_save_error">Error saving image</string>
+    <string name="friend_already_added">This user is already on your friends list</string>
+    <string name="friend_request_accepted">Accepted!</string>
+    <string name="friend_request_declined">Declined</string>
+    <string name="friend_request_cancelled">Request cancelled</string>
+    <string name="permissions_required">Permissions required!</string>
+    <string name="dialog_close">Close</string>
+    <string name="dialog_download">Download</string>
+    <string name="invitations_title_format">Invitations (%1$d)</string>
+
+    <string name="no_notifications">No notifications</string>
+    <string name="joined_group">You joined the group!</string>
+    <string name="action_accepted">Accepted!</string>
+
+    <string name="friend_added">Friend added!</string>
+
+    <string name="group_name_hint">Group name</string>
+    <string name="dialog_new_group_title">New group</string>
+    <string name="dialog_create">Create</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="toast_group_created">Group created!</string>
+    <string name="group_error_format">Error: %1$s</string>
+
+    <string name="dialog_new_group_desc">Enter a name for your new movie group.</string>
+    <string name="error_name_empty">Name cannot be empty</string>
+    <string name="toast_group_created_alt">Group created!</string>
+    <string name="error_creating_group">Error creating group</string>
+
+    <string name="menu_delete_group">Delete group</string>
+    <string name="menu_leave_group">Leave group</string>
+
+    <string name="dialog_delete_proposal_title">Delete proposal</string>
+    <string name="dialog_delete_proposal_msg">Do you want to remove the movie \"%1$s\" from the voting list?</string>
+    <string name="dialog_delete">Delete</string>
+    <string name="dialog_delete_group_msg">Are you sure you want to permanently delete this group? All members will be removed and movie proposals will be lost.</string>
+
+    <string name="dialog_leave_group_msg">Are you sure you want to leave this group? You will no longer be able to participate in voting.</string>
+    <string name="dialog_leave">Leave</string>
+
+    <string name="dialog_remove_from_group_title">Remove from group</string>
+    <string name="dialog_remove_from_group_msg">Are you sure you want to remove user %1$s from the group?</string>
+
+    <string name="dialog_invite_to_group">Invite to group</string>
+
+    <string name="notification_removed_from_group">Removed from group: %1$s</string>
+
+    <string name="toast_no_votes_yet">No one has voted for any proposal yet!</string>
+    <string name="error_msg_format">Error: %1$s</string>
+    <string name="toast_user_removed">User removed</string>
+    <string name="toast_no_friends_to_invite">You don\'t have any friends to invite yet</string>
+    <string name="toast_already_added_to_group_section">This person is already added in the groups section</string>
+    <string name="toast_user_already_in_group">This user is already in the group</string>
+    <string name="toast_group_invite_sent">Group invitation sent!</string>
+
+    <string name="winner_reason_votes">Voice of the people (%1$d votes)</string>
+
+    <string name="shake_2_more">2 more times...</string>
+    <string name="shake_1_more">1 more time!</string>
+    <string name="shake_prompt">Shake your phone 3 times</string>
+    <string name="winner_reason_random">Fate\'s decision</string>
+
+    <string name="winner_no_data">No winner data</string>
+    <string name="winner_no_title">No title</string>
+    <string name="winner_try_later">Please try again later</string>
+    <string name="winner_no_info">No information</string>
+    <string name="toast_no_movies_to_draw">No movies to draw!</string>
+
+    <string name="status_pending_acceptance">Pending acceptance…</string>
+    <string name="status_active_now">Active now</string>
+    <string name="status_offline">Offline</string>
+
+    <string name="group_members_format">%1$d members</string>
+
+    <string name="profile_default_user">User</string>
+    <string name="profile_default_email">No email</string>
+
+    <string name="notifications_pending">Pending invitations</string>
+    <string name="notifications_all_done">All caught up!</string>
+    <string name="notifications_empty">No new invitations</string>
+    <string name="notifications_new_invites">New invitations</string>
+
+    <string name="groups_create_new">Create new group</string>
+    <string name="groups_create_desc">Invite friends for a movie night</string>
+    <string name="groups_my_groups">My groups</string>
+    <string name="groups_my_requests">Pending requests</string>
+
+    <string name="groups_invite_from_list">From list</string>
+    <string name="groups_invite_nearby">Nearby</string>
+    <string name="groups_participants">Members</string>
+    <string name="groups_movie_proposals">Movie proposals</string>
+    <string name="btn_add">ADD</string>
+    <string name="groups_finish_voting">Finish voting</string>
+
+    <string name="library_sort_title">Sort library</string>
+    <string name="library_sort_newest">Recently added</string>
+    <string name="library_sort_rating">Highest rated</string>
+    <string name="library_sort_alpha">Alphabetical (A-Z)</string>
+
+    <string name="voting_decision_title">Final decision</string>
+    <string name="voting_decision_popular_title">Voice of the people</string>
+    <string name="voting_decision_popular_desc">Selects the movie with the most group votes.</string>
+    <string name="voting_decision_random_title">Fate\'s decision</string>
+    <string name="voting_decision_random_desc">Shake your phone to draw a random movie.</string>
+
+    <string name="bluetooth_searching">Searching for people nearby...</string>
+    <string name="bluetooth_ensure_visible">Make sure others also have\nCinematUZ open</string>
+    <string name="bluetooth_found_devices">DEVICES FOUND</string>
+
+    <string name="shake_title">Fate will decide!</string>
+
+    <string name="winner_see_details">SEE DETAILS</string>
+    <string name="winner_reroll">REROLL</string>
+    <string name="winner_back_to_proposals">BACK TO PROPOSALS</string>
+
+    <plurals name="group_movie_votes">
+        <item quantity="one">%d vote</item>
+        <item quantity="other">%d votes</item>
+    </plurals>
+
+
 </resources>

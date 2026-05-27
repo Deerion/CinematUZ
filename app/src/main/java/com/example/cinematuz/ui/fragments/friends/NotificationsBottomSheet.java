@@ -76,7 +76,7 @@ public class NotificationsBottomSheet extends BottomSheetDialogFragment {
             batch.set(db.collection("profiles").document(myUid).collection("friends").document(req.getUid()),
                     new Friend(req.getUid(), req.getUsername(), req.getAvatarUrl(), true));
             batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(req.getUid()));
-            batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), "Dodano znajomego!", Toast.LENGTH_SHORT).show());
+            batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), R.string.friend_added, Toast.LENGTH_SHORT).show());
         });
     }
 

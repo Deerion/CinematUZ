@@ -18,7 +18,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
-        android:text="Wybór ostateczny"
+        android:text="@string/voting_decision_title"
         android:textColor="?attr/colorOnSurface"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -66,7 +66,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Głos ludu"
+                    android:text="@string/voting_decision_popular_title"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -75,7 +75,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="Wybiera film z największą liczbą głosów grupy."
+                    android:text="@string/voting_decision_popular_desc"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -125,7 +125,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Decyzja losu"
+                    android:text="@string/voting_decision_random_title"
                     android:textColor="?attr/colorOnPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -135,7 +135,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:alpha="0.9"
-                    android:text="Potrząśnij telefonem, aby wylosować film."
+                    android:text="@string/voting_decision_random_desc"
                     android:textColor="?attr/colorOnPrimary"
                     android:textSize="12sp" />
             </LinearLayout>

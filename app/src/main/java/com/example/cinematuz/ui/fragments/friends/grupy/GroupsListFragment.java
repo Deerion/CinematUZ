@@ -170,16 +170,16 @@ public class GroupsListFragment extends Fragment {
     private void showCreateGroupDialog() {
         DialogHelper.showInputDialog(
                 requireContext(),
-                "Nowa grupa",
-                "Wprowadź nazwę dla swojej nowej grupy filmowej.",
-                "Nazwa grupy",
-                "Stwórz",
-                "Anuluj",
+                getString(R.string.dialog_new_group_title),
+                getString(R.string.dialog_new_group_desc),
+                getString(R.string.group_name_hint),
+                getString(R.string.dialog_create),
+                getString(R.string.dialog_cancel),
                 name -> {
                     if (!TextUtils.isEmpty(name)) {
                         createGroupInFirebase(name);
                     } else {
-                        Toast.makeText(getContext(), "Nazwa nie może być pusta", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.error_name_empty, Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -197,7 +197,7 @@ public class GroupsListFragment extends Fragment {
 
         Group newGroup = new Group(groupName, myUid, members);
         db.collection("groups").add(newGroup)
-                .addOnSuccessListener(docRef -> Toast.makeText(getContext(), "Utworzono grupę!", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Błąd tworzenia grupy", Toast.LENGTH_SHORT).show());
+                .addOnSuccessListener(docRef -> Toast.makeText(getContext(), R.string.toast_group_created_alt, Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.error_creating_group, Toast.LENGTH_SHORT).show());
     }
 }

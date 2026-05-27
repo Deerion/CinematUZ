@@ -97,7 +97,7 @@ public class RegisterActivity extends AppCompatActivity {
                         })
                         .addOnFailureListener(e -> {
                             captchaStateManager.onCaptchaReset();
-                            Toast.makeText(RegisterActivity.this, "Błąd hCaptcha", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RegisterActivity.this, getString(R.string.toast_data_save_error, e.getMessage()), Toast.LENGTH_LONG).show();
                         });
             });
         }
@@ -108,13 +108,13 @@ public class RegisterActivity extends AppCompatActivity {
                 String email = etEmail.getText().toString().trim();
                 String password = etPassword.getText().toString().trim();
 
-                if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(RegisterActivity.this, "Wypełnij pola!", Toast.LENGTH_SHORT).show();
+                if (email.isEmpty() || password.isEmpty() || name.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, getString(R.string.toast_fill_fields), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 if (!captchaStateManager.hasVerifiedCaptcha()) {
-                    Toast.makeText(RegisterActivity.this, "Potwierdź, że nie jesteś robotem!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, getString(R.string.toast_confirm_robot), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -159,8 +159,8 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call call, IOException e) {
                 runOnUiThread(() -> {
-                    resetCaptchaState();
-                    Toast.makeText(RegisterActivity.this, "Błąd sieci", Toast.LENGTH_SHORT).show();
+                    captchaStateManager.onCaptchaReset();
+                    Toast.makeText(RegisterActivity.this, getString(R.string.toast_network_error), Toast.LENGTH_SHORT).show();
                 });
             }
 
@@ -170,8 +170,8 @@ public class RegisterActivity extends AppCompatActivity {
                     runOnUiThread(() -> performFirebaseRegistration(name, email, password));
                 } else {
                     runOnUiThread(() -> {
-                        resetCaptchaState();
-                        Toast.makeText(RegisterActivity.this, "Weryfikacja nieudana. Spróbuj ponownie.", Toast.LENGTH_LONG).show();
+                        captchaStateManager.onCaptchaReset();
+                        Toast.makeText(RegisterActivity.this, getString(R.string.toast_verification_failed), Toast.LENGTH_LONG).show();
                     });
                 }
             }
@@ -198,20 +198,26 @@ public class RegisterActivity extends AppCompatActivity {
                             db.collection("profiles").document(firebaseUser.getUid())
                                     .set(newUser)
                                     .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(RegisterActivity.this, "Zarejestrowano pomyślnie!", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(RegisterActivity.this, getString(R.string.toast_register_success), Toast.LENGTH_SHORT).show();
                                         startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                                         finish();
                                     })
                                     .addOnFailureListener(e -> {
                                         resetCaptchaState();
-                                        Toast.makeText(RegisterActivity.this, "Błąd zapisu danych: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                        Toast.makeText(RegisterActivity.this, getString(R.string.toast_general_error, task.getException().getMessage()), Toast.LENGTH_LONG).show();
                                     });
                         }
                     } else {
+                        // Wewnątrz bloku else po task.isSuccessful()
                         if (captchaStateManager != null) {
                             captchaStateManager.onSubmitFinished();
                         }
-                        Toast.makeText(RegisterActivity.this, "Błąd: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+
+// Pobieramy wyjątek, jeśli istnieje, aby przekazać jego treść do stringa
+                        String errorMessage = (task.getException() != null) ? task.getException().getMessage() : "Unknown error";
+
+// Podmieniamy na getString z parametrem
+                        Toast.makeText(RegisterActivity.this, getString(R.string.toast_general_error, errorMessage), Toast.LENGTH_LONG).show();
                     }
                 });
     }

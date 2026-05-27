@@ -174,10 +174,10 @@ public class SearchFragment extends Fragment {
                 .collection("movies").document(String.valueOf(movie.getId()))
                 .set(movieData)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(getContext(), "Dodano: " + movie.getTitle(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.toast_movie_added, movie.getTitle()), Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Błąd dodawania filmu", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.toast_add_movie_error), Toast.LENGTH_SHORT).show();
                 });
     }
 

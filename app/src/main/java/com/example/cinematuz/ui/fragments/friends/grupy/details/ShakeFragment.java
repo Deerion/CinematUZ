@@ -95,8 +95,8 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
                 vibratePhone();
 
                 if (tvShakeSubtitle != null) {
-                    if (shakeCount == 1) tvShakeSubtitle.setText("Jeszcze 2 razy...");
-                    else if (shakeCount == 2) tvShakeSubtitle.setText("Jeszcze 1 raz!");
+                    if (shakeCount == 1) tvShakeSubtitle.setText(R.string.shake_2_more);
+                    else if (shakeCount == 2) tvShakeSubtitle.setText(R.string.shake_1_more);
                     else if (shakeCount >= 3) finishShakeAndNavigate();
                 }
             }
@@ -131,7 +131,7 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
             if (groupId != null) {
                 com.google.firebase.firestore.FirebaseFirestore.getInstance()
                         .collection("groups").document(groupId)
-                        .update("winnerId", String.valueOf(winner.getId()), "winnerReason", "Decyzja losu")
+                        .update("winnerId", String.valueOf(winner.getId()), "winnerReason", getString(R.string.winner_reason_random))
                         .addOnCompleteListener(task -> {
                             navigateToWinnerLocal(winner);
                         });
@@ -171,7 +171,7 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
     public void onResume() {
         super.onResume();
         shakeCount = 0;
-        if (tvShakeSubtitle != null) tvShakeSubtitle.setText("Potrząśnij telefonem 3 razy");
+        if (tvShakeSubtitle != null) tvShakeSubtitle.setText(R.string.shake_prompt);
         if (sensorManager != null && accelerometer != null) {
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
         }

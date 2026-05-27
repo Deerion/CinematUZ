@@ -301,8 +301,9 @@ public class ProfileFragment extends Fragment {
      * @param user Obiekt profilu użytkownika.
      */
     private void updateUI(User user) {
-        profileName.setText(user.getUsername() != null ? user.getUsername() : "User");
-        profileUsername.setText(user.getEmail() != null ? user.getEmail() : "No email");
+        // Korzystamy z modelu User zamiast document.getString(...)
+        profileName.setText(user.getUsername() != null ? user.getUsername() : getString(R.string.profile_default_user));
+        profileUsername.setText(user.getEmail() != null ? user.getEmail() : getString(R.string.profile_default_email));
 
         if (user.getAvatar_url() != null && !user.getAvatar_url().isEmpty()) {
             Glide.with(this)

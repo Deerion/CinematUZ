@@ -33,7 +33,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Oczekujące zaproszenia"
+            android:text="@string/notifications_pending"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"/>
@@ -66,7 +66,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Wszystko gotowe!"
+            android:text="@string/notifications_all_done"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorSecondary"/>
@@ -74,7 +74,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Brak nowych zaproszeń"
+            android:text="@string/notifications_empty"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorHint"/>
     </LinearLayout>

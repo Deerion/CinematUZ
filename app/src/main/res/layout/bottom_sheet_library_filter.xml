@@ -7,7 +7,7 @@
     android:background="@drawable/bg_switch_container"> <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="Sortuj bibliotekę"
+    android:text="@string/library_sort_title"
     android:textSize="20sp"
     android:textStyle="bold"
     android:textColor="?attr/colorOnSurface"
@@ -22,7 +22,7 @@
             android:id="@+id/radio_sort_newest"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ostatnio dodane"
+            android:text="@string/library_sort_newest"
             android:paddingVertical="12dp"
             android:checked="true"/>
 
@@ -31,14 +31,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingVertical="12dp"
-            android:text="Najwyżej oceniane"/>
+            android:text="@string/library_sort_rating"/>
 
         <RadioButton
             android:id="@+id/radio_sort_alpha"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingVertical="12dp"
-            android:text="Alfabetycznie (A-Z)"/>
+            android:text="@string/library_sort_alpha"/>
     </RadioGroup>
 
 </LinearLayout>
