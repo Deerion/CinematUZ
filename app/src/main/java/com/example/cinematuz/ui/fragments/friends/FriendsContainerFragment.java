@@ -31,6 +31,11 @@ import com.google.firebase.firestore.WriteBatch;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment kontenerowy dla sekcji społecznościowej.
+ * Zarządza przełączaniem między listą znajomych a grupami oraz obsługuje powiadomienia
+ * o zaproszeniach i usunięciach.
+ */
 public class FriendsContainerFragment extends Fragment {
 
     private ImageButton btnHomeNotifications;
@@ -42,11 +47,14 @@ public class FriendsContainerFragment extends Fragment {
     private List<FriendRequest> requestList = new ArrayList<>();
     private List<FriendRequest> friendReqs = new ArrayList<>();
     private List<FriendRequest> groupReqs = new ArrayList<>();
-    private List<FriendRequest> removalReqs = new ArrayList<>(); // DODANE: Lista powiadomień o usunięciu
+    private List<FriendRequest> removalReqs = new ArrayList<>();
 
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
 
+    /**
+     * Inicjalizuje widok fragmentu, Firebase oraz komponenty UI powiadomień.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -84,6 +92,9 @@ public class FriendsContainerFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Konfiguruje RecyclerView dla listy powiadomień.
+     */
     private void setupRecyclerView() {
         requestAdapter = new RequestAdapter(requestList, new RequestAdapter.OnRequestActionListener() {
             @Override
@@ -95,11 +106,14 @@ public class FriendsContainerFragment extends Fragment {
         rvNotifications.setAdapter(requestAdapter);
     }
 
+    /**
+     * Uruchamia nasłuchiwanie w czasie rzeczywistym na zaproszenia do znajomych,
+     * zaproszenia do grup oraz powiadomienia o usunięciu z grup w Firestore.
+     */
     private void listenForFriendRequests() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getUid();
 
-        // 1. Nasłuchujemy zaproszeń do znajomych
         db.collection("profiles").document(myUid).collection("friend_requests")
                 .addSnapshotListener((value, error) -> {
                     if (value != null && isAdded()) {
@@ -111,7 +125,6 @@ public class FriendsContainerFragment extends Fragment {
                     }
                 });
 
-        // 2. Nasłuchujemy zaproszeń do grupy
         db.collection("profiles").document(myUid).collection("group_invites")
                 .addSnapshotListener((value, error) -> {
                     if (value != null && isAdded()) {
@@ -123,14 +136,12 @@ public class FriendsContainerFragment extends Fragment {
                     }
                 });
 
-        // 3. DODANE: Nasłuchujemy ogólnych powiadomień (np. o usunięciu z grupy)
         db.collection("profiles").document(myUid).collection("notifications")
                 .addSnapshotListener((value, error) -> {
                     if (value != null && isAdded()) {
                         removalReqs.clear();
                         for (QueryDocumentSnapshot doc : value) {
                             if ("group_removal".equals(doc.getString("type"))) {
-                                // Używamy modelu FriendRequest dla wygody - "groupName" trafia pod username
                                 removalReqs.add(new FriendRequest(doc.getId(), doc.getString("groupName"), null, "group_removal"));
                             }
                         }
@@ -139,11 +150,14 @@ public class FriendsContainerFragment extends Fragment {
                 });
     }
 
+    /**
+     * Łączy wszystkie typy powiadomień w jedną listę i aktualizuje widok licznika (badge).
+     */
     private void updateCombinedNotifications() {
         requestList.clear();
         requestList.addAll(friendReqs);
         requestList.addAll(groupReqs);
-        requestList.addAll(removalReqs); // DODANE: złączamy listy
+        requestList.addAll(removalReqs);
         requestAdapter.notifyDataSetChanged();
 
         int count = requestList.size();
@@ -163,10 +177,14 @@ public class FriendsContainerFragment extends Fragment {
         }
     }
 
+    /**
+     * Akceptuje wybrane zaproszenie (do znajomych lub grupy).
+     * 
+     * @param request Obiekt zaproszenia do zaakceptowania.
+     */
     private void acceptRequest(FriendRequest request) {
         String myUid = mAuth.getUid();
 
-        // Jeśli to group_removal to przycisk jest schowany, ale dla bezpieczeństwa
         if ("group_removal".equals(request.getType())) return;
 
         if ("group".equals(request.getType())) {
@@ -197,6 +215,11 @@ public class FriendsContainerFragment extends Fragment {
         }
     }
 
+    /**
+     * Odrzuca zaproszenie lub usuwa powiadomienie.
+     * 
+     * @param request Obiekt powiadomienia do odrzucenia/usunięcia.
+     */
     private void declineRequest(FriendRequest request) {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getUid();
@@ -204,13 +227,17 @@ public class FriendsContainerFragment extends Fragment {
         if ("group".equals(request.getType())) {
             db.collection("profiles").document(myUid).collection("group_invites").document(request.getUid()).delete();
         } else if ("group_removal".equals(request.getType())) {
-            // DODANE: Użytkownik zamyka powiadomienie (X) - usuwamy je z bazy
             db.collection("profiles").document(myUid).collection("notifications").document(request.getUid()).delete();
         } else {
             db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()).delete();
         }
     }
 
+    /**
+     * Konfiguruje przełącznik między zakładką znajomych a grupami.
+     * 
+     * @param view Główny widok fragmentu.
+     */
     private void setupToggleGroup(View view) {
         MaterialButtonToggleGroup toggleGroup = view.findViewById(R.id.toggleGroupFriends);
         toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
@@ -224,6 +251,11 @@ public class FriendsContainerFragment extends Fragment {
         });
     }
 
+    /**
+     * Podmienia fragment w kontenerze podrzędnym.
+     * 
+     * @param fragment Nowy fragment do wyświetlenia.
+     */
     private void replaceFragment(Fragment fragment) {
         getChildFragmentManager().beginTransaction()
                 .replace(R.id.child_fragment_container, fragment)

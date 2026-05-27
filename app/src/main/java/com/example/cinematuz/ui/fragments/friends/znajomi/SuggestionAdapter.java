@@ -16,20 +16,42 @@ import com.example.cinematuz.data.models.SearchResultUser;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Adapter dla listy sugestii użytkowników podczas wyszukiwania nowych znajomych.
+ * Odpowiada za wyświetlanie miniatur profilowych oraz nazw użytkowników pasujących do zapytania.
+ */
 public class SuggestionAdapter extends RecyclerView.Adapter<SuggestionAdapter.SuggestionViewHolder> {
 
+    /**
+     * Interfejs obsługujący kliknięcie w zasugerowanego użytkownika.
+     */
     public interface OnSuggestionClickListener {
+        /**
+         * Wywoływane po kliknięciu w element sugestii.
+         * @param user Obiekt wybranego użytkownika.
+         */
         void onSuggestionClick(SearchResultUser user);
     }
 
     private final List<SearchResultUser> items = new ArrayList<>();
     private final OnSuggestionClickListener listener;
 
+    /**
+     * Tworzy nową instancję adaptera sugestii.
+     * 
+     * @param initialItems Początkowa lista sugestii.
+     * @param listener Listener kliknięć.
+     */
     public SuggestionAdapter(List<SearchResultUser> initialItems, OnSuggestionClickListener listener) {
         items.addAll(initialItems);
         this.listener = listener;
     }
 
+    /**
+     * Aktualizuje listę sugestii i odświeża widok.
+     * 
+     * @param newItems Nowa lista wyników wyszukiwania.
+     */
     public void submitList(List<SearchResultUser> newItems) {
         items.clear();
         items.addAll(newItems);
@@ -43,25 +65,26 @@ public class SuggestionAdapter extends RecyclerView.Adapter<SuggestionAdapter.Su
         return new SuggestionViewHolder(view);
     }
 
+    /**
+     * Wiąże dane użytkownika z widokiem sugestii. 
+     * Ładuje i zaokrągla awatar użytkownika za pomocą biblioteki Glide.
+     */
     @Override
     public void onBindViewHolder(@NonNull SuggestionViewHolder holder, int position) {
         SearchResultUser user = items.get(position);
         holder.tvName.setText(user.getUsername());
 
-        // --- Ładowanie awatara z zaokrągleniem za pomocą Glide ---
         if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
             Glide.with(holder.itemView.getContext())
                     .load(user.getAvatarUrl())
-                    .circleCrop() // To zamienia kwadrat w ładne kółko!
+                    .circleCrop()
                     .into(holder.ivAvatar);
         } else {
-            // Domyślna ikonka, jeśli użytkownik nie ma własnego zdjęcia
             Glide.with(holder.itemView.getContext())
                     .load(R.drawable.ic_person)
                     .circleCrop()
                     .into(holder.ivAvatar);
         }
-        // ----------------------------------------------------------------
 
         holder.itemView.setOnClickListener(v -> listener.onSuggestionClick(user));
     }
@@ -71,14 +94,16 @@ public class SuggestionAdapter extends RecyclerView.Adapter<SuggestionAdapter.Su
         return items.size();
     }
 
+    /**
+     * ViewHolder dla elementu sugestii użytkownika.
+     */
     static class SuggestionViewHolder extends RecyclerView.ViewHolder {
         TextView tvName;
-        ImageView ivAvatar; // Osobne miejsce na avatar
+        ImageView ivAvatar;
 
         SuggestionViewHolder(View v) {
             super(v);
             tvName = v.findViewById(R.id.tvSuggestionName);
-            // Podpinamy ImageView z Twojego pliku XML
             ivAvatar = v.findViewById(R.id.ivSuggestionAvatar);
         }
     }

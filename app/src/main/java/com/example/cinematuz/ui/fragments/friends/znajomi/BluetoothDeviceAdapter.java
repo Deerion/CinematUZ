@@ -13,15 +13,33 @@ import com.example.cinematuz.data.models.SearchResultUser;
 import com.google.android.material.button.MaterialButton;
 import java.util.List;
 
+/**
+ * Adapter dla listy urządzeń/użytkowników wykrytych przez Bluetooth (Nearby).
+ * Umożliwia wysyłanie zaproszeń do grup do osób znajdujących się w pobliżu.
+ */
 public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDeviceAdapter.ViewHolder> {
     private final List<SearchResultUser> users;
     private final OnInviteClickListener listener;
 
+    /**
+     * Interfejs obsługujący kliknięcie przycisku zaproszenia.
+     */
     public interface OnInviteClickListener {
-        // Zmiana typu zwracanego z void na boolean
+        /**
+         * Wywoływane przy próbie wysłania zaproszenia.
+         * 
+         * @param user Użytkownik, który ma zostać zaproszony.
+         * @return true, jeśli zaproszenie zostało pomyślnie wysłane, false w przeciwnym razie.
+         */
         boolean onInvite(SearchResultUser user);
     }
 
+    /**
+     * Konstruktor adaptera.
+     * 
+     * @param users Lista użytkowników wykrytych w pobliżu.
+     * @param listener Listener akcji zaproszenia.
+     */
     public BluetoothDeviceAdapter(List<SearchResultUser> users, OnInviteClickListener listener) {
         this.users = users;
         this.listener = listener;
@@ -33,6 +51,10 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
         return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_bluetooth_device, parent, false));
     }
 
+    /**
+     * Wiąże dane użytkownika z widokiem elementu listy.
+     * Obsługuje ładowanie awatara oraz zmianę stanu przycisku po wysłaniu zaproszenia.
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         SearchResultUser user = users.get(position);
@@ -44,10 +66,8 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
                 .into(holder.ivAvatar);
 
         holder.btnInvite.setOnClickListener(v -> {
-            // Sprawdzamy czy zaproszenie zostało faktycznie wysłane
             boolean inviteSent = listener.onInvite(user);
 
-            // Tylko jeśli wysłano, zmieniamy stan przycisku
             if (inviteSent) {
                 holder.btnInvite.setText("WYSŁANO");
                 holder.btnInvite.setEnabled(false);
@@ -58,6 +78,9 @@ public class BluetoothDeviceAdapter extends RecyclerView.Adapter<BluetoothDevice
     @Override
     public int getItemCount() { return users.size(); }
 
+    /**
+     * ViewHolder reprezentujący element listy urządzenia Bluetooth.
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName;
         ImageView ivAvatar;

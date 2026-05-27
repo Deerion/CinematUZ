@@ -34,6 +34,11 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+/**
+ * Aktywność rejestracji nowego użytkownika.
+ * Obsługuje tworzenie konta w Firebase Auth, tworzenie profilu w Firestore
+ * oraz weryfikację hCaptcha.
+ */
 public class RegisterActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
@@ -44,12 +49,14 @@ public class RegisterActivity extends AppCompatActivity {
     private CheckBox cbCaptcha;
     private CaptchaStateManager captchaStateManager;
 
+    /**
+     * Inicjalizuje aktywność, widoki oraz obsługę zdarzeń.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // W onCreate, po setContentView
         TextView tvLoginLink = findViewById(R.id.tvLoginLink);
         if (tvLoginLink != null) {
             tvLoginLink.setOnClickListener(v -> navigateToLogin());
@@ -119,12 +126,23 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Resetuje stan weryfikacji hCaptcha.
+     */
     private void resetCaptchaState() {
         if (captchaStateManager != null) {
             captchaStateManager.onCaptchaReset();
         }
     }
 
+    /**
+     * Weryfikuje token hCaptcha poprzez zewnętrzny serwer.
+     * 
+     * @param token Token z hCaptcha SDK.
+     * @param name Nazwa użytkownika.
+     * @param email Adres e-mail.
+     * @param password Hasło.
+     */
     private void verifyCaptchaAndRegister(String token, String name, String email, String password) {
         OkHttpClient client = new OkHttpClient();
         JSONObject json = new JSONObject();
@@ -160,6 +178,13 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Tworzy konto użytkownika w Firebase Auth i zapisuje dane profilowe w Firestore.
+     * 
+     * @param name Nazwa użytkownika.
+     * @param email Adres e-mail.
+     * @param password Hasło.
+     */
     private void performFirebaseRegistration(String name, String email, String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
@@ -168,11 +193,10 @@ public class RegisterActivity extends AppCompatActivity {
                         if (firebaseUser != null) {
                             FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-                            // Profesjonalny zapis obiektu User zamiast mapy
                             User newUser = new User(name, email);
 
                             db.collection("profiles").document(firebaseUser.getUid())
-                                    .set(newUser) // Firestore sam rozpozna strukturę obiektu
+                                    .set(newUser)
                                     .addOnSuccessListener(aVoid -> {
                                         Toast.makeText(RegisterActivity.this, "Zarejestrowano pomyślnie!", Toast.LENGTH_SHORT).show();
                                         startActivity(new Intent(RegisterActivity.this, MainActivity.class));
@@ -192,15 +216,21 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Dołącza kontekst z obsługą języka.
+     */
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase));
     }
+
+    /**
+     * Przechodzi do ekranu logowania.
+     */
     private void navigateToLogin() {
         Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-        // Użyj flag, aby wyczyścić stos aktywności i uniknąć zapętlenia
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-        finish(); // Zamknij RegisterActivity
+        finish();
     }
 }

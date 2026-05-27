@@ -27,24 +27,37 @@ import com.google.android.material.color.MaterialColors;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Fragment wyświetlający szczegółowe informacje o wybranym filmie lub serialu.
+ * Umożliwia dodawanie do biblioteki, przeglądanie obsady, gatunków oraz uruchamianie trailerów.
+ */
 public class DetailsFragment extends Fragment {
 
     private FragmentDetailsBinding binding;
     private DetailsViewModel viewModel;
     private MediaItem mediaItem;
 
+    /**
+     * Inicjalizuje dane wejściowe przekazane w argumentach.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) mediaItem = (MediaItem) getArguments().getSerializable("MEDIA_ITEM");
     }
 
+    /**
+     * Tworzy i zwraca hierarchię widoków powiązaną z fragmentem.
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentDetailsBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
+    /**
+     * Inicjalizuje ViewModel, nasłuchiwacze i obserwatorów. Ładuje brakujące dane z API.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -68,11 +81,13 @@ public class DetailsFragment extends Fragment {
         }
     }
 
+    /**
+     * Konfiguruje nasłuchiwacze dla przycisków akcji (powrót, trailer, biblioteka).
+     */
     private void setupListeners() {
         binding.btnBackCustom.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
         binding.fabPlay.setOnClickListener(v -> viewModel.fetchTrailer(mediaItem.getId(), mediaItem.getMediaType()));
 
-        // Logika Biblioteki
         binding.cardWatchlist.setOnClickListener(v -> {
             if (mediaItem != null) {
                 viewModel.toggleLibraryStatus(mediaItem, false); // false = Do obejrzenia
@@ -90,6 +105,9 @@ public class DetailsFragment extends Fragment {
         });
     }
 
+    /**
+     * Konfiguruje obserwowanie danych z ViewModelu (obsada, detale, trailery, stan lokalny).
+     */
     private void setupObservers() {
         viewModel.cast.observe(getViewLifecycleOwner(), list -> {
             boolean isEmpty = list == null || list.isEmpty();
@@ -112,22 +130,18 @@ public class DetailsFragment extends Fragment {
 
         viewModel.trailerKey.observe(getViewLifecycleOwner(), this::openYoutube);
 
-        // Obserwowanie zmiany statusu (Lokalna Baza)
         viewModel.localMovieState.observe(getViewLifecycleOwner(), savedMovie -> {
             int colorSurfaceVariant = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSurfaceVariant, 0);
             int colorPrimaryContainer = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimaryContainer, 0);
 
             if (savedMovie == null) {
-                // Usunięto z bazy (lub jeszcze nie dodano) -> oba szare
                 binding.cardWatchlist.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
                 binding.cardWatched.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
             } else {
                 if (savedMovie.isWatched()) {
-                    // Jest Obejrzany -> karta "Obejrzane" podświetlona
                     binding.cardWatched.setCardBackgroundColor(ColorStateList.valueOf(colorPrimaryContainer));
                     binding.cardWatchlist.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
                 } else {
-                    // Jest Do obejrzenia -> karta "Do obejrzenia" podświetlona
                     binding.cardWatchlist.setCardBackgroundColor(ColorStateList.valueOf(colorPrimaryContainer));
                     binding.cardWatched.setCardBackgroundColor(ColorStateList.valueOf(colorSurfaceVariant));
                 }
@@ -135,6 +149,11 @@ public class DetailsFragment extends Fragment {
         });
     }
 
+    /**
+     * Wiąże podstawowe informacje o filmie z widokami.
+     * 
+     * @param item Obiekt mediów zawierający dane.
+     */
     private void bindBasicInfo(MediaItem item) {
         binding.tvDetailsTitle.setText(orFallback(item.getTitle(), R.string.details_empty_title));
         binding.tvDetailsOverview.setText(orFallback(item.getOverview(), R.string.details_empty_overview));
@@ -157,6 +176,11 @@ public class DetailsFragment extends Fragment {
         bindGenres(item.getGenres());
     }
 
+    /**
+     * Dynamicznie tworzy i wyświetla "chipy" z gatunkami.
+     * 
+     * @param genres Lista gatunków.
+     */
     private void bindGenres(List<MediaItem.Genre> genres) {
         binding.cgGenres.removeAllViews();
         int colorPrimary = MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorPrimary, 0);
@@ -188,6 +212,7 @@ public class DetailsFragment extends Fragment {
         }
     }
 
+    /** Formatuje datę wydania do samego roku. */
     private String getYearText(String releaseDate) {
         if (releaseDate != null && releaseDate.length() >= 4) {
             return releaseDate.substring(0, 4);
@@ -195,6 +220,7 @@ public class DetailsFragment extends Fragment {
         return getString(R.string.details_empty_year);
     }
 
+    /** Formatuje ocenę numeryczną. */
     private String getRatingText(double voteAverage) {
         if (voteAverage > 0d) {
             return String.format(Locale.getDefault(), "%.1f", voteAverage);
@@ -202,6 +228,7 @@ public class DetailsFragment extends Fragment {
         return getString(R.string.details_empty_rating);
     }
 
+    /** Formatuje czas trwania. */
     private String getDurationText(Integer runtime) {
         if (runtime != null && runtime > 0) {
             return runtime + " min";
@@ -209,6 +236,7 @@ public class DetailsFragment extends Fragment {
         return getString(R.string.details_empty_duration);
     }
 
+    /** Zwraca wartość lub fallback, jeśli wartość jest pusta. */
     private String orFallback(String value, int fallbackRes) {
         if (value == null || value.trim().isEmpty()) {
             return getString(fallbackRes);
@@ -216,6 +244,11 @@ public class DetailsFragment extends Fragment {
         return value;
     }
 
+    /**
+     * Otwiera trailer filmu w aplikacji YouTube lub przeglądarce.
+     * 
+     * @param key Klucz wideo z serwisu YouTube.
+     */
     private void openYoutube(String key) {
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + key)));
     }

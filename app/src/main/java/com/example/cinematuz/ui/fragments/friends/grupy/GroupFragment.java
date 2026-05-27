@@ -25,6 +25,10 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment wyświetlający listę grup, do których należy użytkownik.
+ * Umożliwia tworzenie nowych grup oraz przechodzenie do szczegółów grupy.
+ */
 public class GroupFragment extends Fragment {
 
     private FirebaseAuth mAuth;
@@ -32,6 +36,9 @@ public class GroupFragment extends Fragment {
     private GroupsAdapter adapter;
     private List<Group> groupsList = new ArrayList<>();
 
+    /**
+     * Inicjalizuje widok fragmentu, Firebase oraz RecyclerView dla grup.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -50,7 +57,6 @@ public class GroupFragment extends Fragment {
 
         rvGroups.setAdapter(adapter);
 
-        // POPRAWKA: Zmiana FloatingActionButton na View
         View btnCreateGroup = view.findViewById(R.id.btnCreateGroup);
         if (btnCreateGroup != null) {
             btnCreateGroup.setOnClickListener(v -> showCreateGroupDialog());
@@ -61,6 +67,9 @@ public class GroupFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Nasłuchuje zmian w kolekcjach grup w Firestore, filtrując te, których członkiem jest bieżący użytkownik.
+     */
     private void listenForGroups() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -82,6 +91,9 @@ public class GroupFragment extends Fragment {
                 });
     }
 
+    /**
+     * Wyświetla okno dialogowe pozwalające na wpisanie nazwy nowej grupy.
+     */
     private void showCreateGroupDialog() {
         FrameLayout container = new FrameLayout(requireContext());
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -102,6 +114,11 @@ public class GroupFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Tworzy nową grupę w bazie danych Firestore.
+     * 
+     * @param groupName Nazwa nowo tworzonej grupy.
+     */
     private void createGroupInFirebase(String groupName) {
         if (mAuth.getCurrentUser() == null) return;
 

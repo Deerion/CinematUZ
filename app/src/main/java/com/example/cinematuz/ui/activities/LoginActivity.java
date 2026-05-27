@@ -50,6 +50,11 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+/**
+ * Aktywność logowania użytkownika.
+ * Obsługuje logowanie tradycyjne (e-mail/hasło), logowanie przez Google
+ * oraz weryfikację hCaptcha.
+ */
 public class LoginActivity extends AppCompatActivity {
 
     private static final String TAG = "LoginActivity";
@@ -66,6 +71,9 @@ public class LoginActivity extends AppCompatActivity {
     private CheckBox cbCaptcha;
     private CaptchaStateManager captchaStateManager;
 
+    /**
+     * Sprawdza przy starcie, czy użytkownik jest już zalogowany.
+     */
     @Override
     protected void onStart() {
         super.onStart();
@@ -74,12 +82,18 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Przenosi użytkownika do głównej aktywności aplikacji.
+     */
     private void goToMainActivity() {
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         startActivity(intent);
         finish();
     }
 
+    /**
+     * Inicjalizuje komponenty aktywności, konfiguruje Google Sign-In i nakłada motyw.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeHelper.applyTheme(this);
@@ -117,6 +131,9 @@ public class LoginActivity extends AppCompatActivity {
         setupViews();
     }
 
+    /**
+     * Konfiguruje widoki, przyciski i obsługę zdarzeń.
+     */
     private void setupViews() {
         ImageButton btnClose = findViewById(R.id.btnClose);
         TextView tvSignUpLink = findViewById(R.id.tvSignUpLink);
@@ -182,11 +199,19 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Uruchamia proces logowania przez Google.
+     */
     private void signInWithGoogle() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         googleSignInLauncher.launch(signInIntent);
     }
 
+    /**
+     * Obsługuje wynik logowania przez Google.
+     * 
+     * @param completedTask Zadanie zawierające konto Google.
+     */
     private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             GoogleSignInAccount account = completedTask.getResult(ApiException.class);
@@ -198,6 +223,11 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Autoryzuje konto Google w systemie Firebase.
+     * 
+     * @param idToken Token tożsamości z Google.
+     */
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
@@ -213,6 +243,11 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Sprawdza, czy dla zalogowanego użytkownika istnieje profil w bazie Firestore.
+     * 
+     * @param firebaseUser Obiekt użytkownika Firebase.
+     */
     private void checkAndCreateProfile(FirebaseUser firebaseUser) {
         db.collection("profiles").document(firebaseUser.getUid()).get()
                 .addOnCompleteListener(task -> {
@@ -229,6 +264,11 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Tworzy nowy profil użytkownika w Firestore na podstawie danych z konta Firebase.
+     * 
+     * @param firebaseUser Obiekt użytkownika Firebase.
+     */
     private void createProfileFromEmail(FirebaseUser firebaseUser) {
         final String email = firebaseUser.getEmail();
         String tempUsername = "User";
@@ -237,9 +277,7 @@ public class LoginActivity extends AppCompatActivity {
             tempUsername = email.split("@")[0];
         }
 
-        // Ta zmienna musi być finalna, aby lambda mogła jej użyć
         final String finalUsername = tempUsername;
-
         User newUser = new User(finalUsername, email);
 
         db.collection("profiles").document(firebaseUser.getUid())
@@ -254,6 +292,13 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Weryfikuje token hCaptcha poprzez zewnętrzny serwer, a po sukcesie loguje w Firebase.
+     * 
+     * @param token Token wygenerowany przez hCaptcha SDK.
+     * @param email Adres e-mail użytkownika.
+     * @param password Hasło użytkownika.
+     */
     private void verifyCaptchaAndLogin(String token, String email, String password) {
         OkHttpClient client = new OkHttpClient();
         JSONObject json = new JSONObject();
@@ -288,6 +333,12 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Wykonuje właściwe logowanie e-mailem i hasłem w Firebase.
+     * 
+     * @param email Adres e-mail.
+     * @param password Hasło.
+     */
     private void performFirebaseLogin(String email, String password) {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
@@ -302,6 +353,9 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Dołącza kontekst z ustawionym językiem aplikacji.
+     */
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase));

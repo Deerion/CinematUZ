@@ -29,6 +29,11 @@ import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment wyświetlający bibliotekę użytkownika.
+ * Zawiera zakładki "Do obejrzenia" i "Obejrzane" oraz umożliwia filtrowanie treści
+ * według typu (filmy/seriale) i zarządzanie listą (usuwanie elementów).
+ */
 public class LibraryFragment extends Fragment {
 
     private FragmentLibraryBinding binding;
@@ -36,13 +41,15 @@ public class LibraryFragment extends Fragment {
     private View rootView;
     private LibraryViewModel viewModel;
 
-    // Przechowujemy listy pobrane z bazy
     private List<MovieEntity> toWatchList = new ArrayList<>();
     private List<MovieEntity> watchedList = new ArrayList<>();
 
     private String currentStatus = "to_watch";
     private String currentType = "all";
 
+    /**
+     * Tworzy widok fragmentu i konfiguruje podstawowe komponenty RecyclerView.
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (rootView == null) {
@@ -55,19 +62,23 @@ public class LibraryFragment extends Fragment {
         return rootView;
     }
 
+    /**
+     * Inicjalizuje ViewModel i konfiguruje obserwatorów bazy danych.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Inicjalizacja ViewModelu
         viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(LibraryViewModel.class);
 
         updateTypeButtonsUi();
-        setupObservers(); // Zamiast wywoływać ręcznie bazę, nasłuchujemy jej!
+        setupObservers();
     }
 
+    /**
+     * Konfiguruje obserwowanie list filmów z lokalnej bazy danych.
+     */
     private void setupObservers() {
-        // Nasłuchiwanie na filmy "Do obejrzenia"
         viewModel.getMoviesToWatch().observe(getViewLifecycleOwner(), movies -> {
             toWatchList = movies;
             if ("to_watch".equals(currentStatus)) {
@@ -75,7 +86,6 @@ public class LibraryFragment extends Fragment {
             }
         });
 
-        // Nasłuchiwanie na filmy "Obejrzane"
         viewModel.getWatchedMovies().observe(getViewLifecycleOwner(), movies -> {
             watchedList = movies;
             if ("watched".equals(currentStatus)) {
@@ -84,22 +94,21 @@ public class LibraryFragment extends Fragment {
         });
     }
 
-    // Ta metoda przefiltrowuje dane i wysyła je do adaptera
+    /**
+     * Odświeża listę wyświetlaną w adapterze na podstawie aktualnych filtrów statusu i typu.
+     */
     private void refreshLibraryList() {
         List<MovieEntity> sourceList = "to_watch".equals(currentStatus) ? toWatchList : watchedList;
         List<MediaItem> filteredList = new ArrayList<>();
 
-        // Filtrowanie "all", "movie" lub "tv"
         for (MovieEntity entity : sourceList) {
             if ("all".equals(currentType) || currentType.equals(entity.getMediaType())) {
                 filteredList.add(viewModel.convertToMediaItem(entity));
             }
         }
 
-        // Wysłanie danych do adaptera
         adapter.submitList(filteredList);
 
-        // Obsługa widoczności (Pusty ekran vs Lista)
         if (filteredList.isEmpty()) {
             binding.rvLibrary.setVisibility(View.GONE);
             binding.layoutEmptyLibrary.setVisibility(View.VISIBLE);
@@ -115,6 +124,9 @@ public class LibraryFragment extends Fragment {
         }
     }
 
+    /**
+     * Konfiguruje RecyclerView oraz menu kontekstowe dla elementów listy.
+     */
     private void setupRecyclerView() {
         adapter = new MovieGridAdapter(item -> {
             Bundle bundle = new Bundle();
@@ -122,11 +134,9 @@ public class LibraryFragment extends Fragment {
             Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
         });
 
-        // --- OBSŁUGA DŁUGIEGO KLIKNIĘCIA DO USUWANIA ---
         adapter.setOnItemLongClickListener((item, anchorView) -> {
             PopupMenu popup = new PopupMenu(requireContext(), anchorView);
             popup.getMenu().add("Usuń z biblioteki");
-            // popup.getMenu().add("Dodaj do ulubionych"); // Miejsce na krok 3.
 
             popup.setOnMenuItemClickListener(menuItem -> {
                 if (menuItem.getTitle().equals("Usuń z biblioteki")) {
@@ -144,6 +154,9 @@ public class LibraryFragment extends Fragment {
         binding.rvLibrary.setAdapter(adapter);
     }
 
+    /**
+     * Ustawia nasłuchiwacze dla zakładek, przycisków filtrów i akcji.
+     */
     private void setupListeners() {
         binding.tabLayoutStatus.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -169,6 +182,11 @@ public class LibraryFragment extends Fragment {
         });
     }
 
+    /**
+     * Zmienia aktualny filtr typu mediów i odświeża widok.
+     * 
+     * @param type Typ mediów ("all", "movie", "tv").
+     */
     private void changeTypeFilter(String type) {
         if (currentType.equals(type)) return;
         currentType = type;
@@ -176,6 +194,9 @@ public class LibraryFragment extends Fragment {
         refreshLibraryList();
     }
 
+    /**
+     * Aktualizuje wygląd przycisków przełączających typ treści.
+     */
     private void updateTypeButtonsUi() {
         updateButtonStyle(binding.btnLibAll, "all".equals(currentType));
         updateButtonStyle(binding.btnLibMovies, "movie".equals(currentType));

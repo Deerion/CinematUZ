@@ -26,6 +26,10 @@ import com.example.cinematuz.data.models.MediaItem;
 import java.util.ArrayList;
 import java.util.Random;
 
+/**
+ * Fragment obsługujący losowanie filmu poprzez potrząsanie telefonem.
+ * Wykorzystuje akcelerometr do wykrywania ruchu i wibracje jako informację zwrotną.
+ */
 public class ShakeFragment extends Fragment implements SensorEventListener {
 
     private SensorManager sensorManager;
@@ -41,23 +45,27 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
     private String groupId;
     private TextView tvShakeSubtitle;
 
+    /**
+     * Inicjalizuje dane wejściowe (lista filmów do losowania).
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Zabezpieczenie przed brakiem argumentów
         if (getArguments() != null) {
             eligibleMovies = (ArrayList<MediaItem>) getArguments().getSerializable("ELIGIBLE_MOVIES");
             groupId = getArguments().getString("GROUP_ID");
         }
     }
 
+    /**
+     * Inicjalizuje widok oraz usługi systemowe (SensorManager, Vibrator).
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_shake, container, false);
         tvShakeSubtitle = view.findViewById(R.id.tvShakeSubtitle);
 
-        // Inicjalizacja sensorów tutaj, w onCreateView, jest bezpieczniejsza
         sensorManager = (SensorManager) requireContext().getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -67,6 +75,9 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
         return view;
     }
 
+    /**
+     * Obsługuje zmiany wartości z akcelerometru. Wykrywa potrząśnięcie i zlicza je.
+     */
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -92,11 +103,13 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
         }
     }
 
+    /**
+     * Wywołuje krótką wibrację telefonu.
+     */
     private void vibratePhone() {
         if (vibrator == null) return;
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // 255 to max amplituda (siła)
                 vibrator.vibrate(VibrationEffect.createOneShot(200, 255));
             } else {
                 vibrator.vibrate(200);
@@ -104,8 +117,11 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
         } catch (Exception ignored) {}
     }
 
+    /**
+     * Kończy proces losowania po osiągnięciu wymaganej liczby potrząśnięć.
+     * Losuje film z listy i aktualizuje dane w Firestore (jeśli losowanie odbywa się w grupie).
+     */
     private void finishShakeAndNavigate() {
-        // Zabezpieczenie przed wielokrotnym nawigowaniem
         if (shakeCount > 3) return;
         sensorManager.unregisterListener(this);
 
@@ -113,12 +129,10 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
             MediaItem winner = eligibleMovies.get(new Random().nextInt(eligibleMovies.size()));
             
             if (groupId != null) {
-                // Jeśli jesteśmy w grupie, aktualizujemy Firestore - to wywoła nawigację u wszystkich
                 com.google.firebase.firestore.FirebaseFirestore.getInstance()
                         .collection("groups").document(groupId)
                         .update("winnerId", String.valueOf(winner.getId()), "winnerReason", "Decyzja losu")
                         .addOnCompleteListener(task -> {
-                            // Niezależnie od sukcesu zapisu w chmurze (np. brak neta), przechodzimy do ekranu zwycięzcy
                             navigateToWinnerLocal(winner);
                         });
             } else {
@@ -127,8 +141,12 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
         }
     }
 
+    /**
+     * Przenosi użytkownika do fragmentu wyświetlającego zwycięzcę.
+     * 
+     * @param winner Wylosowany film.
+     */
     private void navigateToWinnerLocal(MediaItem winner) {
-        // Aktualizujemy globalną flagę, aby GroupDetailsFragment nie próbował nas tam wysłać ponownie
         GroupDetailsFragment.lastSeenWinnerId = String.valueOf(winner.getId());
 
         Bundle b = new Bundle();
@@ -137,7 +155,7 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
         b.putSerializable("ELIGIBLE_MOVIES", eligibleMovies);
         if (groupId != null) {
             b.putString("GROUP_ID", groupId);
-            b.putBoolean("IS_ADMIN", true); // Tylko admin może wywołać ShakeFragment w kontekście grupy
+            b.putBoolean("IS_ADMIN", true);
         }
 
         NavController navController = Navigation.findNavController(requireView());
@@ -146,6 +164,9 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
 
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
+    /**
+     * Rejestruje nasłuchiwanie sensora przy wznowieniu fragmentu.
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -156,6 +177,9 @@ public class ShakeFragment extends Fragment implements SensorEventListener {
         }
     }
 
+    /**
+     * Wyrejestrowuje nasłuchiwanie sensora przy wstrzymaniu fragmentu.
+     */
     @Override
     public void onPause() {
         if (sensorManager != null) sensorManager.unregisterListener(this);

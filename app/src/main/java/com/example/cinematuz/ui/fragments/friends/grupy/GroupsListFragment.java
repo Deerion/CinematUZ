@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Group;
-// DODANE IMPORTY:
 import com.example.cinematuz.data.models.FriendRequest;
 import com.example.cinematuz.ui.fragments.friends.RequestAdapter;
 import com.example.cinematuz.utils.DialogHelper;
@@ -26,17 +25,24 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment wyświetlający listę grup użytkownika oraz oczekujące zaproszenia do grup.
+ * Obsługuje dołączanie do grup, odrzucanie zaproszeń oraz tworzenie nowych grup.
+ */
 public class GroupsListFragment extends Fragment {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
     private GroupsAdapter adapter;
-    private RequestAdapter requestsAdapter; // ZMIANA: używamy RequestAdaptera z powiadomień
+    private RequestAdapter requestsAdapter;
 
     private List<Group> groupsList = new ArrayList<>();
-    private List<FriendRequest> groupRequestsList = new ArrayList<>(); // ZMIANA: przechowujemy FriendRequest
+    private List<FriendRequest> groupRequestsList = new ArrayList<>();
 
+    /**
+     * Inicjalizuje widok fragmentu, Firebase oraz dwa adaptery: dla list grup i zaproszeń.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -48,7 +54,7 @@ public class GroupsListFragment extends Fragment {
         RecyclerView rvGroups = view.findViewById(R.id.rvGroups);
         RecyclerView rvGroupRequests = view.findViewById(R.id.rvGroupRequests);
 
-        // --- ADAPTER DLA TWOICH GRUP (Wygląda normalnie jako kafle z członkami) ---
+        // Adapter dla list grup
         adapter = new GroupsAdapter(groupsList, group -> {
             Bundle args = new Bundle();
             args.putString("GROUP_ID", group.getId());
@@ -56,12 +62,12 @@ public class GroupsListFragment extends Fragment {
         });
         rvGroups.setAdapter(adapter);
 
-        // --- ADAPTER DLA ZAPROSZEŃ DO GRUP (Wygląda jak w powiadomieniach z przyciskami V i X) ---
+        // Adapter dla zaproszeń do grup
         requestsAdapter = new RequestAdapter(groupRequestsList, new RequestAdapter.OnRequestActionListener() {
             @Override
             public void onAccept(FriendRequest request) {
                 Group group = new Group();
-                group.setId(request.getUid()); // UID to nasze schowane ID grupy
+                group.setId(request.getUid());
                 joinGroup(group);
             }
 
@@ -88,22 +94,23 @@ public class GroupsListFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Nasłuchuje przychodzących zaproszeń do grup w Firestore.
+     */
     private void listenForGroupInvites() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
 
-        // Słuchamy na zaproszenia w profilu użytkownika
         db.collection("profiles").document(myUid).collection("group_invites")
                 .addSnapshotListener((value, error) -> {
                     if (error != null) return;
                     if (value != null) {
                         groupRequestsList.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            // Mapujemy na FriendRequest, żeby wpasować się w RequestAdapter!
                             FriendRequest req = new FriendRequest();
-                            req.setUid(doc.getId()); // chowamy ID grupy do UID
-                            req.setUsername(doc.getString("groupName")); // nazwa grupy jako nazwa wyświetlana
-                            req.setType("group"); // ustawiamy typ "group", aby zniknęło logo (logika z poprzedniej poprawki)
+                            req.setUid(doc.getId());
+                            req.setUsername(doc.getString("groupName"));
+                            req.setType("group");
 
                             groupRequestsList.add(req);
                         }
@@ -112,6 +119,11 @@ public class GroupsListFragment extends Fragment {
                 });
     }
 
+    /**
+     * Dodaje bieżącego użytkownika do wybranej grupy.
+     * 
+     * @param group Obiekt grupy z ustawionym ID.
+     */
     private void joinGroup(Group group) {
         String myUid = mAuth.getCurrentUser().getUid();
         db.collection("groups").document(group.getId())
@@ -119,11 +131,19 @@ public class GroupsListFragment extends Fragment {
                 .addOnSuccessListener(aVoid -> rejectInvite(group));
     }
 
+    /**
+     * Usuwa zaproszenie do grupy z profilu użytkownika.
+     * 
+     * @param group Obiekt grupy z ustawionym ID.
+     */
     private void rejectInvite(Group group) {
         String myUid = mAuth.getCurrentUser().getUid();
         db.collection("profiles").document(myUid).collection("group_invites").document(group.getId()).delete();
     }
 
+    /**
+     * Nasłuchuje zmian w listach grup, do których należy użytkownik.
+     */
     private void listenForGroups() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -144,6 +164,9 @@ public class GroupsListFragment extends Fragment {
                 });
     }
 
+    /**
+     * Wyświetla okno dialogowe do wpisania nazwy nowej grupy.
+     */
     private void showCreateGroupDialog() {
         DialogHelper.showInputDialog(
                 requireContext(),
@@ -162,6 +185,11 @@ public class GroupsListFragment extends Fragment {
         );
     }
 
+    /**
+     * Tworzy nowy dokument grupy w Firestore.
+     * 
+     * @param groupName Nazwa grupy.
+     */
     private void createGroupInFirebase(String groupName) {
         String myUid = mAuth.getCurrentUser().getUid();
         List<String> members = new ArrayList<>();

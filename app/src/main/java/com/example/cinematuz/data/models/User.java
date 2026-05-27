@@ -2,6 +2,10 @@ package com.example.cinematuz.data.models;
 
 import com.google.firebase.firestore.IgnoreExtraProperties;
 
+/**
+ * Model danych reprezentujący pełny profil użytkownika w aplikacji.
+ * Zawiera informacje o koncie oraz statystyki aktywności.
+ */
 @IgnoreExtraProperties
 public class User {
     private String username;
@@ -9,8 +13,17 @@ public class User {
     private String avatar_url;
     private UserStats stats = new UserStats();
 
+    /**
+     * Pusty konstruktor wymagany przez Firebase Firestore.
+     */
     public User() {}
 
+    /**
+     * Konstruktor tworzący profil użytkownika z podstawowymi danymi.
+     * 
+     * @param username Nazwa użytkownika.
+     * @param email Adres e-mail.
+     */
     public User(String username, String email) {
         this.username = username;
         this.email = email;
@@ -30,12 +43,18 @@ public class User {
     public UserStats getStats() { return stats; }
     public void setStats(UserStats stats) { this.stats = stats; }
 
+    /**
+     * Klasa wewnętrzna przechowująca statystyki użytkownika.
+     */
     public static class UserStats {
         private int moviesWatched;
         private int tvShowsWatched;
         private int reviewsCount;
         private int points;
 
+        /**
+         * Inicjalizuje statystyki z wartościami zerowymi.
+         */
         public UserStats() {
             this.moviesWatched = 0;
             this.tvShowsWatched = 0;

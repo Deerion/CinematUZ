@@ -12,31 +12,59 @@ import com.example.cinematuz.data.repositories.MovieRepository;
 
 import java.util.List;
 
+/**
+ * ViewModel dla ekranu biblioteki użytkownika.
+ * Zarządza pobieraniem filmów o różnych statusach (do obejrzenia, obejrzane) z lokalnej bazy danych Room
+ * oraz synchronizuje zmiany ze statystykami w Firebase.
+ */
 public class LibraryViewModel extends AndroidViewModel {
 
     private final MovieRepository repository;
 
+    /**
+     * Inicjalizuje ViewModel i repozytorium.
+     * 
+     * @param application Kontekst aplikacji.
+     */
     public LibraryViewModel(@NonNull Application application) {
         super(application);
         repository = new MovieRepository(application);
     }
 
-    // Pobiera filmy ze statusem "Do Obejrzenia"
+    /**
+     * Pobiera listę filmów i seriali oznaczonych jako "Do obejrzenia".
+     * 
+     * @return LiveData zawierająca listę encji filmów.
+     */
     public LiveData<List<MovieEntity>> getMoviesToWatch() {
         return repository.getMoviesByWatchStatus(false);
     }
 
-    // Pobiera filmy ze statusem "Obejrzane"
+    /**
+     * Pobiera listę filmów i seriali oznaczonych jako "Obejrzane".
+     * 
+     * @return LiveData zawierająca listę encji filmów.
+     */
     public LiveData<List<MovieEntity>> getWatchedMovies() {
         return repository.getMoviesByWatchStatus(true);
     }
 
-    // Usuwanie filmu z biblioteki
+    /**
+     * Usuwa wybrany element z biblioteki i aktualizuje statystyki w Firebase.
+     * 
+     * @param item Obiekt mediów do usunięcia.
+     */
     public void removeFromLibrary(MediaItem item) {
         repository.deleteMovieById(item.getId());
         updateFirebaseStats(item, false);
     }
 
+    /**
+     * Aktualizuje liczniki w profilu użytkownika w Firestore po usunięciu lub dodaniu do biblioteki.
+     * 
+     * @param item Obiekt mediów.
+     * @param isMarkingAsWatched Czy element jest oznaczany jako obejrzany.
+     */
     private void updateFirebaseStats(MediaItem item, boolean isMarkingAsWatched) {
         String uid = com.google.firebase.auth.FirebaseAuth.getInstance().getUid();
         if (uid == null) return;
@@ -47,14 +75,16 @@ public class LibraryViewModel extends AndroidViewModel {
         if (isMarkingAsWatched) {
             profileRef.update(fieldToUpdate, com.google.firebase.firestore.FieldValue.increment(1));
         } else {
-            // Przy usuwaniu z biblioteki, musimy wiedzieć czy był obejrzany, 
-            // ale w tym ViewModelu zakładamy, że jeśli usuwamy coś co jest w watchedList, to zmniejszamy.
-            // LibraryFragment wywołuje to tylko przy usuwaniu.
             profileRef.update(fieldToUpdate, com.google.firebase.firestore.FieldValue.increment(-1));
         }
     }
 
-    // Konwersja formatu bazy danych (MovieEntity) na format API (MediaItem)
+    /**
+     * Konwertuje obiekt encji bazy danych na model danych używany w interfejsie.
+     * 
+     * @param entity Encja z bazy Room.
+     * @return Obiekt MediaItem.
+     */
     public MediaItem convertToMediaItem(MovieEntity entity) {
         MediaItem item = new MediaItem();
         item.setId(entity.getId());

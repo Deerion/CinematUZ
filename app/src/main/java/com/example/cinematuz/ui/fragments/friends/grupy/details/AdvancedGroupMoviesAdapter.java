@@ -24,6 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Zaawansowany adapter dla listy filmów wewnątrz grupy.
+ * Wyświetla listę filmów wraz z postępem głosowania, awatarami głosujących osób
+ * oraz umożliwia oddawanie głosów i usuwanie filmów z propozycji grupowych.
+ */
 public class AdvancedGroupMoviesAdapter extends RecyclerView.Adapter<AdvancedGroupMoviesAdapter.ViewHolder> {
     private List<MediaItem> movies = new ArrayList<>();
     private Map<Integer, List<String>> votes = new HashMap<>();
@@ -31,16 +36,43 @@ public class AdvancedGroupMoviesAdapter extends RecyclerView.Adapter<AdvancedGro
     private int maxMembers = 1;
     private final OnMovieInteractionListener listener;
 
-    // Interfejs do komunikacji z Fragmentem
+    /**
+     * Interfejs do obsługi interakcji z filmami na liście grupowej.
+     */
     public interface OnMovieInteractionListener {
+        /**
+         * Przełącza głos użytkownika na dany film.
+         * 
+         * @param movie Film, na który oddawany/wycofywany jest głos.
+         * @param currentlyVoted Czy użytkownik aktualnie ma oddany głos na ten film.
+         */
         void onToggleVote(MediaItem movie, boolean currentlyVoted);
+
+        /**
+         * Usuwa film z listy propozycji grupowych.
+         * 
+         * @param movie Film do usunięcia.
+         */
         void onDeleteMovie(MediaItem movie);
     }
 
+    /**
+     * Konstruktor adaptera.
+     * 
+     * @param listener Listener interakcji z filmami.
+     */
     public AdvancedGroupMoviesAdapter(OnMovieInteractionListener listener) {
         this.listener = listener;
     }
 
+    /**
+     * Aktualizuje dane w adapterze i odświeża widok.
+     * 
+     * @param newMovies Nowa lista filmów.
+     * @param newVotes Mapa głosów (ID filmu -> lista UID głosujących).
+     * @param members Lista członków grupy (do pobrania awatarów).
+     * @param maxMembers Całkowita liczba członków grupy (do paska postępu).
+     */
     public void setGroupData(List<MediaItem> newMovies, Map<Integer, List<String>> newVotes, List<Friend> members, int maxMembers) {
         this.movies = new ArrayList<>(newMovies);
         this.votes = new HashMap<>(newVotes);
@@ -56,6 +88,9 @@ public class AdvancedGroupMoviesAdapter extends RecyclerView.Adapter<AdvancedGro
                 .inflate(R.layout.item_group_movie, parent, false));
     }
 
+    /**
+     * Wiąże dane filmu z widokiem. Ustawia tytuł, rok, gatunek, pasek postępu głosów oraz awatary głosujących.
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         MediaItem movie = movies.get(position);
@@ -91,7 +126,6 @@ public class AdvancedGroupMoviesAdapter extends RecyclerView.Adapter<AdvancedGro
         holder.btnVote.setImageResource(iVoted ? R.drawable.ic_favorite : R.drawable.ic_favorite_outline);
         holder.btnVote.setColorFilter(iVoted ? 0xFFFF0000 : 0xFF757575);
 
-        // Zgłaszanie kliknięć przez interfejs
         holder.btnVote.setOnClickListener(v -> {
             if (listener != null) listener.onToggleVote(movie, iVoted);
         });
@@ -153,6 +187,9 @@ public class AdvancedGroupMoviesAdapter extends RecyclerView.Adapter<AdvancedGro
         return movies.size();
     }
 
+    /**
+     * ViewHolder dla elementu filmu grupowego.
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivPoster, ivVoter1, ivVoter2, ivVoter3, btnVote, btnDelete;
         TextView tvTitle, tvYear, tvGenre, tvVoteCount, tvExtraVoters;

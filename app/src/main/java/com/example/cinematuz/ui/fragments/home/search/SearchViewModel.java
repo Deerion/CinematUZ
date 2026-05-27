@@ -29,21 +29,42 @@ import com.example.cinematuz.data.models.FilterCriteria;
 import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+
+/**
+ * ViewModel obsługujący logikę wyszukiwania i filtrowania treści.
+ * Implementuje mechanizm debounce dla zapytań tekstowych oraz łączenie wyników
+ * z różnych wersji językowych API (PL/EN).
+ */
 public class SearchViewModel extends AndroidViewModel {
     private final MovieRepository repository;
+
+    /**
+     * Inicjalizuje ViewModel i repozytorium.
+     * 
+     * @param application Kontekst aplikacji.
+     */
     public SearchViewModel(@NonNull Application application) {
         super(application);
         repository = new MovieRepository(application);
     }
+
     private final MutableLiveData<List<MediaItem>> _searchResults = new MutableLiveData<>();
+    /** Lista wyników wyszukiwania. */
     public LiveData<List<MediaItem>> searchResults = _searchResults;
 
     private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>(false);
+    /** Status ładowania danych. */
     public LiveData<Boolean> isLoading = _isLoading;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
 
+    /**
+     * Obsługuje zmianę tekstu w wyszukiwarce. Stosuje opóźnienie 500ms (debounce)
+     * przed wysłaniem zapytania do serwera.
+     * 
+     * @param query Wpisana fraza wyszukiwania.
+     */
     public void onSearchTextChanged(String query) {
         if (searchRunnable != null) {
             handler.removeCallbacks(searchRunnable);
@@ -55,11 +76,13 @@ public class SearchViewModel extends AndroidViewModel {
             return;
         }
 
-        // Opóźnienie 500ms (Debounce)
         searchRunnable = () -> performSearch(query.trim());
         handler.postDelayed(searchRunnable, 500);
     }
 
+    /**
+     * Wykonuje zapytanie wyszukiwania do repozytorium.
+     */
     private void performSearch(String query) {
         _isLoading.setValue(true);
         fetchMergedSearchResults(query, new Callback<List<MediaItem>>() {
@@ -84,6 +107,13 @@ public class SearchViewModel extends AndroidViewModel {
         if (searchRunnable != null) handler.removeCallbacks(searchRunnable);
     }
 
+    /**
+     * Nakłada zaawansowane filtry na wyniki wyszukiwania lub pobiera nowe dane z API Discover.
+     * 
+     * @param criteria Obiekt kryteriów filtrowania.
+     * @param query Aktualna fraza wyszukiwania.
+     * @param lang Kod języka.
+     */
     public void applyAdvancedFilters(FilterCriteria criteria, String query, String lang) {
         if (query != null && !query.trim().isEmpty()) {
             applyFiltersOnSearchResults(criteria, query.trim(), lang);
@@ -99,8 +129,6 @@ public class SearchViewModel extends AndroidViewModel {
 
         String dateFrom = criteria.yearFrom + "-01-01";
         String dateTo = criteria.yearTo + "-12-31";
-
-        // Konwersja listy ID gatunków na string oddzielony przecinkami np. "28,878"
         String genresString = TextUtils.join(",", criteria.genreIds);
 
         repository.discoverContent(
@@ -136,6 +164,9 @@ public class SearchViewModel extends AndroidViewModel {
         );
     }
 
+    /**
+     * Pobiera filmy i seriale jednocześnie przy użyciu API Discover i łączy wyniki.
+     */
     private void discoverAllContent(FilterCriteria criteria, String lang) {
         _isLoading.setValue(true);
 
@@ -221,6 +252,9 @@ public class SearchViewModel extends AndroidViewModel {
     }
 
 
+    /**
+     * Filtruje lokalnie wyniki wyszukiwania tekstowego.
+     */
     private void applyFiltersOnSearchResults(FilterCriteria criteria, String query, String lang) {
         _isLoading.setValue(true);
         fetchMergedSearchResults(query, new Callback<List<MediaItem>>() {
@@ -244,6 +278,10 @@ public class SearchViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Pobiera wyniki wyszukiwania z API w dwóch językach (PL i EN) i łączy je,
+     * dając priorytet polskim opisom lub lepszym dopasowaniom.
+     */
     private void fetchMergedSearchResults(String query, Callback<List<MediaItem>> callback) {
         repository.searchMulti(query, "pl-PL", 1, new Callback<ApiResponse<MediaItem>>() {
             @Override

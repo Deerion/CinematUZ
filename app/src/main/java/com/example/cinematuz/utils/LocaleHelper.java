@@ -10,29 +10,57 @@ import android.preference.PreferenceManager;
 
 import java.util.Locale;
 
+/**
+ * Klasa pomocnicza do zarządzania lokalizacją (językiem) aplikacji.
+ * Odpowiada za zapisywanie wybranego języka w ustawieniach oraz aktualizację
+ * konfiguracji zasobów (Resources) w celu dynamicznej zmiany języka interfejsu.
+ */
 public class LocaleHelper {
     private static final String SELECTED_LANGUAGE = "Locale.Helper.Selected.Language";
 
-    // Wywoływane przy starcie aplikacji (np. w Activity)
+    /**
+     * Wywoływane przy starcie aplikacji (np. w Activity) w celu nałożenia zapisanego języka.
+     * 
+     * @param context Kontekst wejściowy.
+     * @return Kontekst z nową konfiguracją językową.
+     */
     public static Context onAttach(Context context) {
         String lang = getPersistedData(context, Locale.getDefault().getLanguage());
         return setLocale(context, lang);
     }
 
+    /**
+     * Wywoływane przy starcie aplikacji z określonym językiem domyślnym.
+     * 
+     * @param context Kontekst wejściowy.
+     * @param defaultLanguage Domyślny kod języka.
+     * @return Kontekst z nową konfiguracją językową.
+     */
     public static Context onAttach(Context context, String defaultLanguage) {
         String lang = getPersistedData(context, defaultLanguage);
         return setLocale(context, lang);
     }
 
+    /**
+     * Zwraca aktualnie ustawiony kod języka w aplikacji.
+     * 
+     * @param context Kontekst aplikacji.
+     * @return Kod języka (np. "pl", "en").
+     */
     public static String getLanguage(Context context) {
         return getPersistedData(context, Locale.getDefault().getLanguage());
     }
 
-    // Metoda używana do zmiany i zapisania nowego języka
+    /**
+     * Zmienia język aplikacji, zapisuje go w preferencjach i aktualizuje kontekst.
+     * 
+     * @param context Kontekst aplikacji.
+     * @param language Nowy kod języka.
+     * @return Kontekst z zaktualizowaną lokalizacją.
+     */
     public static Context setLocale(Context context, String language) {
         persist(context, language);
 
-        // Aktualizacja kontekstu dla nowszych i starszych wersji Androida
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             return updateResources(context, language);
         }

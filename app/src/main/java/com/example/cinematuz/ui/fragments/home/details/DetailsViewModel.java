@@ -26,27 +26,48 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+/**
+ * ViewModel dla ekranu szczegółów filmu lub serialu.
+ * Odpowiada za pobieranie detali, obsady i trailerów z API oraz synchronizację
+ * stanu biblioteki z lokalną bazą danych i statystykami w Firebase.
+ */
 public class DetailsViewModel extends AndroidViewModel {
 
     private final MovieRepository repository;
 
     private final MutableLiveData<MediaItem> _fullDetails = new MutableLiveData<>();
+    /** Pełne szczegóły filmu/serialu pobrane z API. */
     public LiveData<MediaItem> fullDetails = _fullDetails;
 
     private final MutableLiveData<List<Cast>> _cast = new MutableLiveData<>();
+    /** Lista członków obsady. */
     public LiveData<List<Cast>> cast = _cast;
 
     private final MutableLiveData<String> _trailerKey = new MutableLiveData<>();
+    /** Klucz wideo YouTube dla trailera. */
     public LiveData<String> trailerKey = _trailerKey;
 
     private final MutableLiveData<MovieEntity> _localMovieState = new MutableLiveData<>();
+    /** Stan filmu w lokalnej bazie danych (czy jest w bibliotece/obejrzany). */
     public LiveData<MovieEntity> localMovieState = _localMovieState;
 
+    /**
+     * Inicjalizuje ViewModel i repozytorium.
+     * 
+     * @param application Kontekst aplikacji.
+     */
     public DetailsViewModel(@NonNull Application application) {
         super(application);
         repository = new MovieRepository(application);
     }
 
+    /**
+     * Ładuje szczegółowe informacje oraz obsadę dla danego elementu mediów.
+     * 
+     * @param mediaId Identyfikator elementu.
+     * @param mediaType Typ mediów ("movie" lub "tv").
+     * @param lang Kod języka.
+     */
     public void loadData(int mediaId, String mediaType, String lang) {
         repository.getDetails(mediaId, mediaType, lang, new Callback<MediaItem>() {
             @Override
@@ -73,6 +94,12 @@ public class DetailsViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Pobiera klucz trailera z serwisu YouTube dla danego filmu/serialu.
+     * 
+     * @param mediaId Identyfikator elementu.
+     * @param mediaType Typ mediów.
+     */
     public void fetchTrailer(int mediaId, String mediaType) {
         repository.getVideos(mediaId, mediaType, new Callback<ApiResponse<Video>>() {
             @Override
@@ -92,29 +119,37 @@ public class DetailsViewModel extends AndroidViewModel {
         });
     }
 
+    /**
+     * Sprawdza, czy film znajduje się w lokalnej bazie danych Room.
+     * 
+     * @param movieId Identyfikator filmu.
+     */
     public void checkLocalMovieState(int movieId) {
         repository.getMovieById(movieId, movie -> {
             _localMovieState.postValue(movie);
         });
     }
 
+    /**
+     * Przełącza status filmu w bibliotece (dodaje/usuwa lub zmienia status obejrzenia).
+     * Synchronizuje zmiany z lokalną bazą Room oraz statystykami profilu w Firebase.
+     * 
+     * @param item Obiekt mediów.
+     * @param setAsWatched Czy ustawić status jako "obejrzany".
+     */
     public void toggleLibraryStatus(MediaItem item, boolean setAsWatched) {
         MovieEntity currentEntity = _localMovieState.getValue();
         boolean wasAlreadyWatched = currentEntity != null && currentEntity.isWatched();
 
         if (currentEntity != null && currentEntity.isWatched() == setAsWatched) {
-            // Cofnięcie statusu / Usunięcie z bazy
             repository.deleteMovieById(item.getId());
             _localMovieState.postValue(null);
-
-            // Zmniejszamy statystykę w Firebase (bo użytkownik cofnął obejrzenie)
             updateFirebaseStats(item, false, wasAlreadyWatched);
             return;
         }
 
         boolean isFavorite = currentEntity != null && currentEntity.isFavorite();
 
-        // Zapis do bazy lokalnej
         MovieEntity newEntity = new MovieEntity(
                 item.getId(),
                 item.getTitle(),
@@ -128,25 +163,27 @@ public class DetailsViewModel extends AndroidViewModel {
         repository.insertMovie(newEntity);
         _localMovieState.postValue(newEntity);
 
-        // Zwiększamy lub zmniejszamy statystykę w zależności od wybranego statusu
         updateFirebaseStats(item, setAsWatched, wasAlreadyWatched);
     }
 
-    // Dodana metoda do synchronizacji statystyk z Firebase
+    /**
+     * Aktualizuje liczniki obejrzanych filmów/seriali w profilu użytkownika w Firestore.
+     * 
+     * @param item Obiekt mediów.
+     * @param isMarkingAsWatched Czy użytkownik właśnie zaznaczył element jako obejrzany.
+     * @param wasAlreadyWatched Czy element był wcześniej oznaczony jako obejrzany.
+     */
     private void updateFirebaseStats(MediaItem item, boolean isMarkingAsWatched, boolean wasAlreadyWatched) {
         String uid = FirebaseAuth.getInstance().getUid();
         if (uid == null) return;
 
         DocumentReference profileRef = FirebaseFirestore.getInstance().collection("profiles").document(uid);
 
-        // Rozróżnienie Film vs Serial (TV)
         String fieldToUpdate = "tv".equalsIgnoreCase(item.getMediaType()) ? "stats.tvShowsWatched" : "stats.moviesWatched";
 
         if (isMarkingAsWatched && !wasAlreadyWatched) {
-            // Zaznaczono jako obejrzane -> Zwiększamy licznik
             profileRef.update(fieldToUpdate, FieldValue.increment(1));
         } else if (!isMarkingAsWatched && wasAlreadyWatched) {
-            // Cofnięto zaznaczenie obejrzanego -> Zmniejszamy licznik
             profileRef.update(fieldToUpdate, FieldValue.increment(-1));
         }
     }

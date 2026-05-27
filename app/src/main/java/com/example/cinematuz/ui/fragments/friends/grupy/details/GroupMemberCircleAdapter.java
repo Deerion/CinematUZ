@@ -16,21 +16,42 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
+/**
+ * Adapter dla poziomej listy członków grupy wyświetlanej w formie okręgów (awatarów).
+ * Obsługuje wyróżnienie właściciela grupy oraz interakcję (usuwanie członków) przez administratora.
+ */
 public class GroupMemberCircleAdapter extends RecyclerView.Adapter<GroupMemberCircleAdapter.ViewHolder> {
     private List<Friend> members;
     private String ownerId = "";
     private final OnMemberInteractionListener listener;
 
-    // Interfejs do komunikacji z Fragmentem
+    /**
+     * Interfejs do komunikacji z fragmentem w celu obsługi akcji na członkach grupy.
+     */
     public interface OnMemberInteractionListener {
+        /**
+         * Wywoływane po długim kliknięciu na członka grupy.
+         * @param friend Obiekt członka, który został kliknięty.
+         */
         void onMemberLongClick(Friend friend);
     }
 
+    /**
+     * Konstruktor adaptera.
+     * 
+     * @param members Lista członków do wyświetlenia.
+     * @param listener Listener interakcji (np. do usuwania członków).
+     */
     public GroupMemberCircleAdapter(List<Friend> members, OnMemberInteractionListener listener) {
         this.members = members;
         this.listener = listener;
     }
 
+    /**
+     * Ustawia identyfikator właściciela grupy, co pozwala na wyświetlenie ikony gwiazdki przy jego awatarze.
+     * 
+     * @param ownerId UID właściciela grupy.
+     */
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
         notifyDataSetChanged();
@@ -43,6 +64,10 @@ public class GroupMemberCircleAdapter extends RecyclerView.Adapter<GroupMemberCi
                 .inflate(R.layout.item_group_member_circle, parent, false));
     }
 
+    /**
+     * Wiąże dane członka z widokiem awatara. Zarządza widocznością ikony administratora
+     * oraz konfiguruje obsługę długiego kliknięcia dla administratora grupy.
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Friend friend = members.get(position);
@@ -68,7 +93,6 @@ public class GroupMemberCircleAdapter extends RecyclerView.Adapter<GroupMemberCi
         holder.flAvatarContainer.clearAnimation();
         holder.itemView.setOnClickListener(null);
 
-        // Wywołanie interfejsu zamiast bezpośredniej metody z Fragmentu
         holder.itemView.setOnLongClickListener(v -> {
             if (isAdmin && !isMe) {
                 if (listener != null) {
@@ -85,6 +109,9 @@ public class GroupMemberCircleAdapter extends RecyclerView.Adapter<GroupMemberCi
         return members.size();
     }
 
+    /**
+     * ViewHolder reprezentujący pojedynczy okrągły awatar członka grupy.
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivStar, ivAvatar, ivRemove;
         TextView tvName;

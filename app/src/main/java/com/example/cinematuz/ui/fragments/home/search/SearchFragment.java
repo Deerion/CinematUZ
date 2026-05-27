@@ -42,6 +42,10 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Fragment wyszukiwania treści (filmów i seriali).
+ * Obsługuje wyszukiwanie tekstowe, filtrowanie zaawansowane oraz dodawanie wybranych pozycji do grup.
+ */
 public class SearchFragment extends Fragment {
 
     private SearchViewModel viewModel;
@@ -61,7 +65,7 @@ public class SearchFragment extends Fragment {
     private FilterCriteria lastAppliedCriteria;
     private boolean updatingFilterFromModal;
 
-    private String targetGroupId; // ID grupy, do której dodajemy film
+    private String targetGroupId;
     private static final String STATE_LAST_FILTER = "state_last_filter";
 
     @Override
@@ -69,12 +73,14 @@ public class SearchFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_search, container, false);
     }
 
+    /**
+     * Inicjalizuje widoki, adaptery i obserwatorów. Przywraca stan filtrów, jeśli istnieje.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(requireActivity().getApplication())).get(SearchViewModel.class);
 
-        // Sprawdzenie czy przyszliśmy z konkretnej grupy
         if (getArguments() != null) {
             targetGroupId = getArguments().getString("TARGET_GROUP_ID");
         }
@@ -100,6 +106,9 @@ public class SearchFragment extends Fragment {
         }
     }
 
+    /**
+     * Zapisuje stan ostatnio użytych kryteriów filtrowania.
+     */
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -120,16 +129,18 @@ public class SearchFragment extends Fragment {
         btnFilterTv = view.findViewById(R.id.btnFilterTv);
     }
 
+    /**
+     * Konfiguruje RecyclerView z adapterem wyników wyszukiwania.
+     * Obsługuje przejście do detali oraz tryb wyboru filmu do grupy.
+     */
     private void setupRecyclerView() {
         adapter = new SearchResultAdapter(
                 item -> {
-                    // Normalne kliknięcie: Detale
                     Bundle bundle = new Bundle();
                     bundle.putSerializable("MEDIA_ITEM", item);
                     Navigation.findNavController(requireView()).navigate(R.id.detailsFragment, bundle);
                 },
                 item -> {
-                    // Kliknięcie "Dodaj": Dodaj do grupy
                     if (targetGroupId != null) {
                         addMovieToGroup(targetGroupId, item);
                     }
@@ -141,6 +152,12 @@ public class SearchFragment extends Fragment {
         rvSearchResults.setAdapter(adapter);
     }
 
+    /**
+     * Dodaje wybrany film do kolekcji propozycji danej grupy w Firestore.
+     * 
+     * @param groupId Unikalny identyfikator grupy.
+     * @param movie Obiekt wybranego filmu.
+     */
     private void addMovieToGroup(String groupId, MediaItem movie) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -164,6 +181,9 @@ public class SearchFragment extends Fragment {
                 });
     }
 
+    /**
+     * Inicjalizuje nasłuchiwacze dla pola tekstowego, przycisków i filtrów.
+     */
     private void setupListeners() {
         btnSearchBack.setOnClickListener(v -> Navigation.findNavController(v).popBackStack());
         btnClearSearch.setOnClickListener(v -> {
@@ -197,6 +217,9 @@ public class SearchFragment extends Fragment {
         btnFilterTv.setOnClickListener(v -> onTopFilterSelected(SearchResultAdapter.FilterType.TV));
     }
 
+    /**
+     * Konfiguruje nasłuchiwanie na wyniki z panelu dolnego filtrów.
+     */
     private void setupFilterResultListener() {
         getChildFragmentManager().setFragmentResultListener("filter_request", getViewLifecycleOwner(), (requestKey, bundle) -> {
             FilterCriteria criteria = (FilterCriteria) bundle.getSerializable("filter_data");
@@ -213,6 +236,9 @@ public class SearchFragment extends Fragment {
         });
     }
 
+    /**
+     * Wyświetla panel dolny z zaawansowanymi opcjami filtrowania.
+     */
     private void openFilterBottomSheet() {
         FilterBottomSheetFragment bottomSheet = new FilterBottomSheetFragment();
         if (lastAppliedCriteria != null) {
@@ -223,6 +249,11 @@ public class SearchFragment extends Fragment {
         bottomSheet.show(getChildFragmentManager(), "FilterBottomSheet");
     }
 
+    /**
+     * Obsługuje wybór typu mediów w górnym pasku filtrów.
+     * 
+     * @param filterType Typ wybranego filtra (ALL, MOVIE, TV).
+     */
     private void onTopFilterSelected(SearchResultAdapter.FilterType filterType) {
         setFilter(filterType);
         if (updatingFilterFromModal || lastAppliedCriteria == null) return;
@@ -247,6 +278,9 @@ public class SearchFragment extends Fragment {
         return "all";
     }
 
+    /**
+     * Tworzy kopię obiektu kryteriów filtrowania.
+     */
     private FilterCriteria copyCriteria(FilterCriteria source) {
         if (source == null) return null;
         FilterCriteria copy = new FilterCriteria();
@@ -260,6 +294,9 @@ public class SearchFragment extends Fragment {
         return copy;
     }
 
+    /**
+     * Ustawia aktualny filtr w adapterze i aktualizuje wygląd przycisków.
+     */
     private void setFilter(SearchResultAdapter.FilterType filterType) {
         currentFilter = filterType;
         adapter.setFilter(filterType);
@@ -281,13 +318,15 @@ public class SearchFragment extends Fragment {
         }
     }
 
+    /**
+     * Konfiguruje obserwowanie stanu ładowania i wyników wyszukiwania z ViewModelu.
+     */
     private void setupObservers() {
         viewModel.isLoading.observe(getViewLifecycleOwner(), loading -> {
             if (progressBar != null) progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         });
         viewModel.searchResults.observe(getViewLifecycleOwner(), results -> {
             adapter.submitList(results);
-            boolean isQueryEmpty = etSearch.getText() == null || etSearch.getText().toString().trim().isEmpty();
             if (results == null || results.isEmpty()) {
                 tvSearchEmpty.setText(R.string.empty_search_results);
                 tvSearchEmpty.setVisibility(View.VISIBLE);
@@ -297,17 +336,20 @@ public class SearchFragment extends Fragment {
         });
     }
 
+    /** Wyświetla początkowy stan zachęcający do wyszukiwania. */
     private void showInitialEmptyState() {
         tvSearchEmpty.setText(R.string.empty_search_initial);
         tvSearchEmpty.setVisibility(View.VISIBLE);
     }
 
+    /** Aktualizuje widoczność licznika aktywnych filtrów na ikonie filtra. */
     private void updateFilterBadge() {
         if (tvFilterBadge == null) return;
         int activeCount = getActiveFilterCount(lastAppliedCriteria);
         tvFilterBadge.setVisibility(activeCount > 0 ? View.VISIBLE : View.GONE);
     }
 
+    /** Oblicza liczbę faktycznie zmienionych parametrów filtrowania względem domyślnych. */
     private int getActiveFilterCount(@Nullable FilterCriteria criteria) {
         if (criteria == null) return 0;
         int active = 0;

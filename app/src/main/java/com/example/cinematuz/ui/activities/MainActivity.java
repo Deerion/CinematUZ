@@ -27,11 +27,17 @@ import com.example.cinematuz.utils.ThemeHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Główna aktywność aplikacji zarządzająca nawigacją dolną i synchronizacją statystyk dla widgetu.
+ * Odpowiada za hostowanie fragmentów i konfigurację głównego interfejsu użytkownika.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
 
-    // ---------------- Lifecycle ----------------
+    /**
+     * Inicjalizuje aktywność, konfiguruje nawigację, insets oraz nasłuchiwanie statystyk.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ThemeHelper.applyTheme(this);
@@ -46,24 +52,32 @@ public class MainActivity extends AppCompatActivity {
         setupStatisticsListener();
     }
 
-    // ---------------- Kontekst lokalizacji ----------------
-
+    /**
+     * Dołącza kontekst z obsługą wybranego języka.
+     */
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(LocaleHelper.onAttach(newBase));
     }
 
-    // ---------------- Konfiguracja UI ----------------
-
+    /**
+     * Konfiguruje okno aplikacji do pracy w trybie "edge-to-edge".
+     */
     private void setupWindow() {
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
     }
 
+    /**
+     * Inicjalizuje ViewBinding dla aktywności.
+     */
     private void setupBinding() {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
     }
 
+    /**
+     * Konfiguruje paddingi widoku głównego w oparciu o paski systemowe.
+     */
     private void setupInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, windowInsets) -> {
             Insets systemBars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -75,8 +89,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ---------------- Nawigacja ----------------
-
+    /**
+     * Konfiguruje Navigation Component z BottomNavigationView.
+     * Obsługuje widoczność paska nawigacji na różnych ekranach oraz specyficzne zachowanie dla biblioteki.
+     */
     private void setupNavigation() {
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
@@ -109,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         binding.navView.setVisibility(View.VISIBLE);
-        setupStatisticsListener();
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             // Sprawdzamy czy to shaker lub zwycięzca
             if (destination.getId() == R.id.shakeFragment || destination.getId() == R.id.winnerFragment) {
@@ -121,8 +136,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ---------------- Statystyki dla Widgetu ----------------
-
+    /**
+     * Konfiguruje nasłuchiwanie zmian w statystykach użytkownika w Firestore.
+     * Po zmianie danych aktualizuje SharedPreferences i odświeża widget aplikacji.
+     */
     private void setupStatisticsListener() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {

@@ -25,19 +25,29 @@ import com.google.android.material.color.MaterialColors;
 
 import java.util.Locale;
 
+/**
+ * Fragment wyświetlający ekran główny aplikacji.
+ * Zawiera sekcję "Hero" z polecanym filmem, wyszukiwarkę oraz listę trendujących filmów i seriali
+ * z możliwością filtrowania.
+ */
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private HomeViewModel viewModel;
     private MovieGridAdapter adapter;
     private String currentFilter = "all";
 
+    /**
+     * Tworzy i zwraca hierarchię widoków powiązaną z fragmentem.
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // CZYSTY CYKL ŻYCIA: Zawsze budujemy widok poprawnie od nowa
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
+    /**
+     * Inicjalizuje ViewModel, widoki, nasłuchiwacze i obserwatorów po utworzeniu widoku.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -57,6 +67,9 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Konfiguruje RecyclerView do wyświetlania siatki filmów.
+     */
     private void setupRecyclerView() {
         adapter = new MovieGridAdapter(item -> {
             Bundle bundle = new Bundle();
@@ -75,6 +88,9 @@ public class HomeFragment extends Fragment {
         binding.rvTrending.setAdapter(adapter);
     }
 
+    /**
+     * Ustawia początkową widoczność elementów interfejsu.
+     */
     private void setupInitialState() {
         binding.rvTrending.setVisibility(View.GONE);
         binding.layoutEmptyTrending.setVisibility(View.GONE);
@@ -82,18 +98,29 @@ public class HomeFragment extends Fragment {
         binding.layoutSkeletonTrending.getRoot().setVisibility(View.GONE);
     }
 
+    /**
+     * Natychmiast ukrywa widoki szkieletowe (skeleton screens).
+     */
     private void hideSkeletonsInstantly() {
         if (binding == null) return;
         binding.layoutSkeletonHero.getRoot().setVisibility(View.GONE);
         binding.layoutSkeletonTrending.getRoot().setVisibility(View.GONE);
     }
 
+    /**
+     * Zarządza widocznością stanu pustego dla sekcji trendów.
+     * 
+     * @param show Prawda, jeśli stan pusty ma być widoczny.
+     */
     private void showEmptyTrendingState(boolean show) {
         if (binding == null) return;
         binding.layoutEmptyTrending.setVisibility(show ? View.VISIBLE : View.GONE);
         binding.rvTrending.setVisibility(show ? View.GONE : View.VISIBLE);
     }
 
+    /**
+     * Konfiguruje obserwowanie danych z ViewModelu.
+     */
     private void setupObservers() {
         viewModel.heroItem.observe(getViewLifecycleOwner(), this::updateHeroUi);
 
@@ -121,6 +148,9 @@ public class HomeFragment extends Fragment {
         });
     }
 
+    /**
+     * Konfiguruje nasłuchiwacze kliknięć dla przycisków i elementów interaktywnych.
+     */
     private void setupListeners() {
         binding.btnFilterAll.setOnClickListener(v -> applyFilter("all", true));
         binding.btnFilterMovies.setOnClickListener(v -> applyFilter("movie", true));
@@ -139,10 +169,14 @@ public class HomeFragment extends Fragment {
         binding.tvSearchBar.setOnClickListener(v -> Navigation.findNavController(v).navigate(R.id.searchFragment));
     }
 
+    /**
+     * Aktualizuje interfejs użytkownika sekcji Hero na podstawie dostarczonego elementu mediów.
+     * 
+     * @param item Element do wyświetlenia w sekcji Hero.
+     */
     private void updateHeroUi(MediaItem item) {
         if (binding == null) return;
 
-        // POPRAWKA: Jeśli nie ma głównego filmu (np. zły filtr), całkowicie chowamy wielką kartę
         if (item == null) {
             binding.layoutHeroMovie.getRoot().setVisibility(View.GONE);
             return;
@@ -174,15 +208,34 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Formatuje tekst oceny dla sekcji Hero.
+     * 
+     * @param rating Ocena numeryczna.
+     * @return Sformatowany ciąg znaków z oceną.
+     */
     private String getHeroRatingText(double rating) {
         if (rating > 0d) return String.format(Locale.getDefault(), "%.1f", rating);
         return getString(R.string.hero_empty_rating);
     }
 
+    /**
+     * Zwraca wartość lub tekst zastępczy, jeśli wartość jest pusta.
+     * 
+     * @param value Sprawdzana wartość.
+     * @param fallbackRes Zasób tekstowy używany jako fallback.
+     * @return Ciąg znaków do wyświetlenia.
+     */
     private String orFallback(String value, int fallbackRes) {
         return (value == null || value.trim().isEmpty()) ? getString(fallbackRes) : value;
     }
 
+    /**
+     * Nakłada wybrany filtr na listę trendów.
+     * 
+     * @param filter Klucz filtra ("all", "movie", "tv").
+     * @param updateData Czy odświeżyć dane w ViewModelu.
+     */
     private void applyFilter(String filter, boolean updateData) {
         currentFilter = filter;
         if (updateData) viewModel.applyFilter(filter);
@@ -192,6 +245,12 @@ public class HomeFragment extends Fragment {
         updateButtonStyle(binding.btnFilterTv, "tv".equals(filter));
     }
 
+    /**
+     * Aktualizuje wygląd przycisku filtra w zależności od tego, czy jest wybrany.
+     * 
+     * @param button Przycisk do zaktualizowania.
+     * @param isSelected Czy przycisk jest aktualnie wybrany.
+     */
     private void updateButtonStyle(MaterialButton button, boolean isSelected) {
         if (isSelected) {
             button.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.getColor(button, com.google.android.material.R.attr.colorPrimary)));
@@ -205,10 +264,12 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Czyści binding przy niszczeniu widoku fragmentu.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // POPRAWKA: Obowiązkowe czyszczenie bindingu zapobiegające wyciekom pamięci!
         binding = null;
     }
 }

@@ -15,16 +15,38 @@ import com.example.cinematuz.data.models.FriendRequest;
 
 import java.util.List;
 
+/**
+ * Adapter dla RecyclerView wyświetlający powiadomienia i zaproszenia.
+ * Obsługuje trzy typy powiadomień: zaproszenia do znajomych, zaproszenia do grupy oraz informację o usunięciu z grupy.
+ */
 public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestViewHolder> {
 
+    /**
+     * Interfejs do obsługi akcji na zaproszeniu (akceptacja/odrzucenie).
+     */
     public interface OnRequestActionListener {
+        /**
+         * Wywoływane po kliknięciu przycisku akceptacji.
+         * @param request Obiekt zaproszenia.
+         */
         void onAccept(FriendRequest request);
+
+        /**
+         * Wywoływane po kliknięciu przycisku odrzucenia/zamknięcia.
+         * @param request Obiekt zaproszenia.
+         */
         void onDecline(FriendRequest request);
     }
 
     private final List<FriendRequest> items;
     private final OnRequestActionListener listener;
 
+    /**
+     * Tworzy nową instancję adaptera.
+     * 
+     * @param items Lista powiadomień do wyświetlenia.
+     * @param listener Listener akcji użytkownika.
+     */
     public RequestAdapter(List<FriendRequest> items, OnRequestActionListener listener) {
         this.items = items;
         this.listener = listener;
@@ -37,6 +59,9 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
         return new RequestViewHolder(view);
     }
 
+    /**
+     * Wiąże dane powiadomienia z widokiem. Dostosowuje widoczność elementów i tekst w zależności od typu powiadomienia.
+     */
     @Override
     public void onBindViewHolder(@NonNull RequestViewHolder holder, int position) {
         FriendRequest req = items.get(position);
@@ -89,16 +114,19 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
         return items.size();
     }
 
+    /**
+     * ViewHolder dla elementu powiadomienia.
+     */
     static class RequestViewHolder extends RecyclerView.ViewHolder {
         TextView tvName;
-        TextView tvRequestInfo; // DODANO ZMIENNĄ DLA TEKSTU POMOCNICZEGO
+        TextView tvRequestInfo;
         ImageView ivAvatar;
         View btnAccept, btnDecline;
 
         RequestViewHolder(View v) {
             super(v);
             tvName = v.findViewById(R.id.tvRequestName);
-            tvRequestInfo = v.findViewById(R.id.tvRequestInfo); // PODPIĘCIE WIDOKU
+            tvRequestInfo = v.findViewById(R.id.tvRequestInfo);
             ivAvatar = v.findViewById(R.id.ivRequestAvatar);
             btnAccept = v.findViewById(R.id.btnAccept);
             btnDecline = v.findViewById(R.id.btnDecline);

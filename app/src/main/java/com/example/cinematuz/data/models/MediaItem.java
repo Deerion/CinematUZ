@@ -4,6 +4,10 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Model danych reprezentujący element mediów (film lub serial) z API TMDB.
+ * Implementuje {@link Serializable}, aby umożliwić przekazywanie między komponentami.
+ */
 public class MediaItem implements Serializable {
 
     @SerializedName("id")
@@ -39,6 +43,9 @@ public class MediaItem implements Serializable {
     @SerializedName("genres")
     private List<Genre> genres;
 
+    /**
+     * Wewnętrzna klasa reprezentująca gatunek filmu/serialu.
+     */
     public static class Genre implements Serializable {
         @SerializedName("id")
         private int id;
@@ -48,6 +55,7 @@ public class MediaItem implements Serializable {
         public String getName() { return name; }
     }
 
+    // Gettery
     public int getId() { return id; }
     public String getTitle() { return title; }
     public String getOverview() { return overview; }
@@ -60,14 +68,13 @@ public class MediaItem implements Serializable {
     public List<Integer> getGenreIds() { return genreIds; }
     public List<Genre> getGenres() { return genres; }
 
+    // Settery
     public void setId(int id) { this.id = id; }
     public void setTitle(String title) { this.title = title; }
     public void setOverview(String overview) { this.overview = overview; }
     public void setPosterPath(String posterPath) { this.posterPath = posterPath; }
     public void setVoteAverage(double voteAverage) { this.voteAverage = voteAverage; }
     public void setMediaType(String mediaType) { this.mediaType = mediaType; }
-
-    // DODANE SETTERY DO OBSŁUGI BŁĘDÓW KOMPILACJI
     public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
     public void setGenres(List<Genre> genres) { this.genres = genres; }
     public void setGenreIds(List<Integer> genreIds) { this.genreIds = genreIds; }
