@@ -1,4 +1,3 @@
-// Plik: main/java/com/example/cinematuz/utils/BluetoothHelper.java
 package com.example.cinematuz.utils;
 
 import android.annotation.SuppressLint;
@@ -10,19 +9,36 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * Klasa pomocnicza do obsługi podstawowych operacji Bluetooth, takich jak wykrywanie urządzeń.
+ * Zarządza procesem skanowania i powiadamianiem o znalezionych urządzeniach.
+ */
 public class BluetoothHelper {
     private final BluetoothAdapter bluetoothAdapter;
     private final Context context;
     private final BluetoothDiscoveryListener listener;
 
+    /**
+     * Interfejs powiadamiający o postępach wykrywania urządzeń.
+     */
     public interface BluetoothDiscoveryListener {
+        /**
+         * Wywoływane, gdy zostanie znalezione nowe urządzenie Bluetooth.
+         * @param device Obiekt znalezionego urządzenia.
+         */
         void onDeviceFound(BluetoothDevice device);
+        /**
+         * Wywoływane po zakończeniu procesu skanowania.
+         */
         void onDiscoveryFinished();
     }
 
+    /**
+     * Konstruktor klasy BluetoothHelper.
+     * 
+     * @param context Kontekst aplikacji.
+     * @param listener Listener zdarzeń wykrywania.
+     */
     public BluetoothHelper(Context context, BluetoothDiscoveryListener listener) {
         this.context = context;
         this.listener = listener;
@@ -42,6 +58,10 @@ public class BluetoothHelper {
         }
     };
 
+    /**
+     * Uruchamia proces wykrywania urządzeń Bluetooth w pobliżu.
+     * Rejestruje odpowiedni BroadcastReceiver i wywołuje systemowe skanowanie.
+     */
     @SuppressLint("MissingPermission")
     public void startDiscovery() {
         if (bluetoothAdapter != null && !bluetoothAdapter.isDiscovering()) {
@@ -53,6 +73,9 @@ public class BluetoothHelper {
         }
     }
 
+    /**
+     * Zatrzymuje proces wykrywania urządzeń i wyrejestrowuje BroadcastReceiver.
+     */
     @SuppressLint("MissingPermission")
     public void stopDiscovery() {
         if (bluetoothAdapter != null && bluetoothAdapter.isDiscovering()) {
@@ -65,6 +88,11 @@ public class BluetoothHelper {
         }
     }
 
+    /**
+     * Sprawdza, czy moduł Bluetooth jest włączony na urządzeniu.
+     * 
+     * @return true, jeśli Bluetooth jest włączony.
+     */
     public boolean isBluetoothEnabled() {
         return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
     }

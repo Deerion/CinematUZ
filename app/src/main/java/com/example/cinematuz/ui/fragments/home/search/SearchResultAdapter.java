@@ -19,36 +19,65 @@ import com.google.android.material.imageview.ShapeableImageView;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Adapter dla wyników wyszukiwania filmów i seriali.
+ * Obsługuje filtrowanie typów mediów (filmy, seriale, wszystkie) oraz tryb wyboru
+ * pozwalający na dodawanie pozycji do grupy.
+ */
 public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapter.ViewHolder> {
 
+    /**
+     * Typy filtrów dostępnych dla wyników wyszukiwania.
+     */
     public enum FilterType { ALL, MOVIE, TV }
 
     private final List<MediaItem> allItems = new ArrayList<>();
     private final List<MediaItem> visibleItems = new ArrayList<>();
     private final OnItemClickListener listener;
-    private final OnAddClickListener addListener; // Nowy listener do dodawania
+    private final OnAddClickListener addListener;
     private FilterType currentFilter = FilterType.ALL;
-    private boolean selectionMode = false; // Tryb wyboru dla grupy
+    private boolean selectionMode = false;
 
+    /**
+     * Interfejs obsługujący kliknięcie w element wyniku wyszukiwania.
+     */
     public interface OnItemClickListener {
         void onItemClick(MediaItem item);
     }
 
-    // Interfejs do obsługi przycisku "Dodaj"
+    /**
+     * Interfejs obsługujący kliknięcie przycisku "Dodaj" (widocznego w trybie wyboru).
+     */
     public interface OnAddClickListener {
         void onAddClick(MediaItem item);
     }
 
+    /**
+     * Konstruktor adaptera.
+     * 
+     * @param listener Listener kliknięcia w element.
+     * @param addListener Listener przycisku dodawania.
+     */
     public SearchResultAdapter(OnItemClickListener listener, OnAddClickListener addListener) {
         this.listener = listener;
         this.addListener = addListener;
     }
 
+    /**
+     * Ustawia tryb wyboru, który steruje widocznością przycisku dodawania.
+     * 
+     * @param selectionMode Prawda, jeśli tryb wyboru ma być aktywny.
+     */
     public void setSelectionMode(boolean selectionMode) {
         this.selectionMode = selectionMode;
         notifyDataSetChanged();
     }
 
+    /**
+     * Aktualizuje całą listę elementów i nakłada aktualny filtr.
+     * 
+     * @param newItems Nowa lista elementów z API.
+     */
     public void submitList(List<MediaItem> newItems) {
         allItems.clear();
         if (newItems != null) {
@@ -62,11 +91,19 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         applyFilter();
     }
 
+    /**
+     * Ustawia aktywny filtr typu mediów.
+     * 
+     * @param filter Typ filtra (ALL, MOVIE, TV).
+     */
     public void setFilter(FilterType filter) {
         this.currentFilter = filter;
         applyFilter();
     }
 
+    /**
+     * Filtruje listę wszystkich elementów i aktualizuje listę widoczną.
+     */
     private void applyFilter() {
         visibleItems.clear();
         for (MediaItem item : allItems) {
@@ -98,6 +135,13 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         return visibleItems.size();
     }
 
+    /**
+     * Zwraca nazwę pierwszego gatunku z listy identyfikatorów.
+     * 
+     * @param genreIds Lista identyfikatorów gatunków.
+     * @param context Kontekst do pobrania zasobów tekstowych.
+     * @return Zlokalizowana nazwa gatunku lub pusty ciąg.
+     */
     public static String getFirstGenreName(List<Integer> genreIds, Context context) {
         if (genreIds == null || genreIds.isEmpty()) return "";
         int id = genreIds.get(0);
@@ -129,6 +173,9 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         }
     }
 
+    /**
+     * ViewHolder dla elementu wyniku wyszukiwania.
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         ShapeableImageView ivPoster;
         TextView tvTitle, tvYear, tvRating, tvGenres;
@@ -144,6 +191,9 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
             btnAdd = itemView.findViewById(R.id.btnAdd);
         }
 
+        /**
+         * Wiąże dane MediaItem z widokiem.
+         */
         void bind(MediaItem item, OnItemClickListener listener, OnAddClickListener addListener, boolean selectionMode) {
             tvTitle.setText(item.getTitle() != null ? item.getTitle() : "Brak tytułu");
             tvRating.setText(String.format("%.1f", item.getVoteAverage()));
@@ -172,7 +222,6 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
 
             itemView.setOnClickListener(v -> listener.onItemClick(item));
 
-            // Logika przycisku dodawania
             btnAdd.setVisibility(selectionMode ? View.VISIBLE : View.GONE);
             btnAdd.setOnClickListener(v -> {
                 if (addListener != null) {

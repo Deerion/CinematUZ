@@ -1,8 +1,11 @@
-// Lokalizacja: java/com/example/cinematuz/data/models/Friend.java
 package com.example.cinematuz.data.models;
 
 import com.google.firebase.firestore.IgnoreExtraProperties;
 
+/**
+ * Model danych reprezentujący znajomego użytkownika.
+ * Przechowywany w Firebase Firestore.
+ */
 @IgnoreExtraProperties
 public class Friend {
     private String id;
@@ -11,8 +14,19 @@ public class Friend {
     private boolean isOnline;
     private String status = "accepted"; // Domyślnie zaakceptowany, może być "pending"
 
+    /**
+     * Pusty konstruktor wymagany przez Firebase Firestore.
+     */
     public Friend() {}
 
+    /**
+     * Konstruktor tworzący obiekt znajomego.
+     * 
+     * @param id Unikalny identyfikator użytkownika.
+     * @param name Nazwa użytkownika.
+     * @param avatarUrl Adres URL do obrazka profilowego.
+     * @param isOnline Status dostępności.
+     */
     public Friend(String id, String name, String avatarUrl, boolean isOnline) {
         this.id = id;
         this.name = name;

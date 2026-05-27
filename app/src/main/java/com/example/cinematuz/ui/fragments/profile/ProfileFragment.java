@@ -42,6 +42,11 @@ import com.google.firebase.storage.StorageReference;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Fragment wyświetlający profil użytkownika.
+ * Umożliwia edycję nazwy użytkownika, zmianę awatara, wybór języka aplikacji,
+ * przełączanie motywu oraz wylogowanie. Wyświetla również statystyki aktywności.
+ */
 public class ProfileFragment extends Fragment {
 
     private static final String TAG = "ProfileFragment";
@@ -55,16 +60,20 @@ public class ProfileFragment extends Fragment {
     private TextView profileName, profileUsername;
     private TextView statMoviesCount, statPoints;
 
-
     private FloatingActionButton btnEditAvatar;
     private View editProfileTile;
 
     private ActivityResultLauncher<String> mGetContent;
 
+    /**
+     * Wymagany pusty konstruktor.
+     */
     public ProfileFragment() {
-        // Wymagany pusty konstruktor
     }
 
+    /**
+     * Inicjalizuje Firebase, Google SignIn oraz launcher dla wyboru zdjęć z galerii.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,13 +100,15 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
+    /**
+     * Inicjalizuje widoki, ustawia nasłuchiwacze i sprawdza stan zalogowania użytkownika.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        // Inicjalizacja widoków
         profileAvatar = view.findViewById(R.id.profile_avatar);
         profileName = view.findViewById(R.id.profile_name);
         profileUsername = view.findViewById(R.id.profile_username);
@@ -151,7 +162,6 @@ public class ProfileFragment extends Fragment {
         View logoutTile = view.findViewById(R.id.logout_settings_tile);
 
         if (mAuth.getCurrentUser() != null) {
-            // STAN: ZALOGOWANY
             logoutTile.setVisibility(View.VISIBLE);
             editProfileTile.setVisibility(View.VISIBLE);
             btnEditAvatar.setVisibility(View.VISIBLE);
@@ -161,7 +171,6 @@ public class ProfileFragment extends Fragment {
             logoutTile.setOnClickListener(v -> performLogout());
             loadUserProfile();
         } else {
-            // STAN: GOŚĆ
             logoutTile.setVisibility(View.GONE);
             editProfileTile.setVisibility(View.GONE);
             btnEditAvatar.setVisibility(View.GONE);
@@ -172,7 +181,6 @@ public class ProfileFragment extends Fragment {
 
             btnLoginGuest.setVisibility(View.VISIBLE);
 
-            // Przejście z powrotem do ekranu logowania
             btnLoginGuest.setOnClickListener(v -> {
                 Intent intent = new Intent(requireContext(), LoginActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -185,6 +193,9 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Wyświetla dialog umożliwiający zmianę nazwy użytkownika.
+     */
     private void showEditProfileDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle(R.string.profile_edit_title);
@@ -202,6 +213,11 @@ public class ProfileFragment extends Fragment {
         builder.show();
     }
 
+    /**
+     * Aktualizuje nazwę użytkownika w bazie Firestore.
+     * 
+     * @param newUsername Nowa nazwa użytkownika.
+     */
     private void updateUsername(String newUsername) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) return;
@@ -215,12 +231,15 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show());
     }
 
-    // --- POPRAWIONE WGRYWANIE (TYLKO JEDEN PLIK NA UŻYTKOWNIKA) ---
+    /**
+     * Przesyła wybrany obraz do Firebase Storage jako awatar użytkownika.
+     * 
+     * @param imageUri URI wybranego obrazu.
+     */
     private void uploadImageToFirebase(Uri imageUri) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null || storage == null) return;
 
-        // Stała nazwa pliku to UID - stare zdjęcie zostanie nadpisane w Storage
         String fileName = "avatars/" + currentUser.getUid() + ".jpg";
         StorageReference ref = storage.getReference().child(fileName);
 
@@ -233,6 +252,11 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show());
     }
 
+    /**
+     * Aktualizuje adres URL awatara w profilu Firestore.
+     * 
+     * @param downloadUrl Publiczny URL wgranego zdjęcia.
+     */
     private void updateAvatarUrl(String downloadUrl) {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) return;
@@ -246,6 +270,9 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> Toast.makeText(getContext(), R.string.profile_update_failed, Toast.LENGTH_SHORT).show());
     }
 
+    /**
+     * Pobiera dane profilowe zalogowanego użytkownika z Firestore.
+     */
     private void loadUserProfile() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) return;
@@ -254,10 +281,9 @@ public class ProfileFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // MAPOWANIE: Zamieniamy dokument na obiekt klasy User
                         User user = documentSnapshot.toObject(User.class);
                         if (user != null) {
-                            updateUI(user); // Przekazujemy obiekt User zamiast dokumentu
+                            updateUI(user);
                         }
                     } else {
                         Log.d(TAG, "No such document");
@@ -269,7 +295,11 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
-    // Zmieniamy sygnaturę metody: teraz przyjmuje obiekt User
+    /**
+     * Aktualizuje interfejs użytkownika na podstawie danych z obiektu User.
+     * 
+     * @param user Obiekt profilu użytkownika.
+     */
     private void updateUI(User user) {
         // Korzystamy z modelu User zamiast document.getString(...)
         profileName.setText(user.getUsername() != null ? user.getUsername() : getString(R.string.profile_default_user));
@@ -285,19 +315,20 @@ public class ProfileFragment extends Fragment {
             profileAvatar.setImageResource(R.drawable.ic_person);
         }
 
-        // Korzystamy z wewnętrznej klasy UserStats z Twojego zaktualizowanego modelu
         if (user.getStats() != null) {
             int movies = user.getStats().getMoviesWatched();
             int tvShows = user.getStats().getTvShowsWatched();
 
-            // Wyświetlamy filmy
             statMoviesCount.setText(String.valueOf(movies));
-
-            // Wyświetlamy seriale (używamy zmiennej statPoints, póki nie zmienisz jej nazwy w pliku XML)
             statPoints.setText(String.valueOf(tvShows));
-
         }
     }
+
+    /**
+     * Zmienia język aplikacji i wymusza odświeżenie aktywności.
+     * 
+     * @param langCode Kod języka ("pl" lub "en").
+     */
     private void changeLanguage(String langCode) {
         if (!langCode.equals(LocaleHelper.getLanguage(requireContext()))) {
             LocaleHelper.setLocale(requireContext(), langCode);
@@ -305,6 +336,11 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    /**
+     * Przełącza motyw aplikacji (jasny/ciemny).
+     * 
+     * @param dark Prawda dla trybu ciemnego.
+     */
     private void toggleTheme(boolean dark) {
         if (dark != ThemeHelper.isDarkMode(requireContext())) {
             ThemeHelper.setDarkMode(requireContext(), dark);
@@ -312,6 +348,9 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    /**
+     * Wylogowuje użytkownika z Firebase i Google, a następnie wraca do ekranu logowania.
+     */
     private void performLogout() {
         mAuth.signOut();
         mGoogleSignInClient.signOut().addOnCompleteListener(requireActivity(), task -> {

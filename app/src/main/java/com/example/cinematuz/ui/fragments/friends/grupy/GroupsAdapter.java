@@ -18,9 +18,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Adapter dla listy grup w widoku społecznościowym.
+ * Odpowiada za wyświetlanie nazwy grupy, liczby członków oraz miniatur awatarów uczestników.
+ */
 public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewHolder> {
 
+    /**
+     * Interfejs obsługujący kliknięcie w element listy grup.
+     */
     public interface OnGroupClickListener {
+        /**
+         * Wywoływane po kliknięciu w kartę grupy.
+         * @param group Obiekt wybranej grupy.
+         */
         void onGroupClick(Group group);
     }
 
@@ -28,9 +39,17 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
     private final OnGroupClickListener listener;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    // Cache awatarów, by nie pobierać ich ponownie przy scrollowaniu listy
+    /**
+     * Podręczna pamięć (cache) awatarów użytkowników, aby uniknąć nadmiarowych zapytań do Firestore.
+     */
     private final Map<String, String> avatarCache = new HashMap<>();
 
+    /**
+     * Tworzy nową instancję adaptera grup.
+     * 
+     * @param groups Lista grup do wyświetlenia.
+     * @param listener Listener kliknięć.
+     */
     public GroupsAdapter(List<Group> groups, OnGroupClickListener listener) {
         this.groups = groups;
         this.listener = listener;
@@ -43,6 +62,9 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
         return new GroupViewHolder(view);
     }
 
+    /**
+     * Wiąże dane grupy z widokiem. Ustawia tekst, obsługę kliknięć i inicjuje ładowanie miniatur członków.
+     */
     @Override
     public void onBindViewHolder(@NonNull GroupViewHolder holder, int position) {
         Group group = groups.get(position);
@@ -52,14 +74,12 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
         int membersSize = members != null ? members.size() : 0;
         holder.tvCount.setText(holder.itemView.getContext().getString(R.string.group_members_format, membersSize));
 
-        // Ustawienie kliknięcia na całą kartę grupy
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onGroupClick(group);
             }
         });
 
-        // Wypełnianie okrągłych miniaturek uczestników
         holder.bindParticipants(members, avatarCache, db);
     }
 
@@ -68,6 +88,9 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
         return groups.size();
     }
 
+    /**
+     * ViewHolder dla elementu grupy. Zarządza wyświetlaniem nazwy i awatarów uczestników.
+     */
     static class GroupViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvCount, tvExtraParticipants;
         ImageView ivParticipant1, ivParticipant2, ivParticipant3;
@@ -76,16 +99,20 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
             super(itemView);
             tvName = itemView.findViewById(R.id.tvGroupName);
             tvCount = itemView.findViewById(R.id.tvGroupMembersCount);
-            // Poprawione ID!
             tvExtraParticipants = itemView.findViewById(R.id.tvExtraParticipants);
             ivParticipant1 = itemView.findViewById(R.id.ivParticipant1);
             ivParticipant2 = itemView.findViewById(R.id.ivParticipant2);
             ivParticipant3 = itemView.findViewById(R.id.ivParticipant3);
         }
 
-        // Metoda, której brakowało!
+        /**
+         * Wyświetla miniatury maksymalnie trzech uczestników grupy oraz informację o pozostałych.
+         * 
+         * @param members Lista identyfikatorów UID członków grupy.
+         * @param cache Cache adresów URL awatarów.
+         * @param db Instancja Firestore do pobierania brakujących danych profilowych.
+         */
         void bindParticipants(List<String> members, Map<String, String> cache, FirebaseFirestore db) {
-            // Najpierw ukrywamy wszystkie awatary
             ivParticipant1.setVisibility(View.GONE);
             ivParticipant2.setVisibility(View.GONE);
             ivParticipant3.setVisibility(View.GONE);
@@ -101,14 +128,12 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
                 ImageView currentView = avatarViews[i];
                 currentView.setVisibility(View.VISIBLE);
 
-                // Jeśli mamy ten awatar już w pamięci, załaduj od razu
                 if (cache.containsKey(uid)) {
                     loadAvatar(cache.get(uid), currentView);
                 } else {
-                    // W przeciwnym razie pobierz profil z Firebase
                     db.collection("profiles").document(uid).get().addOnSuccessListener(doc -> {
                         if (doc.exists()) {
-                            String url = doc.getString("avatar_url"); // zgodnie z kluczami bazy z poprzednich etapów
+                            String url = doc.getString("avatar_url");
                             cache.put(uid, url);
                             loadAvatar(url, currentView);
                         } else {
@@ -118,13 +143,18 @@ public class GroupsAdapter extends RecyclerView.Adapter<GroupsAdapter.GroupViewH
                 }
             }
 
-            // Jeśli jest więcej niż 3 członków, pokaż "+X"
             if (members.size() > 3) {
                 tvExtraParticipants.setVisibility(View.VISIBLE);
                 tvExtraParticipants.setText("+" + (members.size() - 3));
             }
         }
 
+        /**
+         * Ładuje obrazek awatara do ImageView przy użyciu biblioteki Glide.
+         * 
+         * @param url Adres URL obrazka.
+         * @param imageView Widok docelowy.
+         */
         private void loadAvatar(String url, ImageView imageView) {
             if (url != null && !url.isEmpty()) {
                 Glide.with(imageView.getContext())

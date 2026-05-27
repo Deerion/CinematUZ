@@ -32,8 +32,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Fragment typu BottomSheet wyświetlający zaawansowane opcje filtrowania dla filmów i seriali.
+ * Pozwala na wybór typu treści, sortowania, gatunków, zakresu lat oraz minimalnej oceny.
+ */
 public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
 
+    /** Klucz dla początkowych kryteriów filtra przekazywanych w argumentach. */
     public static final String ARG_INITIAL_FILTER = "initial_filter_data";
 
     private ChipGroup chipGroupSort;
@@ -51,6 +56,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
     private int colorOnSurface;
     private FilterCriteria initialCriteria;
 
+    /**
+     * Inicjalizuje dane filtra na podstawie przekazanych argumentów.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +67,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Konfiguruje zachowanie BottomSheet, w tym wysokość początkową i zachowanie po rozwinięciu.
+     */
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -81,6 +92,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         return inflater.inflate(R.layout.bottom_sheet_filter, container, false);
     }
 
+    /**
+     * Inicjalizuje widoki i nasłuchiwacze po utworzeniu widoku fragmentu.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -89,6 +103,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         updateApplyButton();
     }
 
+    /**
+     * Inicjalizuje komponenty UI, ustawia domyślne wartości oraz style.
+     */
     private void initViews(View view) {
         chipGroupSort = view.findViewById(R.id.chip_group_sort);
         toggleContentType = view.findViewById(R.id.toggle_content_type);
@@ -119,6 +136,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         applyInitialCriteria(currentYear);
     }
 
+    /**
+     * Nakłada przekazane kryteria początkowe na widoki fragmentu.
+     */
     private void applyInitialCriteria(int currentYear) {
         if (initialCriteria == null) return;
 
@@ -199,6 +219,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         setupRealTmdbGenres(contentType, null);
     }
 
+    /**
+     * Konfiguruje listę gatunków w zależności od wybranego typu treści.
+     */
     private void setupRealTmdbGenres(String contentType, @Nullable List<Integer> selectedGenreIds) {
         chipGroupGenre.removeAllViews();
 
@@ -309,6 +332,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         }
     }
 
+    /**
+     * Sortuje chipy z gatunkami tak, aby wybrane znajdowały się na początku.
+     */
     private void sortGenreChips() {
         List<Chip> chips = new ArrayList<>();
         for (int i = 0; i < chipGroupGenre.getChildCount(); i++) {
@@ -344,6 +370,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         return "popularity.desc";
     }
 
+    /**
+     * Konfiguruje nasłuchiwacze zdarzeń dla wszystkich elementów sterujących filtrem.
+     */
     private void setupListeners() {
         btnReset.setOnClickListener(v -> resetFilters());
 
@@ -388,6 +417,9 @@ public class FilterBottomSheetFragment extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Resetuje wszystkie filtry do ich domyślnych wartości.
+     */
     private void resetFilters() {
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         sliderYear.setValueTo(currentYear);

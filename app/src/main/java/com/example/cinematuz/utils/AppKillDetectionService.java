@@ -9,6 +9,10 @@ import androidx.annotation.Nullable;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Serwis wykrywający usunięcie aplikacji z listy ostatnich zadań (tzw. "zabicie" aplikacji).
+ * Służy do aktualizacji statusu użytkownika na offline w bazie danych Firestore.
+ */
 public class AppKillDetectionService extends Service {
 
     @Nullable
@@ -22,6 +26,10 @@ public class AppKillDetectionService extends Service {
         return START_NOT_STICKY;
     }
 
+    /**
+     * Wywoływane, gdy aplikacja zostanie usunięta z widoku ostatnich zadań.
+     * Próbuje zaktualizować status 'isOnline' na false przed zakończeniem procesu.
+     */
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);

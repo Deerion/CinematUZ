@@ -29,6 +29,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment wyświetlający zwycięski film wybrany przez grupę lub wylosowany przez użytkownika.
+ * Obsługuje wibrację przy ogłoszeniu wyniku, wyświetla plakaty oraz umożliwia ponowne losowanie
+ * lub przejście do szczegółów filmu.
+ */
 public class WinnerFragment extends Fragment {
 
     private MediaItem winnerMovie;
@@ -46,6 +51,9 @@ public class WinnerFragment extends Fragment {
     private ImageView ivWinnerPoster;
     private com.example.cinematuz.ui.fragments.home.details.DetailsViewModel detailsViewModel;
 
+    /**
+     * Inicjalizuje dane zwycięzcy przekazane w argumentach i konfiguruje obsługę przycisku wstecz.
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,11 +81,13 @@ public class WinnerFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_winner, container, false);
     }
 
+    /**
+     * Inicjalizuje widoki, nasłuchiwacze i ViewModel. Uruchamia wibrację oraz nasłuchiwanie zmian w grupie.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Ukrywamy dolną nawigację na tym ekranie
         View navView = requireActivity().findViewById(R.id.nav_view);
         if (navView != null) navView.setVisibility(View.GONE);
 
@@ -94,13 +104,10 @@ public class WinnerFragment extends Fragment {
         if (btnBack != null) btnBack.setOnClickListener(v -> navigateBackToGroup());
         if (btnClose != null) btnClose.setOnClickListener(v -> navigateBackToGroup());
 
-        // Logika wyświetlania przycisku "Losuj ponownie"
         if (btnReroll != null) {
             if (groupId != null && !groupId.isEmpty() && !isAdmin) {
-                // Uczestnik grupy (nie admin) - ukrywamy przycisk
                 btnReroll.setVisibility(View.GONE);
             } else {
-                // Admin grupy LUB tryb solo - pokazujemy przycisk i aktywujemy kliknięcie
                 btnReroll.setVisibility(View.VISIBLE);
                 btnReroll.setOnClickListener(v -> navigateToShake());
             }
@@ -120,7 +127,6 @@ public class WinnerFragment extends Fragment {
 
         detailsViewModel = new androidx.lifecycle.ViewModelProvider(this).get(com.example.cinematuz.ui.fragments.home.details.DetailsViewModel.class);
 
-        // Wibracja: Uruchamia się tylko raz przy pierwszym otwarciu ekranu (nie przy powrocie ze szczegółów)
         if (!hasVibrated) {
             triggerWinnerVibration();
             hasVibrated = true;
@@ -134,15 +140,12 @@ public class WinnerFragment extends Fragment {
         });
 
         if (winnerMovie != null) {
-            // Pobieramy pełne dane (gatunki, rok), jeśli ich brakuje
             detailsViewModel.loadData(winnerMovie.getId(), "movie", "pl");
             bindWinnerUi();
         } else if (winnerId != null) {
-            // Dopiero jeśli brak obiektu, dociągamy go
             fetchWinnerMovieIfNeeded();
         }
 
-        // Słuchamy zmian w dokumencie grupy na żywo, aby zaktualizować ekran u zwykłych uczestników
         if (groupId != null && !groupId.isEmpty()) {
             groupListener = FirebaseFirestore.getInstance()
                     .collection("groups")
@@ -159,12 +162,9 @@ public class WinnerFragment extends Fragment {
                             winnerId = firebaseWinnerId;
                             winnerReason = firebaseWinnerReason != null ? firebaseWinnerReason : "Decyzja losu";
 
-                            // ROZWIĄZANIE PROBLEMU Z ZAMYKANIEM:
-                            // Aktualizujemy zmienną w głównym fragmencie, żeby po wyjściu stąd nie otwierał zwycięzcy drugi raz
                             GroupDetailsFragment.lastSeenWinnerId = firebaseWinnerId;
 
                             triggerWinnerVibration();
-
                             fetchWinnerMovieIfNeeded();
 
                             try {
@@ -174,7 +174,12 @@ public class WinnerFragment extends Fragment {
                         }
                     });
         }
-    }    @Override
+    }
+
+    /**
+     * Przywraca widoczność nawigacji dolnej i usuwa nasłuchiwacze przy niszczeniu widoku.
+     */
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (groupListener != null) {
@@ -184,6 +189,9 @@ public class WinnerFragment extends Fragment {
         if (navView != null) navView.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Wypełnia elementy UI danymi zwycięskiego filmu.
+     */
     private void bindWinnerUi() {
         if (winnerMovie == null) {
             if (tvWinnerTitle != null) tvWinnerTitle.setText(R.string.winner_no_data);
@@ -215,6 +223,12 @@ public class WinnerFragment extends Fragment {
         }
     }
 
+    /**
+     * Buduje tekst z dodatkowymi informacjami o filmie (rok, gatunki).
+     * 
+     * @param movie Obiekt filmu.
+     * @return Sformatowany tekst szczegółów.
+     */
     private String buildDetailsText(MediaItem movie) {
         List<String> parts = new ArrayList<>();
 
@@ -235,6 +249,9 @@ public class WinnerFragment extends Fragment {
         return parts.isEmpty() ? "" : android.text.TextUtils.join(" • ", parts);
     }
 
+    /**
+     * Pobiera brakujące dane o filmie z kolekcji propozycji grupy w Firestore.
+     */
     private void fetchWinnerMovieIfNeeded() {
         if (groupId == null || winnerId == null || winnerId.trim().isEmpty()) return;
 
@@ -258,6 +275,9 @@ public class WinnerFragment extends Fragment {
                 });
     }
 
+    /**
+     * Przechodzi do ekranu losowania (potrząsania), pobierając wcześniej listę filmów, jeśli to konieczne.
+     */
     private void navigateToShake() {
         if (eligibleMovies == null || eligibleMovies.isEmpty()) {
             if (groupId == null) return;
@@ -282,6 +302,9 @@ public class WinnerFragment extends Fragment {
         proceedToShake();
     }
 
+    /**
+     * Wykonuje faktyczną nawigację do fragmentu ShakeFragment.
+     */
     private void proceedToShake() {
         if (eligibleMovies == null || eligibleMovies.isEmpty()) {
             if (getView() != null) {
@@ -291,7 +314,7 @@ public class WinnerFragment extends Fragment {
         }
 
         Bundle b = new Bundle();
-        b.putSerializable("ELIGIBLE_MOVIES", eligibleMovies); // Przekazujemy całą listę z powrotem do losowania
+        b.putSerializable("ELIGIBLE_MOVIES", eligibleMovies);
         if (groupId != null) {
             b.putString("GROUP_ID", groupId);
         }
@@ -303,6 +326,9 @@ public class WinnerFragment extends Fragment {
         }
     }
 
+    /**
+     * Uzupełnia brakujące szczegóły wczytanego filmu na podstawie listy dostępnych propozycji.
+     */
     private void mergeWinnerDetailsFromEligibleMovies(MediaItem loaded) {
         if (eligibleMovies == null || loaded == null) return;
         for (MediaItem candidate : eligibleMovies) {
@@ -324,6 +350,9 @@ public class WinnerFragment extends Fragment {
         }
     }
 
+    /**
+     * Uruchamia krótką wibrację urządzenia.
+     */
     private void triggerWinnerVibration() {
         Vibrator vibrator = (Vibrator) requireContext().getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator != null && vibrator.hasVibrator()) {
@@ -331,6 +360,9 @@ public class WinnerFragment extends Fragment {
         }
     }
 
+    /**
+     * Wraca do ekranu szczegółów grupy.
+     */
     private void navigateBackToGroup() {
         if (getView() != null) {
             NavController navController = Navigation.findNavController(requireView());

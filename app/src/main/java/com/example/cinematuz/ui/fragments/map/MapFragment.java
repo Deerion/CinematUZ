@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -42,7 +41,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.List;
+import android.view.inputmethod.EditorInfo;
 
+/**
+ * Fragment wyświetlający mapę Google z lokalizacjami kin.
+ * Obsługuje geolokalizację użytkownika, wyszukiwanie adresów oraz wyświetlanie detali o wybranych kinach.
+ */
 public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private FragmentMapBinding binding;
@@ -50,6 +54,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap googleMap;
     private FusedLocationProviderClient fusedLocationClient;
 
+    /**
+     * Launcher do obsługi próśb o uprawnienia lokalizacyjne.
+     */
     private final ActivityResultLauncher<String[]> locationPermissionRequest =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 Boolean fineGranted = result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false);
@@ -61,6 +68,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 }
             });
 
+    /**
+     * Inicjalizuje ViewBinding, ViewModel oraz FusedLocationProviderClient.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -75,6 +85,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         return binding.getRoot();
     }
 
+    /**
+     * Konfiguruje nasłuchiwacze interfejsu użytkownika (przyciski zoomu, lokalizacji, wyszukiwarka).
+     */
     private void setupUI() {
         binding.btnMyLocation.setOnClickListener(v -> checkPermissions());
         binding.btnZoomIn.setOnClickListener(v -> { if (googleMap != null) googleMap.animateCamera(CameraUpdateFactory.zoomIn()); });
@@ -90,6 +103,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
     }
 
+    /**
+     * Wyszukuje współrzędne geograficzne na podstawie nazwy miejscowości lub adresu i przesuwa tam kamerę.
+     * 
+     * @param locationName Nazwa lokalizacji do wyszukania.
+     */
     private void searchLocation(String locationName) {
         Geocoder geocoder = new Geocoder(requireContext());
         try {
@@ -102,6 +120,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
+    /**
+     * Wywoływane, gdy mapa jest gotowa do użycia. Nakłada styl mapy i inicjuje obserwowanie kin.
+     */
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         this.googleMap = map;
@@ -120,18 +141,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         googleMap.setOnMapClickListener(latLng -> binding.cinemaCard.setVisibility(View.GONE));
     }
 
+    /**
+     * Wyświetla kartę z informacjami o wybranym kinie.
+     */
     private void showCinemaDetails(MapViewModel.Cinema cinema) {
         binding.cinemaTitle.setText(cinema.name);
         binding.cinemaAddress.setText(cinema.address);
         binding.cinemaCard.setVisibility(View.VISIBLE);
     }
 
-    private void applyDarkStyle() {
-        try {
-            googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style_dark));
-        } catch (Exception e) { e.printStackTrace(); }
-    }
-
+    /**
+     * Konfiguruje obserwowanie listy kin z ViewModelu i nanosi je na mapę jako markery.
+     */
     private void observeCinemas() {
         viewModel.getCinemas().observe(getViewLifecycleOwner(), cinemas -> {
             if (googleMap == null) return;
@@ -147,6 +168,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
     }
 
+    /**
+     * Konwertuje wektorową ikonę (drawable) na format BitmapDescriptor używany przez Google Maps.
+     */
     private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
         if (vectorDrawable == null) return BitmapDescriptorFactory.defaultMarker();
@@ -157,6 +181,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
+    /**
+     * Sprawdza uprawnienia lokalizacyjne i prosi o nie, jeśli nie zostały przyznane.
+     */
     private void checkPermissions() {
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             onLocationPermissionGranted();
@@ -165,6 +192,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Włącza warstwę "Moja lokalizacja" na mapie i centruje widok na aktualnej pozycji użytkownika.
+     */
     @SuppressLint("MissingPermission")
     private void onLocationPermissionGranted() {
         if (googleMap != null) {

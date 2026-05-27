@@ -57,6 +57,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Fragment wyświetlający listę znajomych użytkownika.
+ * Umożliwia wyszukiwanie znajomych, akceptowanie zaproszeń, usuwanie znajomych
+ * oraz dodawanie przez kod QR i Bluetooth (Nearby).
+ */
 public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFriendActionListener {
 
     private static final String TAG = "FriendsListFragment";
@@ -73,7 +78,6 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // Zmiana na Google Nearby Connections API
     private NearbyHelper nearbyHelper;
     private List<SearchResultUser> nearbyUsers = new ArrayList<>();
     private BluetoothDeviceAdapter btAdapter;
@@ -82,6 +86,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
     private List<FriendRequest> pendingRequests = new ArrayList<>();
     private Map<String, ListenerRegistration> profileListeners = new HashMap<>();
 
+    /**
+     * Launcher dla skanera kodów QR.
+     */
     private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(),
             result -> {
                 if(result.getContents() == null) {
@@ -91,6 +98,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                 }
             });
 
+    /**
+     * Inicjalizuje widok fragmentu, Firebase oraz komponenty UI.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -144,6 +154,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         return view;
     }
 
+    /**
+     * Uruchamia skaner kodów QR.
+     */
     private void startQrScanner() {
         ScanOptions options = new ScanOptions();
         options.setPrompt(getString(R.string.qr_scan_prompt));
@@ -153,6 +166,11 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         barcodeLauncher.launch(options);
     }
 
+    /**
+     * Przetwarza odczytany z kodu QR identyfikator UID.
+     * 
+     * @param uid Identyfikator użytkownika odczytany z kodu.
+     */
     private void processScannedUid(String uid) {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -184,6 +202,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         });
     }
 
+    /**
+     * Wyświetla okno dialogowe z własnym kodem QR użytkownika.
+     */
     private void showMyQrDialog() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -220,11 +241,15 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
 
         dialogBuilder.show();
 
-        // Usuwamy stare listenery przycisków, bo MD Dialog ma własne
         if (sheetView.findViewById(R.id.btnClose) != null) sheetView.findViewById(R.id.btnClose).setVisibility(View.GONE);
         if (sheetView.findViewById(R.id.btnDownloadQr) != null) sheetView.findViewById(R.id.btnDownloadQr).setVisibility(View.GONE);
     }
 
+    /**
+     * Zapisuje wygenerowany obraz kodu QR do galerii zdjęć urządzenia.
+     * 
+     * @param bitmap Obraz kodu QR.
+     */
     private void saveBitmapToGallery(Bitmap bitmap) {
         String filename = "CinematUZ_QR_" + System.currentTimeMillis() + ".png";
         OutputStream fos = null;
@@ -266,11 +291,15 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         }
     }
 
+    /**
+     * Wysyła zaproszenie do znajomych wybranemu użytkownikowi.
+     * 
+     * @param targetUser Użytkownik docelowy.
+     */
     private void sendFriendRequest(SearchResultUser targetUser) {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
 
-        // --- NOWY BLOK 1: Sprawdzenie, czy jest już naszym znajomym lub czy my już do niego wysłaliśmy ---
         for (Friend friend : friendsList) {
             if (friend.getId().equals(targetUser.getUid())) {
                 Toast.makeText(getContext(), R.string.friend_already_added, Toast.LENGTH_SHORT).show();
@@ -278,16 +307,13 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             }
         }
 
-        // --- NOWY BLOK 2: Sprawdzenie, czy ten użytkownik już nas nie zaprosił ---
         for (FriendRequest req : pendingRequests) {
             if (req.getUid().equals(targetUser.getUid())) {
-                // Skoro on już nas zaprosił, a my chcemy go dodać - automatycznie akceptujemy!
                 acceptRequest(req);
-                return; // Przerywamy wysyłanie nowego zaproszenia
+                return;
             }
         }
 
-        // --- Właściwe wysłanie zaproszenia, jeśli przeszedł powyższe filtry ---
         db.collection("profiles").document(myUid).get().addOnSuccessListener(documentSnapshot -> {
             String myUsername = documentSnapshot.getString("username");
             String myAvatarUrl = documentSnapshot.getString("avatar_url");
@@ -313,21 +339,22 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
             });
         });
     }
+
+    /**
+     * Sprawdza wymagane uprawnienia i uruchamia wyszukiwanie Bluetooth (Nearby).
+     */
     private void checkPermissionsAndStartBluetooth() {
         List<String> permissions = new ArrayList<>();
 
-        // Uprawnienia do Nearby Connections od Android 13
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES);
         }
 
-        // Uprawnienia Bluetooth od Android 12
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions.add(Manifest.permission.BLUETOOTH_SCAN);
             permissions.add(Manifest.permission.BLUETOOTH_ADVERTISE);
             permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
         } else {
-            // Wymagane dla starszych wersji systemu
             permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
             permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         }
@@ -346,23 +373,23 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         }
     }
 
+    /**
+     * Uruchamia mechanizm Nearby do wykrywania innych użytkowników w pobliżu przez Bluetooth/WiFi.
+     */
     private void startBluetoothSearch() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
 
         nearbyUsers.clear();
-        showBluetoothDiscoveryDialog(); // Wyświetlamy UI do szukania
+        showBluetoothDiscoveryDialog();
 
         nearbyHelper = new NearbyHelper(requireContext(), myUid, discoveredUid -> {
-            // Zabezpieczenie przed wykryciem samego siebie
             if (discoveredUid.equals(myUid)) return;
 
-            // Zabezpieczenie przed powielaniem użytkownika na liście
             for (SearchResultUser user : nearbyUsers) {
                 if (user.getUid().equals(discoveredUid)) return;
             }
 
-            // Znaleziono nową osobę - pobieramy jej profil z Firebase
             db.collection("profiles").document(discoveredUid).get().addOnSuccessListener(doc -> {
                 if (doc.exists() && isAdded()) {
                     SearchResultUser user = new SearchResultUser(
@@ -379,6 +406,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         nearbyHelper.startSearching();
     }
 
+    /**
+     * Wyświetla okno dialogowe z wynikami wyszukiwania Nearby.
+     */
     private void showBluetoothDiscoveryDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_bluetooth_discovery, null);
@@ -387,10 +417,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         RecyclerView rv = sheetView.findViewById(R.id.rvBluetoothDevices);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Zaktualizowany Adapter obsługuje kliknięcie przycisku i zwraca wartość boolean
         btAdapter = new BluetoothDeviceAdapter(nearbyUsers, user -> {
-
-            // --- SPRAWDZENIE CZY UŻYTKOWNIK JEST JUŻ ZNAJOMYM LUB MA WYSŁANE ZAPROSZENIE ---
             boolean isAlreadyFriend = false;
             for (Friend friend : friendsList) {
                 if (friend.getId().equals(user.getUid())) {
@@ -404,7 +431,7 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                 return false; // Zwracamy false - przycisk NIE zmieni się na "Wysłano"
             } else {
                 sendFriendRequest(user);
-                return true; // Zwracamy true - zaproszenie poszło, przycisk zmieni się na "Wysłano"
+                return true;
             }
         });
 
@@ -422,6 +449,10 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         dialog.show();
     }
 
+    /**
+     * Nasłuchuje zmian w liście znajomych zalogowanego użytkownika.
+     * Dodatkowo subskrybuje zmiany statusu (online/offline) dla każdego znajomego.
+     */
     private void listenForFriends() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -481,6 +512,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                 });
     }
 
+    /**
+     * Nasłuchuje przychodzących zaproszeń do znajomych.
+     */
     private void listenForFriendRequests() {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -506,6 +540,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                 });
     }
 
+    /**
+     * Aktualizuje widoczność elementów interfejsu powiązanych z zaproszeniami.
+     */
     private void updateUIVisibility() {
         boolean hasRequests = !pendingRequests.isEmpty();
 
@@ -519,6 +556,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         }
     }
 
+    /**
+     * Wyświetla okno dialogowe z wyszukiwarką użytkowników po nazwie.
+     */
     private void showSearchFriendsDialog() {
         BottomSheetDialog bottomSheet = new BottomSheetDialog(requireContext(), R.style.BottomSheetDialogStyle);
         View sheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_search_friends, null);
@@ -565,6 +605,11 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         bottomSheet.show();
     }
 
+    /**
+     * Akceptuje zaproszenie do znajomych.
+     * 
+     * @param request Obiekt zaproszenia.
+     */
     private void acceptRequest(FriendRequest request) {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -572,26 +617,27 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         db.collection("profiles").document(myUid).get().addOnSuccessListener(documentSnapshot -> {
             WriteBatch batch = db.batch();
 
-            // Ustawienie statusu na zaakceptowany u Ciebie
             Friend friendForMe = new Friend(request.getUid(), request.getUsername(), request.getAvatarUrl(), true);
             friendForMe.setStatus("accepted");
             batch.set(db.collection("profiles").document(myUid).collection("friends").document(request.getUid()), friendForMe);
 
-            // Ustawienie statusu na zaakceptowany u nadawcy
             Friend friendForSender = new Friend(myUid, documentSnapshot.getString("username"), documentSnapshot.getString("avatar_url"), true);
             friendForSender.setStatus("accepted");
             batch.set(db.collection("profiles").document(request.getUid()).collection("friends").document(myUid), friendForSender);
 
-            // Usuwa zaproszenie od nadawcy z Twojej bazy
             batch.delete(db.collection("profiles").document(myUid).collection("friend_requests").document(request.getUid()));
 
-            // --- NOWA LINIA: Usuwa zaproszenie od Ciebie z bazy nadawcy (jeśli istnieje) ---
             batch.delete(db.collection("profiles").document(request.getUid()).collection("friend_requests").document(myUid));
 
             batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), R.string.friend_request_accepted, Toast.LENGTH_SHORT).show());
         });
     }
 
+    /**
+     * Odrzuca przychodzące zaproszenie do znajomych.
+     * 
+     * @param request Obiekt zaproszenia.
+     */
     private void declineRequest(FriendRequest request) {
         if (mAuth.getCurrentUser() == null) return;
         String myUid = mAuth.getCurrentUser().getUid();
@@ -602,6 +648,12 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), R.string.friend_request_declined, Toast.LENGTH_SHORT).show());
     }
 
+    /**
+     * Usuwa znajomego z listy lub anuluje wysłane zaproszenie.
+     * 
+     * @param friend Obiekt znajomego.
+     * @param position Pozycja na liście.
+     */
     @Override
     public void onRemoveFriend(Friend friend, int position) {
         if ("pending".equals(friend.getStatus())) {
@@ -622,6 +674,11 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
                 .setNegativeButton(R.string.profile_cancel, null).show();
     }
 
+    /**
+     * Anuluje wcześniej wysłane zaproszenie do znajomych, które nie zostało jeszcze zaakceptowane.
+     * 
+     * @param friend Obiekt znajomego o statusie "pending".
+     */
     private void cancelSentRequest(Friend friend) {
         String myUid = mAuth.getCurrentUser().getUid();
         WriteBatch batch = db.batch();
@@ -630,6 +687,9 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         batch.commit().addOnSuccessListener(aVoid -> Toast.makeText(getContext(), R.string.friend_request_cancelled, Toast.LENGTH_SHORT).show());
     }
 
+    /**
+     * Obsługuje wynik prośby o uprawnienia systemowe.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE) {
@@ -644,13 +704,15 @@ public class FriendsListFragment extends Fragment implements FriendsAdapter.OnFr
         }
     }
 
+    /**
+     * Czyści zasoby i usuwa nasłuchiwacze przy niszczeniu widoku fragmentu.
+     */
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         for (ListenerRegistration reg : profileListeners.values()) reg.remove();
         profileListeners.clear();
 
-        // Zmiana na nową metodę
         if (nearbyHelper != null) nearbyHelper.stopSearching();
     }
 }

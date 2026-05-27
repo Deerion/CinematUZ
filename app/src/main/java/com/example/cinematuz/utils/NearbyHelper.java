@@ -12,43 +12,72 @@ import com.google.android.gms.nearby.connection.DiscoveryOptions;
 import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
 import com.google.android.gms.nearby.connection.Strategy;
 
+/**
+ * Klasa pomocnicza dla Google Nearby Connections API.
+ * Umożliwia wykrywanie innych użytkowników w pobliżu bez konieczności nawiązywania pełnego połączenia,
+ * wykorzystując identyfikator UID jako nazwę punktu końcowego (endpoint name).
+ */
 public class NearbyHelper {
     private static final String SERVICE_ID = "com.example.cinematuz.NEARBY_FRIENDS";
     private final Context context;
     private final NearbyDiscoveryListener listener;
     private String myUid;
 
+    /**
+     * Interfejs powiadamiający o znalezieniu identyfikatora użytkownika w pobliżu.
+     */
     public interface NearbyDiscoveryListener {
-        void onUserFound(String uid); // Zwracamy UID znalezionego użytkownika
+        /**
+         * Wywoływane, gdy zostanie wykryty użytkownik z określonym UID.
+         * @param uid Identyfikator UID znalezionego użytkownika.
+         */
+        void onUserFound(String uid);
     }
 
+    /**
+     * Konstruktor NearbyHelper.
+     * 
+     * @param context Kontekst aplikacji.
+     * @param myUid Identyfikator UID bieżącego użytkownika (do ogłaszania).
+     * @param listener Listener wyników wykrywania.
+     */
     public NearbyHelper(Context context, String myUid, NearbyDiscoveryListener listener) {
         this.context = context;
         this.myUid = myUid;
         this.listener = listener;
     }
 
+    /**
+     * Uruchamia jednocześnie rozgłaszanie (advertising) własnego identyfikatora
+     * oraz wykrywanie (discovery) identyfikatorów innych osób.
+     */
     public void startSearching() {
         startAdvertising();
         startDiscovery();
     }
 
+    /**
+     * Zatrzymuje procesy rozgłaszania i wykrywania Nearby Connections.
+     */
     public void stopSearching() {
         Nearby.getConnectionsClient(context).stopAdvertising();
         Nearby.getConnectionsClient(context).stopDiscovery();
     }
 
-    // Ogłaszamy w eterze nasz UID
+    /**
+     * Rozpoczyna ogłaszanie własnego UID w sieci lokalnej (Bluetooth/WiFi).
+     */
     private void startAdvertising() {
         AdvertisingOptions options = new AdvertisingOptions.Builder().setStrategy(Strategy.P2P_STAR).build();
-        // Jako "Endpoint Name" nadajemy nasz UID. Dzięki temu inni od razu go znają bez łączenia się.
         Nearby.getConnectionsClient(context)
                 .startAdvertising(myUid, SERVICE_ID, connectionLifecycleCallback, options)
                 .addOnSuccessListener(unused -> {})
                 .addOnFailureListener(e -> {});
     }
 
-    // Szukamy w eterze innych UID
+    /**
+     * Rozpoczyna skanowanie w poszukiwaniu innych urządzeń korzystających z tego samego SERVICE_ID.
+     */
     private void startDiscovery() {
         DiscoveryOptions options = new DiscoveryOptions.Builder().setStrategy(Strategy.P2P_STAR).build();
         Nearby.getConnectionsClient(context)
@@ -57,11 +86,10 @@ public class NearbyHelper {
                 .addOnFailureListener(e -> {});
     }
 
-    // Ktoś został znaleziony w okolicy!
     private final EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
         @Override
         public void onEndpointFound(@NonNull String endpointId, @NonNull DiscoveredEndpointInfo info) {
-            String discoveredUid = info.getEndpointName(); // To jest UID z Firebase!
+            String discoveredUid = info.getEndpointName();
             if (listener != null) {
                 listener.onUserFound(discoveredUid);
             }
@@ -70,7 +98,6 @@ public class NearbyHelper {
         public void onEndpointLost(@NonNull String endpointId) {}
     };
 
-    // Puste callbacki - nie musimy się z nimi parować, żeby dostać UID
     private final ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override public void onConnectionInitiated(@NonNull String s, @NonNull ConnectionInfo connectionInfo) {}
         @Override public void onConnectionResult(@NonNull String s, @NonNull ConnectionResolution connectionResolution) {}

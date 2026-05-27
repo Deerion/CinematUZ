@@ -13,14 +13,26 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.cinematuz.R;
 import com.example.cinematuz.data.models.Friend;
-// DODANY IMPORT DLA FIREBASE AUTH
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 
+/**
+ * Adapter dla listy znajomych użytkownika.
+ * Obsługuje wyświetlanie statusu online, awatarów oraz umożliwia usuwanie znajomych lub członków grupy.
+ */
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendViewHolder> {
 
+    /**
+     * Interfejs obsługujący akcje na znajomym (np. usuwanie).
+     */
     public interface OnFriendActionListener {
+        /**
+         * Wywoływane przy próbie usunięcia znajomego z listy.
+         * 
+         * @param friend Obiekt znajomego.
+         * @param position Pozycja elementu w adapterze.
+         */
         void onRemoveFriend(Friend friend, int position);
     }
 
@@ -28,11 +40,22 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
     private final OnFriendActionListener listener;
     private String ownerId;
 
+    /**
+     * Konstruktor adaptera.
+     * 
+     * @param friendsList Lista znajomych do wyświetlenia.
+     * @param listener Listener akcji.
+     */
     public FriendsAdapter(List<Friend> friendsList, OnFriendActionListener listener) {
         this.friendsList = friendsList;
         this.listener = listener;
     }
 
+    /**
+     * Ustawia identyfikator właściciela grupy, co zmienia logikę wyświetlania przycisku usuwania.
+     * 
+     * @param ownerId UID właściciela grupy.
+     */
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
         notifyDataSetChanged();
@@ -45,6 +68,10 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         return new FriendViewHolder(view);
     }
 
+    /**
+     * Wiąże dane znajomego z widokiem.
+     * Konfiguruje widoczność ikony administratora, przycisku usuwania oraz statusu dostępności.
+     */
     @Override
     public void onBindViewHolder(@NonNull FriendViewHolder holder, int position) {
         Friend friend = friendsList.get(position);
@@ -78,7 +105,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
                 holder.btnRemoveFriend.setVisibility(View.GONE);
             }
         } else {
-            // Jesteśmy w zwykłej liście znajomych (ownerId jest null), pokazujemy 'X' wszystkim oprócz siebie (na wszelki wypadek)
+            // Jesteśmy w zwykłej liście znajomych (ownerId jest null), pokazujemy 'X' wszystkim oprócz siebie
             if (!isMe) {
                 holder.btnRemoveFriend.setVisibility(View.VISIBLE);
             } else {
@@ -126,6 +153,9 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.FriendVi
         return friendsList.size();
     }
 
+    /**
+     * ViewHolder dla elementu listy znajomych.
+     */
     static class FriendViewHolder extends RecyclerView.ViewHolder {
         TextView tvFriendName;
         TextView tvFriendStatus;

@@ -17,23 +17,53 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Adapter dla RecyclerView wyświetlający siatkę filmów i seriali na ekranie głównym oraz w bibliotece.
+ * Obsługuje optymalne odświeżanie listy za pomocą DiffUtil oraz dwa źródła danych: API (MediaItem) i lokalną bazę (MovieEntity).
+ */
 public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.MovieViewHolder> {
     private List<MediaItem> mediaItems = new ArrayList<>();
     private final OnItemClickListener listener;
     private OnItemLongClickListener longClickListener;
 
-    public interface OnItemClickListener { void onItemClick(MediaItem item); }
-    public interface OnItemLongClickListener { void onItemLongClick(MediaItem item, View anchorView); }
+    /**
+     * Interfejs obsługujący kliknięcie w element siatki.
+     */
+    public interface OnItemClickListener { 
+        void onItemClick(MediaItem item); 
+    }
 
+    /**
+     * Interfejs obsługujący długie kliknięcie w element siatki.
+     */
+    public interface OnItemLongClickListener { 
+        void onItemLongClick(MediaItem item, View anchorView); 
+    }
+
+    /**
+     * Konstruktor adaptera.
+     * 
+     * @param listener Listener kliknięć.
+     */
     public MovieGridAdapter(OnItemClickListener listener) {
         this.listener = listener;
     }
 
+    /**
+     * Ustawia listener dla długich kliknięć.
+     * 
+     * @param longClickListener Obiekt implementujący OnItemLongClickListener.
+     */
     public void setOnItemLongClickListener(OnItemLongClickListener longClickListener) {
         this.longClickListener = longClickListener;
     }
 
-    // Metoda przyjmująca listę z API
+    /**
+     * Aktualizuje listę elementów pochodzących z API (TMDB).
+     * Wykorzystuje DiffUtil do obliczenia różnic i animowanej aktualizacji widoku.
+     * 
+     * @param newList Nowa lista elementów mediów.
+     */
     public void submitList(List<MediaItem> newList) {
         if (newList == null) return;
         if (newList == mediaItems) return;
@@ -52,7 +82,12 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         diffResult.dispatchUpdatesTo(this);
     }
 
-    // Metoda przyjmująca listę z Bazy Danych (MovieEntity)
+    /**
+     * Aktualizuje listę na podstawie danych z lokalnej bazy danych Room.
+     * Konwertuje obiekty MovieEntity na MediaItem.
+     * 
+     * @param newList Lista encji filmów z bazy danych.
+     */
     public void updateList(List<MovieEntity> newList) {
         this.mediaItems.clear();
         for (MovieEntity entity : newList) {
@@ -82,10 +117,23 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     @Override
     public int getItemCount() { return mediaItems.size(); }
 
+    /**
+     * ViewHolder reprezentujący pojedynczy kafel filmu/serialu w siatce.
+     */
     class MovieViewHolder extends RecyclerView.ViewHolder {
         private final ItemMovieGridBinding binding;
-        public MovieViewHolder(ItemMovieGridBinding binding) { super(binding.getRoot()); this.binding = binding; }
+        
+        public MovieViewHolder(ItemMovieGridBinding binding) { 
+            super(binding.getRoot()); 
+            this.binding = binding; 
+        }
 
+        /**
+         * Wiąże dane MediaItem z widokami elementu listy.
+         * Ładuje plakat, ustawia tytuł, ocenę, rok i gatunek.
+         * 
+         * @param item Obiekt danych mediów.
+         */
         public void bind(MediaItem item) {
             binding.textTitle.setText(item.getTitle());
             binding.textRating.setText(String.format(Locale.getDefault(), "%.1f", item.getVoteAverage()));

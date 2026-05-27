@@ -10,8 +10,16 @@ import android.widget.RemoteViews;
 
 import com.example.cinematuz.R;
 
+/**
+ * Provider dla widgetu statystyk na ekranie głównym urządzenia.
+ * Obsługuje aktualizację liczników obejrzanych filmów i seriali pobieranych z SharedPreferences.
+ */
 public class StatisticsWidgetProvider extends AppWidgetProvider {
 
+    /**
+     * Odbiera broadcasty systemowe i aplikacyjne. 
+     * Reaguje na ACTION_APPWIDGET_UPDATE wysyłany po zmianie danych w aplikacji.
+     */
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
@@ -24,6 +32,14 @@ public class StatisticsWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    /**
+     * Aktualizuje widok konkretnej instancji widgetu.
+     * Pobiera najnowsze statystyki z SharedPreferences i ustawia je w polach tekstowych widgetu.
+     * 
+     * @param context Kontekst aplikacji.
+     * @param appWidgetManager Menedżer widgetów.
+     * @param appWidgetId Identyfikator instancji widgetu.
+     */
     public static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         SharedPreferences prefs = context.getSharedPreferences("CinematUZ_Stats", Context.MODE_PRIVATE);
         int moviesCount = prefs.getInt("movies_count", 0);
@@ -37,6 +53,9 @@ public class StatisticsWidgetProvider extends AppWidgetProvider {
         appWidgetManager.updateAppWidget(appWidgetId, views);
     }
 
+    /**
+     * Wywoływane cyklicznie przez system w celu odświeżenia widgetów.
+     */
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {

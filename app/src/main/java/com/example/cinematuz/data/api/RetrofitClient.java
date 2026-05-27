@@ -1,6 +1,6 @@
 package com.example.cinematuz.data.api;
 
-import com.example.cinematuz.BuildConfig; // Import wygenerowanej klasy BuildConfig
+import com.example.cinematuz.BuildConfig;
 
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -12,12 +12,30 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import java.io.IOException;
 
+/**
+ * Klient Retrofit odpowiedzialny za konfigurację i dostarczanie instancji biblioteki
+ * do komunikacji z API The Movie Database (TMDB).
+ * Klasa implementuje wzorzec Singleton dla obiektu Retrofit.
+ */
 public class RetrofitClient {
 
-    // Adres bazowy dla TMDB API
+    /**
+     * Adres bazowy dla TMDB API.
+     */
     private static final String BASE_URL = "https://api.themoviedb.org/3/";
+
+    /**
+     * Instancja obiektu Retrofit (Singleton).
+     */
     private static Retrofit retrofit = null;
 
+    /**
+     * Zwraca i w razie potrzeby inicjalizuje klienta Retrofit.
+     * Konfiguruje OkHttpClient z interceptorami do logowania oraz automatycznego
+     * dodawania klucza API (api_key) do każdego zapytania.
+     *
+     * @return Skonfigurowana instancja Retrofit do obsługi zapytań sieciowych.
+     */
     public static Retrofit getClient() {
         if (retrofit == null) {
 
@@ -49,7 +67,7 @@ public class RetrofitClient {
             // 3. Dodajemy oba interceptory do klienta OkHttp
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
                     .addInterceptor(apiKeyInterceptor) // Dodaje klucz API
-                    .addInterceptor(loggingInterceptor) // Loguje zapytania (musi być po apiKeyInterceptor, żeby logował też dodany klucz)
+                    .addInterceptor(loggingInterceptor) // Loguje zapytania
                     .build();
 
             // 4. Budujemy Retrofit

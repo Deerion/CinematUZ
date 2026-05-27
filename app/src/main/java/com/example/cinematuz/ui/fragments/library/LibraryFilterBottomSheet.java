@@ -12,15 +12,21 @@ import androidx.annotation.Nullable;
 import com.example.cinematuz.R;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
+/**
+ * Fragment typu BottomSheet wyświetlający opcje sortowania i filtrowania dla biblioteki filmów użytkownika.
+ * Pozwala na zmianę kolejności wyświetlania pozycji (np. po dacie dodania lub ocenie).
+ */
 public class LibraryFilterBottomSheet extends BottomSheetDialogFragment {
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Podepnij layout uproszczonego filtra
         return inflater.inflate(R.layout.bottom_sheet_library_filter, container, false);
     }
 
+    /**
+     * Inicjalizuje widoki i nasłuchiwacz zmian w grupie przełączników (RadioGroup).
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);

@@ -16,10 +16,19 @@ import com.example.cinematuz.data.models.Cast;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Adapter dla RecyclerView wyświetlający listę członków obsady filmu lub serialu.
+ * Odpowiada za prezentację imienia aktora oraz jego zdjęcia profilowego.
+ */
 public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder> {
 
     private List<Cast> castList = new ArrayList<>();
 
+    /**
+     * Aktualizuje listę obsady i odświeża widok.
+     * 
+     * @param list Nowa lista obiektów Cast.
+     */
     public void setCastList(List<Cast> list) {
         this.castList = list;
         notifyDataSetChanged();
@@ -32,6 +41,10 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder
         return new CastViewHolder(view);
     }
 
+    /**
+     * Wiąże dane aktora z widokiem elementu listy.
+     * Ładuje zdjęcie profilowe za pomocą biblioteki Glide i stosuje zaokrąglenie.
+     */
     @Override
     public void onBindViewHolder(@NonNull CastViewHolder holder, int position) {
         Cast member = castList.get(position);
@@ -49,6 +62,9 @@ public class CastAdapter extends RecyclerView.Adapter<CastAdapter.CastViewHolder
         return castList != null ? castList.size() : 0;
     }
 
+    /**
+     * ViewHolder reprezentujący pojedynczy element listy obsady.
+     */
     static class CastViewHolder extends RecyclerView.ViewHolder {
         ImageView ivPhoto;
         TextView tvName;

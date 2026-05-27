@@ -21,12 +21,19 @@ import com.google.firebase.firestore.WriteBatch;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment typu BottomSheet wyświetlający listę powiadomień (zaproszeń do znajomych).
+ * Pozwala na akceptowanie lub odrzucanie zaproszeń bezpośrednio z panelu dolnego.
+ */
 public class NotificationsBottomSheet extends BottomSheetDialogFragment {
     private RequestAdapter adapter;
     private List<FriendRequest> requests = new ArrayList<>();
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
+    /**
+     * Inicjalizuje widok BottomSheet, konfiguruje RecyclerView oraz nasłuchuje zaproszeń w Firestore.
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -48,7 +55,6 @@ public class NotificationsBottomSheet extends BottomSheetDialogFragment {
                     if (value != null) {
                         requests.clear();
                         for (QueryDocumentSnapshot doc : value) {
-                            // TUTAJ RÓWNIEŻ NAPRAWIONO BŁĄD (dodano "friend")
                             requests.add(new FriendRequest(doc.getId(), doc.getString("username"), doc.getString("avatarUrl"), "friend"));
                         }
                         adapter.notifyDataSetChanged();
@@ -58,6 +64,11 @@ public class NotificationsBottomSheet extends BottomSheetDialogFragment {
         return v;
     }
 
+    /**
+     * Akceptuje zaproszenie do znajomych. Tworzy relację obustronną w Firestore.
+     * 
+     * @param req Obiekt zaproszenia do zaakceptowania.
+     */
     private void accept(FriendRequest req) {
         String myUid = mAuth.getUid();
         db.collection("profiles").document(myUid).get().addOnSuccessListener(doc -> {
@@ -69,10 +80,20 @@ public class NotificationsBottomSheet extends BottomSheetDialogFragment {
         });
     }
 
+    /**
+     * Odrzuca zaproszenie do znajomych, usuwając je z bazy danych.
+     * 
+     * @param req Obiekt zaproszenia do odrzucenia.
+     */
     private void decline(FriendRequest req) {
         db.collection("profiles").document(mAuth.getUid()).collection("friend_requests").document(req.getUid()).delete();
     }
 
+    /**
+     * Zwraca styl motywu dla BottomSheet.
+     * 
+     * @return Identyfikator zasobu stylu.
+     */
     @Override
     public int getTheme() { return R.style.TransparentBottomSheetDialog; }
 }

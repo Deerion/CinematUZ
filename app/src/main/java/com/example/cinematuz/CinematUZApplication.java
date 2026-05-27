@@ -12,8 +12,15 @@ import com.example.cinematuz.utils.AppKillDetectionService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Główna klasa aplikacji CinematUZ, inicjalizująca globalne usługi i monitorująca cykl życia aplikacji.
+ */
 public class CinematUZApplication extends Application {
 
+    /**
+     * Wywoływane przy tworzeniu aplikacji. Inicjalizuje serwis wykrywania zabicia aplikacji
+     * oraz obserwatora cyklu życia procesu do zarządzania statusem online użytkownika.
+     */
     @Override
     public void onCreate() {
         super.onCreate();
@@ -41,6 +48,11 @@ public class CinematUZApplication extends Application {
         });
     }
 
+    /**
+     * Aktualizuje status online użytkownika w bazie danych Firestore.
+     * 
+     * @param isOnline Wartość logiczna określająca, czy użytkownik jest online.
+     */
     private void setOnlineStatus(boolean isOnline) {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth.getCurrentUser() != null) {

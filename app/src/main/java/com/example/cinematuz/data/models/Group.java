@@ -5,6 +5,10 @@ import com.google.firebase.firestore.ServerTimestamp;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Model danych reprezentujący grupę użytkowników w aplikacji.
+ * Wykorzystywany do wspólnego wybierania filmów.
+ */
 public class Group {
     private String id; // ID dokumentu z Firestore
     private String name;
@@ -16,10 +20,19 @@ public class Group {
     @ServerTimestamp
     private Date createdAt; // Firebase automatycznie wstawi tu datę serwera
 
-    // Pusty konstruktor wymagany przez Firebase
+    /**
+     * Pusty konstruktor wymagany przez Firebase Firestore.
+     */
     public Group() {
     }
 
+    /**
+     * Konstruktor tworzący nową grupę.
+     * 
+     * @param name Nazwa grupy.
+     * @param ownerId Unikalny identyfikator właściciela grupy.
+     * @param members Lista identyfikatorów członków grupy.
+     */
     public Group(String name, String ownerId, List<String> members) {
         this.name = name;
         this.ownerId = ownerId;
@@ -27,6 +40,10 @@ public class Group {
     }
 
     // Gettery i Settery
+
+    /**
+     * @return Unikalny identyfikator dokumentu grupy.
+     */
     public String getId() {
         return id;
     }
@@ -35,6 +52,9 @@ public class Group {
         this.id = id;
     }
 
+    /**
+     * @return Nazwa grupy.
+     */
     public String getName() {
         return name;
     }
@@ -43,6 +63,9 @@ public class Group {
         this.name = name;
     }
 
+    /**
+     * @return Unikalny identyfikator właściciela.
+     */
     public String getOwnerId() {
         return ownerId;
     }
@@ -51,6 +74,9 @@ public class Group {
         this.ownerId = ownerId;
     }
 
+    /**
+     * @return Lista identyfikatorów członków.
+     */
     public List<String> getMembers() {
         return members;
     }
@@ -59,6 +85,9 @@ public class Group {
         this.members = members;
     }
 
+    /**
+     * @return Identyfikator wybranego filmu ("zwycięzcy").
+     */
     public String getWinnerId() {
         return winnerId;
     }
@@ -67,6 +96,9 @@ public class Group {
         this.winnerId = winnerId;
     }
 
+    /**
+     * @return Powód wyboru danego filmu.
+     */
     public String getWinnerReason() {
         return winnerReason;
     }
@@ -75,6 +107,9 @@ public class Group {
         this.winnerReason = winnerReason;
     }
 
+    /**
+     * @return Data utworzenia grupy.
+     */
     public Date getCreatedAt() {
         return createdAt;
     }
